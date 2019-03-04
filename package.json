@@ -1,0 +1,15 @@
+{
+  "name": "server_sdk",
+  "version": "1.0.0",
+  "description": "基于 AppChain 架构的 Server SDK",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.f3m.club:paul.zhao/server_sdk.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
