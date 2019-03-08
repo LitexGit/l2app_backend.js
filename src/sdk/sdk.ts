@@ -1,4 +1,4 @@
-import Web3 from "web3";
+import {Web3} from "../lib/web3";
 import {Server} from "../lib/server";
 import {Session} from "../lib/session";
 
@@ -8,8 +8,8 @@ export class SDK {
     public web3;
 
     constructor() {
-        this.web3 = new Web3('');
-        this.server = new Server(this.web3);
+        this.web3 = Web3.getInstance();
+        this.server = new Server();
         this.session = new Session();
     }
 

@@ -5,7 +5,7 @@ export class AppChain {
      * @constructor
      */
     ConfirmWithdraw() {
-
+        
     }
 
     /**

@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@cryptape/cita-sdk": "^0.21.1",
     "web3": "^1.0.0-beta.48"
   },
   "devDependencies": {

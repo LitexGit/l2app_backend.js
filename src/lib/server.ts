@@ -1,15 +1,21 @@
+import {EthWeb3} from "./web3";
+import {ETHContract} from "./eth_contract";
+import {AppChainContract} from "./app_chain_contract";
+
 export class Server {
     private web3;
-    private contract;
+    private payment_contract;
+    private app_chain_contract;
 
     /**
-     *
-     *
-     * @param web3
+     * 构造函数
      */
-    constructor (web3) {
-        this.web3 = web3;
-        this.contract = new this.web3.eth.Contract('', '');
+    constructor () {
+        this.web3 = EthWeb3.getInstance();
+        this.payment_contract = ETHContract.getInstance();
+
+
+        this.app_chain_contract = AppChainContract.getInstance();
     }
 
     /**
@@ -22,14 +28,9 @@ export class Server {
      *
      * @returns string 返回交易hash
      */
-    Deposit(address: string, amount: number):string {
-        this.contract.methods.
-
-        let hash: string;
-
-        hash = '';
-
-        return hash;
+    Deposit(address: string, amount: number) {
+        // 调用 ETH 支付合约方法
+        return this.payment_contract.methods.providerDeposit(address, amount);
     }
 
     /**
@@ -44,7 +45,8 @@ export class Server {
      * @returns string 返回交易hash
      */
     ProposeWithdraw(address: string, amount: bigint, lastCommitBlock: number) {
-
+        // 调用 AppChain 合约
+        return this.app_chain_contract.methods.providerProposeWithdraw(address, amount, lastCommitBlock);
     }
 
     /**
@@ -60,7 +62,8 @@ export class Server {
      * @return
      */
     Withdraw(address: string, amount: bigint, lastCommitBlock: number, signature: Array<bigint>) {
-
+        // 调用 ETH 支付合约
+        this.payment_contract.methods.providerWithdraw(address, amount, lastCommitBlock, signature);
     }
 
     /**
@@ -88,7 +91,7 @@ export class Server {
      * @param nonce     number Nonce
      * @param hash      bytes   Hash
      */
-    CloseChannel(channelId: Array<bigint>, amount: bigint, nonce: number, hash: Array<bigint>, ) {
+    CloseChannel(channelId: Array<bigint>, amount: bigint, nonce: number, hash: Array<bigint>) {
         // TODO
     }
 

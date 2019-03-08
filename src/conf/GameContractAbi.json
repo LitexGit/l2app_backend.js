@@ -1,0 +1,298 @@
+{
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "revealWindow",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "roundIdentifier_to_diceInfo",
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "address"
+        },
+        {
+          "name": "negative",
+          "type": "address"
+        },
+        {
+          "name": "betMask",
+          "type": "uint256"
+        },
+        {
+          "name": "modulo",
+          "type": "uint256"
+        },
+        {
+          "name": "initiatorHashR",
+          "type": "bytes32"
+        },
+        {
+          "name": "acceptorR",
+          "type": "bytes32"
+        },
+        {
+          "name": "state",
+          "type": "uint8"
+        },
+        {
+          "name": "lastRevealBlock",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "name": "_revealWindow",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "initiator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "acceptor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "roundIdentifier",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "name": "winner",
+          "type": "address"
+        }
+      ],
+      "name": "InitiatorSettled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "initiator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "acceptor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "roundIdentifier",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "name": "lastRevealBlock",
+          "type": "uint256"
+        }
+      ],
+      "name": "AcceptorSettled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "initiator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "acceptor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "roundIdentifier",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "name": "winner",
+          "type": "address"
+        }
+      ],
+      "name": "InitiatorRevealed",
+      "type": "event"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "channelIdentifier",
+          "type": "bytes32"
+        },
+        {
+          "name": "round",
+          "type": "uint256"
+        },
+        {
+          "name": "betMask",
+          "type": "uint256"
+        },
+        {
+          "name": "modulo",
+          "type": "uint256"
+        },
+        {
+          "name": "positive",
+          "type": "address"
+        },
+        {
+          "name": "negative",
+          "type": "address"
+        },
+        {
+          "name": "initiatorHashR",
+          "type": "bytes32"
+        },
+        {
+          "name": "initiatorSignature",
+          "type": "bytes"
+        },
+        {
+          "name": "acceptorR",
+          "type": "bytes32"
+        },
+        {
+          "name": "acceptorSignature",
+          "type": "bytes"
+        },
+        {
+          "name": "initiatorR",
+          "type": "bytes32"
+        }
+      ],
+      "name": "initiatorSettle",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "channelIdentifier",
+          "type": "bytes32"
+        },
+        {
+          "name": "round",
+          "type": "uint256"
+        },
+        {
+          "name": "betMask",
+          "type": "uint256"
+        },
+        {
+          "name": "modulo",
+          "type": "uint256"
+        },
+        {
+          "name": "positive",
+          "type": "address"
+        },
+        {
+          "name": "negative",
+          "type": "address"
+        },
+        {
+          "name": "initiatorHashR",
+          "type": "bytes32"
+        },
+        {
+          "name": "initiatorSignature",
+          "type": "bytes"
+        },
+        {
+          "name": "acceptorR",
+          "type": "bytes32"
+        }
+      ],
+      "name": "acceptorSettle",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "channelIdentifier",
+          "type": "bytes32"
+        },
+        {
+          "name": "round",
+          "type": "uint256"
+        },
+        {
+          "name": "initiatorR",
+          "type": "bytes32"
+        }
+      ],
+      "name": "initiatorReveal",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "roundIdentifier",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getResult",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
