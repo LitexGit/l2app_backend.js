@@ -1,11 +1,20 @@
-export class AppChain {
+export class AppChainListener {
     /**
      * 监听APPChain 确认CP提现申请的有效性
      *
-     * @constructor
+     * @description 监听到 CP发起申请提现请求
      */
     ConfirmWithdraw() {
-        
+
+    }
+
+    /**
+     * 监听APPChain
+     *
+     * @constructor
+     */
+    ProviderProposeWithdraw() {
+
     }
 
     /**

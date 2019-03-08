@@ -1,4 +1,4 @@
-export class ETH {
+export class ETHListener {
     /**
      * 监听Eth充值交易结果
      *
@@ -33,5 +33,9 @@ export class ETH {
 
     ChannelClosed() {
 
+    }
+
+    Start() {
+        // cita.listeners.listenToTransactionReceipt(res.hash)
     }
 }
