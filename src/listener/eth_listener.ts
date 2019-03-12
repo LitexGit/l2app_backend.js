@@ -11,7 +11,7 @@ export class ETHListener {
     /**
      * 监听Eth提现交易结果
      */
-    Withdraw() {
+    ProviderWithdraw() {
 
     }
 

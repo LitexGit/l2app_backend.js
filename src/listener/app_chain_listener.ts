@@ -4,8 +4,8 @@ export class AppChainListener {
      *
      * @description 监听到 CP发起申请提现请求
      */
-    ConfirmWithdraw() {
-
+    confirmProviderWithdraw() {
+        //
     }
 
     /**

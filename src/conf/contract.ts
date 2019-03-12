@@ -12,3 +12,17 @@ const appChainUrl = 'http://wallet.milewan.com:8090';
 
 const appChainContractAddress = '0xeBdc4a25EFba864F7635F718b9A3F5518dE43040';
 const appChainContractAbi = require('./AppChainContractAbi.json');
+
+enum CHANNEL_STATUS {
+    CHANNEL_STATUS_INIT = 1,
+    CHANNEL_STATUS_PENDINGOPEN,
+    CHANNEL_STATUS_OPEN,
+    CHANNEL_STATUS_PENDING_UPDATE_PUPPET,
+    CHANNEL_STATUS_PENDING_SETTLE,
+    CHANNEL_STATUS_CLOSE,
+    CHANNEL_STATUS_PARTNER_UPDATE_PROOF,
+    CHANNEL_STATUS_REGULATOR_UPDATE_PROOF
+};
+
+// let contractEvent = 'Deposit' | 'Withdraw' | 'ForceWithdraw' | 'Transfer' | 'DisablePuppet';
+
