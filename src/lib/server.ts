@@ -6,6 +6,8 @@ import Web3 from "web3/types";
 import CITASDK from '@cryptape/cita-sdk';
 
 import { Common } from "./common";
+import {ETHListener} from "../listener/eth_listener";
+import {AppChainListener} from "../listener/app_chain_listener";
 
 // 定义 PaymentNetwork 合约对象
 export type PN = {
@@ -54,6 +56,12 @@ export class SDK {
 
         this.ethPaymentNetwork  = new Contract(ethProvider, Common.Abi2JsonInterface(ethContract.abi), ethContract.address);
         this.appPaymentNetwork = new this.cita.base.Contract(Common.Abi2JsonInterface(appChainContract.abi), appChainContract.address);
+
+        // 监听 ETH合约事件
+        new ETHListener(this.web3, this.ethPaymentNetwork).Start();
+
+        // 监听 appChain合约事件
+        new AppChainListener(this.web3, this.cita, Common.Abi2JsonInterface(appChainContract.abi)).Start();
     }
 
     /**
@@ -284,7 +292,7 @@ export class SDK {
      * @description 从AppChain上获取最新的通道状态数据，提交到ETH支付合约
      */
     UpdateProof(token: string) {
-        
+
     }
 
     /**

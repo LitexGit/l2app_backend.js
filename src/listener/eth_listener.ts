@@ -1,41 +1,55 @@
 export class ETHListener {
+
+    public web3;
+
+    public ethPaymentNetwork;
+
+    constructor(web3, ethPaymentNetwork) {
+        this.web3 = web3;
+        this.ethPaymentNetwork = ethPaymentNetwork;
+    }
+
     /**
      * 监听Eth充值交易结果
-     *
-     * @constructor
      */
-    NewDeposit() {
+    async NewDeposit(error, event) {
 
     }
 
     /**
      * 监听Eth提现交易结果
      */
-    ProviderWithdraw() {
+    ProviderWithdraw(error, event) {
 
     }
 
-    UserJoin() {
+    UserJoin(error, event) {
 
     }
 
-    UserDeposit() {
+    UserDeposit(error, event) {
 
     }
 
-    UserWithdraw() {
+    UserWithdraw(error, event) {
 
     }
 
-    UserLeave() {
+    UserLeave(error, event) {
 
     }
 
-    ChannelClosed() {
+    ChannelClosed(error, event) {
 
     }
 
     Start() {
-        // cita.listeners.listenToTransactionReceipt(res.hash)
+        this.ethPaymentNetwork.events.NewDeposit({}, this.NewDeposit.bind(this));
+        this.ethPaymentNetwork.events.ProviderWithdraw({}, this.ProviderWithdraw.bind(this));
+        this.ethPaymentNetwork.events.UserJoin({}, this.UserJoin.bind(this));
+        this.ethPaymentNetwork.events.UserDeposit({}, this.UserDeposit.bind(this));
+        this.ethPaymentNetwork.events.UserWithdraw({}, this.UserWithdraw.bind(this));
+        this.ethPaymentNetwork.events.UserLeave({}, this.UserLeave.bind(this));
+        this.ethPaymentNetwork.events.ChannelClosed({}, this.ChannelClosed.bind(this));
     }
 }
