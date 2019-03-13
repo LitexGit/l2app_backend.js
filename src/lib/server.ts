@@ -85,6 +85,15 @@ export class SDK {
             // 用户通道状态正常
             if (channelInfo.status === CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
                 // 进行 cp 充值操作
+                /*FIX
+                 1. 如果是ERC20 token，充值的时候需要开启两笔交易
+                    参数定义：token为ERC20 token的地址，amount为实际充值金额
+                    第一笔交易 ERC20.Approve(ethPaymentNetwork.options.address, amount), 授权合约能从账户扣token
+                    第二笔交易 调用 ethPaymentNetwork.methods.providerDeposit
+
+                 2. 如果是ETH，充值的时候调用ethPaymentNetwork.methods.providerDeposit
+                    需要在option中额外指定value，value为充值的以太金额，需要与amount一致
+                */
                 let rs = await this.ethPaymentNetwork.methods.providerDeposit(token, amount).call();
                 // rs 进行如下判断
                 // 1. 提交失败
@@ -148,6 +157,10 @@ export class SDK {
         let signature = '';
 
         // 将提现请求提交到Eth
+        /*FIX
+            1. 此处前三个参数的含义与appPaymentNetwork.methods.providerProposeWithdraw的参数一致
+            2. 第四个参数表示regulator的签名，可从appPayment中查询 providerWithdrawProofMap[token].signature
+        */
         let rs = await this.ethPaymentNetwork.methods.providerWithdraw(token, amount, lastCommitBlock, signature);
         // rs 进行如下情况判断
         // 1. 提交失败
@@ -175,6 +188,9 @@ export class SDK {
         if(!channelID) {
             return false;
         }
+        /*FIX
+        需要重新理解Rebalance
+        */
 
         // 总金额检测， 判断是否有足够资金
 
@@ -209,6 +225,11 @@ export class SDK {
         if (!channelID) {
             return false;
         }
+
+        /*FIX
+            rebalanceProofMap的参数已经变动
+            closeChannel的参数已经修改
+        */
 
         // AppChain 获取缓存数据
         let [{ balance, nonce, additionalHash, partnerSignature },
@@ -253,10 +274,14 @@ export class SDK {
             from: this.cpAddress,
         };
 
+
         // 获取 cita block Number
         let blockNumber = this.cita.base.getBlockNumber() + 1;
         tx.validUntilBlock = blockNumber;
 
+        /*FIX
+            nonce balance计算规则缺失
+        */
         // get balance proof from appChain contract
         let { balance, nonce, additionalHash } = await this.appPaymentNetwork.methods.balanceProofMap(channelID, this.cpAddress).call();
         balance = new BN(amount).add(balance);
@@ -300,6 +325,16 @@ export class SDK {
      * @constructor
      */
     SettleChannel() {
+
+    }
+
+    /**
+     * 外部设置事件回调
+     * @param eventName 外部事件名
+     * @param callback 外部设置的回调
+     */
+    on(eventName, callback){
+        //TODO
 
     }
 

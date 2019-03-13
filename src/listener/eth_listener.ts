@@ -43,6 +43,12 @@ export class ETHListener {
 
     }
 
+    /*TODO
+        强关事件检测，处理方法分两类
+        1. 用户发起强关
+        2. CP发起强关
+    */
+
     Start() {
         this.ethPaymentNetwork.events.NewDeposit({}, this.NewDeposit.bind(this));
         this.ethPaymentNetwork.events.ProviderWithdraw({}, this.ProviderWithdraw.bind(this));
