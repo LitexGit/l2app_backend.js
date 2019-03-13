@@ -21,11 +21,7 @@ export class AppChainListener {
             regulator已经签名， 此时需要调用server.ts中的ProviderWithdraw方法，向ETH提交取现
             1. 查询providerWithdrawProofMap[token]获取相关参数
             2. 调用server.ts中的ProviderWithdraw方法
-
-
         */
-        
-
     }
 
     /**
@@ -80,11 +76,17 @@ export class AppChainListener {
 
     UserProposeWithdraw() {
         // 需要审核用户的取现申请
+        // 获取数据
+        // 签名
+        // 提交数据
 
     }
 
     UserProposeCooperativeSettle() {
         // 需要审核用户的协商关申请
+        // 获取数据
+        // 签名
+        // 提交数据
     }
 
     

@@ -1,4 +1,4 @@
-import { AbiItem } from 'web3-utils/types';
+import { AbiItem } from 'web3/node_modules/web3-utils';
 
 export class Common {
     static Abi2JsonInterface(abi: string): AbiItem[] | AbiItem {

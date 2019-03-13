@@ -17,10 +17,12 @@
     "web3": "^1.0.0-beta.48"
   },
   "devDependencies": {
+    "@types/mocha": "^5.2.6",
     "@types/node": "^11.10.5",
+    "@types/should": "^13.0.0",
     "eslint": "^5.15.1",
     "eslint-plugin-typescript": "^0.14.0",
-    "typescript": "^3.3.3333",
+    "typescript": "^3.0.1",
     "typescript-eslint-parser": "^22.0.0"
   }
 }
