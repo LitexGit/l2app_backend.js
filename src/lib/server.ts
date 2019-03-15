@@ -2,18 +2,18 @@ import { Contract } from 'web3/node_modules/web3-eth-contract';
 import { provider } from 'web3-providers';
 import { BN } from 'web3-utils';
 
+
 import CITASDK from '@cryptape/cita-sdk';
 
 import { Common } from "./common";
-import {ETHListener} from "../listener/eth_listener";
-import {AppChainListener} from "../listener/app_chain_listener";
 
-import { ERC20ABI, ADDRESS_ZERO } from '../conf/contract';
+import { ERC20ABI, ADDRESS_ZERO, CHANNEL_STATUS, TYPED_DATA } from '../conf/contract';
 import HttpWatcher from "../listener/listener";
 import {ETH_EVENTS} from "../listener/eth_events";
+import {CITA_EVENTS} from "../listener/cita_events";
 
-const Web3 = require('web3');
-// import Web3 from "web3";
+import Web3 from "web3";
+import {signHash} from "./sign";
 
 // 定义 PaymentNetwork 合约对象
 export type PN = {
@@ -21,25 +21,19 @@ export type PN = {
     abi: string
 };
 
-export type L2_EVENT = 'Deposit' | 'Withdraw' | 'ForceWithdraw' | 'Transfer' | 'DisablePuppet';
+export type L2_EVENT = 'SessionMessage' | 'UserJoin' | 'Deposit' | 'Withdraw' | 'UserLeave' | 'Asset';
 export type L2_CB = (err: any, res: any) => { };
-export var callbacks: Map<L2_EVENT, L2_CB>; // callbacks for L2.on
+
+export let CITA: any;
+export let cpProvider: any;
+export let web3: Web3;
+export let ethPN: Contract;
+export let appPN: Contract;
+export let ERC20: Contract;
+export let callbacks: Map<L2_EVENT, L2_CB>;
 
 export class SDK {
     public static instance: SDK;
-
-    public web3;
-    public cita;
-
-    public ethContractAddress;
-    public appChainContract;
-
-    public ethPaymentNetwork;
-    public appPaymentNetwork;
-
-    public cpProvider;
-
-    public erc20;
 
     // 私有函数，不允许外部使用 new函数 创建
     private constructor() {}
@@ -58,32 +52,33 @@ export class SDK {
      *
      * @param cpPrivateKey      string
      * @param ethProvider       provider
-     * @param ethContract       PN
+     * @param ethPaymentNetwork       PN
      * @param appRpcUrl         string
-     * @param appChainContract  PN
+     * @param appPaymentNetwork  PN
      * @constructor
      */
-    async Init(cpPrivateKey: string, ethProvider: provider, ethContract: PN, appRpcUrl: string, appChainContract: PN) {
-        this.web3    = new Web3(Web3.givenProvider || ethProvider);
+    async Init(cpPrivateKey: string, ethProvider: provider, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN) {
+        web3    = new Web3(Web3.givenProvider || ethProvider);
 
-        this.cita = CITASDK(appRpcUrl);
+        CITA = CITASDK(appRpcUrl);
 
-        this.ethPaymentNetwork  = new Contract(ethProvider, Common.Abi2JsonInterface(ethContract.abi), ethContract.address);
-        this.appPaymentNetwork = new this.cita.base.Contract(Common.Abi2JsonInterface(appChainContract.abi), appChainContract.address);
+        ethPN  = new Contract(ethProvider, Common.Abi2JsonInterface(ethPaymentNetwork.abi), ethPaymentNetwork.address);
+        appPN = new CITA.base.Contract(Common.Abi2JsonInterface(appPaymentNetwork.abi), appPaymentNetwork.address);
 
-        this.ethContractAddress = ethContract.address;
-        this.appChainContract   = appChainContract.address;
+        ethPN.options.address = ethPaymentNetwork.address;
+        appPN.options.address = appPaymentNetwork.address;
 
-        this.cpProvider = this.web3.eth.accounts.privateKeyToAccount(cpPrivateKey);
+        TYPED_DATA.domain.verifyingContract = ethPaymentNetwork.address;
 
-        this.erc20 = new Contract(ethProvider, Common.Abi2JsonInterface(ERC20ABI));
+        cpProvider = CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
+
+        ERC20 = new Contract(ethProvider, Common.Abi2JsonInterface(ERC20ABI));
 
         // 监听 ETH合约事件
-        new HttpWatcher(this.web3.eth, 15000, this.ethPaymentNetwork, ETH_EVENTS).start();
-        // new ETHListener(this.web3, this.ethPaymentNetwork, this.appPaymentNetwork).Start();
+        new HttpWatcher(web3.eth, 15000, ethPN, ETH_EVENTS).start();
 
         // 监听 appChain合约事件
-        // new AppChainListener(this.web3, this.cita, Common.Abi2JsonInterface(appChainContract.abi)).Start();
+        new HttpWatcher(CITA.base, 3000, appPN, CITA_EVENTS).start();
     }
 
     /**
@@ -96,33 +91,29 @@ export class SDK {
      *
      * @returns string 返回交易hash
      */
-    async Deposit(amount: number, token: string = ADDRESS_ZERO) {
-        let data = this.ethPaymentNetwork.methods.providerDeposit(token, amount).encodeABI();
+    async Deposit(amount: number | string, token: string = ADDRESS_ZERO) {
+        let amountBN = web3.utils.toBN(amount).toString();
 
-        let balance = amount;
+        let data = ethPN.methods.providerDeposit(token, amountBN).encodeABI();
+
+        let hash = {};
+
         // 其它token
         if(token !== ADDRESS_ZERO) {
             // 授权合约能从账户扣token
-            let erc20Data = this.erc20.methods.approve(this.ethContractAddress, amount).encodeABI();
+            let erc20Data = ERC20.methods.approve(ethPN.options.address, amountBN).encodeABI();
 
             // 发送ERC20交易
-            await this.SendEthTransaction(this.cpProvider.address, token, 0, erc20Data);
+            await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, erc20Data);
 
-            // 充值金额
-            balance = 0;
+            // 发送ETH交易
+            hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
+        } else {
+            // 发送ETH交易
+            hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, amountBN, data);
         }
 
-        // 发送ETH交易
-        let rs = await this.SendEthTransaction(this.cpProvider.address, this.ethContractAddress, balance, data);
-
-        // let rs = await this.ethPaymentNetwork.methods.providerDeposit(token, amount).send();
-        // rs 进行如下判断
-        // 1. 提交失败
-        // 2. 确认失败
-        // 3. 确认成功， 等待审核
-        // cp 不主动与用户开通道， 不做开通道处理
-
-        return rs;
+        return hash;
     }
 
     /**
@@ -130,65 +121,56 @@ export class SDK {
      *
      * @description 发送提现请求到AppChain上
      *
-     * @param token            string  token地址
-     * @param amount            bigint  提现金额
-     * @param lastCommitBlock   number  最后区块高度
+     * @param amount number  提现金额
+     * @param token  string  token地址
      *
      * @returns string 返回交易hash
      */
-    async ProposeWithdraw(token: string, amount: bigint, lastCommitBlock: number) {
-        // 问题：如何获取 CP通道余额？
+    async ProposeWithdraw(amount: number | string, token: string = ADDRESS_ZERO) {
+        let amountBN = web3.utils.toBN(amount);
 
-        // 余额检测
-        // 输入的提现余额 大于 有效的可提现金额时 直接打回 (合约有同样的判断)
+        let [{ providerOnchainBalance, providerBalance }] = await Promise.all([ appPN.methods.paymentNetworkMap(token).call() ]);
 
-        // 余额监测通过
-        // 调用 AppChain 合约
-        // 使用 CP的 私钥  与 ETH 同一个
-        // 参数 amount 与合约不一致， 应该为：  balance = paymentnetwork.providerBalance - amount
-        let balance = 0;
-        // lastCommitBlock 从 eth 获取
-        let rs = await this.appPaymentNetwork.methods.providerProposeWithdraw(token, balance, lastCommitBlock);
-        // rs 进行如下情况判断
-        // 1. 提交失败
-        // 2. 确认失败
-        // 3. 确认成功， 等待审核
+        let onChainBalanceBN = web3.utils.toBN(providerOnchainBalance);
+        let balanceBN = web3.utils.toBN(providerBalance);
+
+        // 余额检测 (BN 计算)
+        if (amountBN.gt(onChainBalanceBN)) {
+            return false;
+        }
+
+        //web3.utils.toBN(amount).gt()
+        let balance = web3.utils.toBN(providerOnchainBalance).sub(web3.utils.toBN(amount));
+        // 余额检测 (BN 计算)
+        if (balance.gt(balanceBN)) {
+            return false;
+        }
+
+        // 初始化 交易对象
+        let tx = await Common.BuildAppChainTX();
+
+        // ETH lastCommitBlock
+        let lastCommitBlock = await Common.GetLastCommitBlock();
+
+        // 发送交易 到 AppChain
+        let rs = await appPN.methods.providerProposeWithdraw(token, balance.toString(), lastCommitBlock).send(tx);
+        if (rs.hash) {
+            let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
+
+            if (!receipt.errorMessage) {
+                //确认成功
+                console.log("send CITA tx success", receipt);
+                return 'confirm success'
+            } else {
+                //确认失败
+                return 'confirm fail'
+            }
+        } else {
+            // 提交失败
+            return 'send CITA tx fail'
+        }
 
         // 等待 ProviderProposeWithdraw 事件回调
-    }
-
-
-    /**
-     * 审核通过, 提交提现数据到ETH
-     *
-     * @description 构造Eth交易，将提现请求提交到Eth的支付合约中
-     *
-     * @param token             string  token地址
-     * @param amount            bigint  提现金额
-     * @param lastCommitBlock   number  最后区块高度
-     *
-     * @return
-     */
-    async Withdraw(token: string, amount: bigint, lastCommitBlock: number) {
-        // 参数 token, amount, lastCommitBlock   由 eth event回调返回
-
-        // 从 APPChain 获取 cp 签名
-        let signature = await Promise.all([
-            this.appPaymentNetwork.methods.providerWithdrawProofMap(this.cpProvider.address).call()
-        ]);
-
-        // 将提现请求提交到Eth
-        /*FIX
-            1. 此处前三个参数的含义与appPaymentNetwork.methods.providerProposeWithdraw的参数一致
-            2. 第四个参数表示regulator的签名，可从appPayment中查询 providerWithdrawProofMap[token].signature
-        */
-        let rs = await this.ethPaymentNetwork.methods.providerWithdraw(token, amount, lastCommitBlock, signature);
-        // rs 进行如下情况判断
-        // 1. 提交失败
-        // 2. 确认失败
-        // 3. 确认成功， 等待审核
-
-        // 等待 ConfirmProviderWithdraw 事件回调
     }
 
     /**
@@ -196,56 +178,83 @@ export class SDK {
      *
      * @description 提交到AppChain的支付合约
      *
-     * @param token     string token地址
      * @param userAddress string 用户地址
      * @param amount    bigint 挪进通道的金额
+     * @param token     string token地址
      *
      * @return
      */
-    async ProposeReBalance(token: string, userAddress: string, amount: bigint) {
+    async ProposeReBalance(userAddress: string, amount: number | string, token: string = ADDRESS_ZERO) {
         // 从 ETH 获取通道信息
-        let channelID = await this.ethPaymentNetwork.methods.getChannelID(userAddress, token).call();
+        let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
 
         // 通道未开通检测
         if(!channelID) {
             return false;
         }
 
-        // 总金额检测， 判断是否有足够资金
+        // 转换金额 为BN, 便于计算
+        let amountBN = web3.utils.toBN(amount);
 
-        // 获取 appChain Nonce;
-        let nonce = this.cita.base.getBlockNumber() + 1;
+        // 获取通道 可用金额
+        let [{ providerBalance }] = await Promise.all([ appPN.methods.paymentNetworkMap(token).call() ]);
+        // 转换金额 为BN, 便于计算
+        let providerBalanceBN = web3.utils.toBN(providerBalance);
 
-        let reBalanceType = true;
+        // 获取 ReBalance 数据
+        let [{ amount: balance, nonce }] = await Promise.all([ appPN.methods.rebalanceProofMap(channelID).call() ]);
+        // 转换金额 为BN, 便于计算
+        let balanceBN = web3.utils.toBN(balance);
 
-        // 对以上数据进行签名
-        let signature = this.cita.base.sign('', this.cpProvider.address);
+        // 总金额检测，判断是否有足够资金
+        if (amountBN.sub(balanceBN).gt(providerBalanceBN)) {
+            return false;
+        }
 
-        // rebalanceProfMap
-        // struct RebalanceProof {
-        //         bytes32 channelID;
-        //         uint256 amount;
-        //         uint256 nonce;
-        //         bytes providerSignature;
-        //         bytes regulatorSignature;
-        //     }
-        let balance = 0;
-        // balance = RebalanceProof.amount + amount
-        // nonce = RebalanceProof.nonce + 1
+        // 计算 ReBalance amount
+        let reBalanceAmountBN = balanceBN.add(amountBN).toString();
 
-        // 向 appChain 提交 ReBalance 申请
-        let rs = await this.appPaymentNetwork.methods.proposeRebalance(channelID, balance, nonce, signature).call();
+        // 计算 NONCE
+        nonce = web3.utils.toBN(nonce).add(web3.utils.toBN(1)).toString();
 
-        // sign =
-        // bytes32 messageHash = keccak256(
-        //             abi.encodePacked(
-        //                 onchainPayment,
-        //                 channelID,
-        //                 amount,
-        //                 nonce
-        //             )
-        //         );
-        // web3.utils.soliditySha3()
+        // CP 签名
+        let messageHash = web3.utils.soliditySha3(
+            {v: ethPN.options.address, t: 'address'},
+            {v: channelID, t: 'bytes32'},
+            {v: reBalanceAmountBN, t: 'uint256'},
+            {v: nonce, t: 'uint256'},
+        );
+
+        // 进行签名
+        let signature = Common.SignatureToHex(messageHash);
+
+        // 初始化 交易对象
+        let tx = await Common.BuildAppChainTX();
+
+        console.log("channelID", channelID);
+        console.log("balance", reBalanceAmountBN);
+        console.log("nonce", nonce);
+        console.log("signature", signature);
+
+        // 向 appChain 提交 ReBalance 数据
+        let rs = await appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature).send(tx);
+        if (rs.hash) {
+            let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
+
+            if (!receipt.errorMessage) {
+                //确认成功
+                console.log("send CITA tx success", receipt);
+                return 'confirm success'
+            } else {
+                //确认失败
+                console.log('confirm fail', receipt.errorMessage);
+                return 'confirm fail'
+            }
+        } else {
+            // 提交失败
+            console.log('send CITA tx fail');
+            return 'send CITA tx fail'
+        }
 
         // 等待 ConfirmRebalance 事件回调
     }
@@ -259,28 +268,23 @@ export class SDK {
      */
     async CloseChannel(token: string, userAddress: string) {
         // 从 ETH 获取通道信息
-        let channelID = await this.ethPaymentNetwork.methods.getChannelID(userAddress, token).call();
+        let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
 
         // 通道未开通 检测
         if (!channelID) {
             return false;
         }
 
-        /*FIX
-            rebalanceProofMap的参数已经变动
-            closeChannel的参数已经修改
-        */
-
         // AppChain 获取缓存数据
         let [{ balance, nonce, additionalHash, partnerSignature },
             { inAmount, inNonce, regulatorSignature, inProviderSignature }]
             = await Promise.all([
-            this.appPaymentNetwork.methods.balanceProofMap(channelID, this.cpProvider.address).call(),
-            this.appPaymentNetwork.methods.rebalanceProofMap(channelID).call()
+            appPN.methods.balanceProofMap(channelID, cpProvider.address).call(),
+            appPN.methods.rebalanceProofMap(channelID).call()
         ]);
 
         // 向eth 提交强关请求
-        let rs = await this.ethPaymentNetwork.methods.closeChannel(
+        let rs = await ethPN.methods.closeChannel(
             channelID, balance, nonce, additionalHash, partnerSignature, inAmount, inNonce, regulatorSignature, inProviderSignature
         ).call();
 
@@ -298,36 +302,78 @@ export class SDK {
      *
      * @constructor
      */
-    async SendAsset (to: string, amount: string, token: string) {
+    async SendAsset (to: string, amount: number | string, token: string = ADDRESS_ZERO) {
         // 获取通道id
-        let channelID = await this.ethPaymentNetwork.methods.getChannelID(this.cpProvider.address, token).call();
+        let channelID = await ethPN.methods.getChannelID(to, token).call();
+
+        let channel = await appPN.methods.channelMap(channelID).call();
+
+        if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
+            throw new Error("channel status is not open");
+        }
 
         // 构造交易结构体
-        let tx = {
-            nonce: 999999,
-            quota: 1000000,
-            chainId: 1,
-            version: 1,
-            validUntilBlock: 999999,
-            value: '0x0',
-            from: this.cpProvider.address,
-        };
+        let tx = await Common.BuildAppChainTX();
 
-
-        // 获取 cita block Number
-        tx.validUntilBlock = this.cita.base.getBlockNumber() + 1;
+        let amountBN = web3.utils.toBN(amount);
 
         // get balance proof from appChain contract
-        let { balance, nonce, additionalHash } = await this.appPaymentNetwork.methods.balanceProofMap(channelID, to).call();
+        let [{balance, nonce, additionalHash}] = await Promise.all([
+            appPN.methods.balanceProofMap(channelID, to).call()
+        ]);
 
-        balance = new BN(amount).add(balance);
-        nonce += 1;
+        let balanceBN = web3.utils.toBN(balance);
 
-        // cp 签名
-        let signature = this.web3.utils.soliditySha3(this.ethPaymentNetwork, channelID, balance, nonce, additionalHash);
+        // 计算金额
+        let assetAmountBN = amountBN.add(balanceBN).toString();
+        nonce = web3.utils.toBN(nonce).add(web3.utils.toBN(1)).toString();
+
+        additionalHash = '0x0';
+
+        // 签署消息
+        // let messageHash = web3.utils.soliditySha3(
+        //     {v: ethPN.options.address, t: 'address'},
+        //     {v: channelID, t: 'bytes32'},
+        //     {v: assetAmountBN, t: 'uint256'},
+        //     {v: nonce, t: 'uint256'},
+        //     {v: additionalHash, t: 'bytes32'},
+        // );
+
+        let messageHash = signHash({
+            channelID: channelID,
+            balance: assetAmountBN,
+            nonce: nonce,
+            additionalHash: additionalHash
+        });
+
+        // 进行签名
+        let signature = Common.SignatureToHex(messageHash);
+
+        console.log("--balance--", balance);
+        console.log("--nonce--", nonce);
+        console.log("--additionalHash--", additionalHash);
+        console.log("--signature--", signature);
+        console.log("--tx--", tx);
+        // return;
 
         // 发送转账交易
-        let rs = await this.appPaymentNetwork.methods.transfer(to, channelID, balance, nonce, additionalHash).send(tx);
+        let rs = await appPN.methods.transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature).send(tx);
+        if (rs.hash) {
+            let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
+
+            if (!receipt.errorMessage) {
+                //确认成功
+                console.log("send CITA tx success", receipt);
+                return 'confirm success'
+            } else {
+                //确认失败
+                console.log("confirm fail", receipt.errorMessage);
+                return 'confirm fail'
+            }
+        } else {
+            // 提交失败
+            return 'send CITA tx fail'
+        }
 
         // 等待 Transfer 事件回调
     }
@@ -353,34 +399,7 @@ export class SDK {
      *
      * @description 从AppChain上获取最新的通道状态数据，提交到ETH支付合约
      */
-    UpdateProof(token: string) {
-        // let { balance, nonce, additionalHash, partnerSignature } = await this.appPaymentNetwork.methods.balanceProofMap(channelID, cpAdd).call();
-        // function partnerUpdateProof (
-        //         bytes32 channelID,
-        //         uint256 balance,
-        //         uint256 nonce,
-        //         bytes32 additionalHash,
-        //         bytes memory partnerSignature,
-
-        //         bytes memory consignorSignature
-        //     )
-
-        /*
-         consignorSignature = CP PK 签名
-
-        * bytes32 messageHash = keccak256(
-            abi.encodePacked(
-                address(this), //this.ethPaymentNetwork
-                channelID,
-                balance,
-                nonce,
-                additionalHash,
-                partnerSignature
-            )
-        );
-
-        // 提交 .ethPaymentNetwork. partnerUpdateProof
-*/
+    async UpdateProof(token: string) {
     }
 
     /**
@@ -397,34 +416,8 @@ export class SDK {
      * @param event 外部事件名
      * @param callback 外部设置的回调
      */
-    on(event: L2_EVENT, callback: L2_CB){
-        // callbacks.set(event, callback);
-    }
-
-
-    private async SendEthTransaction(from: string, to: string, value: number | string | BN, data: string) {
-        // this.web3.eth.sendTransaction({ from, to, value, data }, function (err: any, result: any) {
-        //     console.log("send Transaction", err, result);
-        // });
-
-        let nonce = await this.web3.eth.getTransactionCount(from);
-
-        let transaction = {
-            from: from,
-            nonce: "0x" + nonce.toString(16),
-            gasPrice: this.web3.utils.toHex(8 * 1e9),
-            gasLimit: this.web3.utils.toHex(600000),
-            to: to,
-            value: this.web3.utils.toHex(value),
-            data: data,
-            chainId: await this.web3.eth.net.getId(),
-        };
-
-        console.log("transaction", transaction);return;
-
-        let rawTransaction = this.web3.eth.accounts.signTransaction(transaction, this.cpProvider.privateKey);
-
-        return this.web3.eth.sendSignedTransaction(rawTransaction);
+    on(event: L2_EVENT, callback: L2_CB) {
+        callbacks.set(event, callback);
     }
 
 }

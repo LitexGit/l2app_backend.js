@@ -22,8 +22,7 @@ export default class HttpWatcher {
 
     async processEvent(fromBlockNumber: number, toBlockNumber: number, eventName: string, eventSetting: any) {
 
-        // console.log(this.contract);
-
+        console.log(fromBlockNumber, toBlockNumber, eventName, eventSetting);
         console.log('eventName is ', eventName);
 
         let events = await this.contract.getPastEvents(eventName, {
@@ -55,7 +54,7 @@ export default class HttpWatcher {
                 );
             }
 
-            lastBlockNumber = currentBlockNumber;
+            lastBlockNumber = currentBlockNumber + 1;
             currentBlockNumber = await this.base.getBlockNumber();
         }
 
