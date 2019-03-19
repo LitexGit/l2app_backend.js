@@ -70,15 +70,20 @@ export class SDK {
 
         TYPED_DATA.domain.verifyingContract = ethPaymentNetwork.address;
 
-        cpProvider = CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
-
         ERC20 = new Contract(ethProvider, Common.Abi2JsonInterface(ERC20ABI));
 
-        // 监听 ETH合约事件
-        new HttpWatcher(web3.eth, 15000, ethPN, ETH_EVENTS).start();
+        cpProvider = CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
 
-        // 监听 appChain合约事件
-        new HttpWatcher(CITA.base, 3000, appPN, CITA_EVENTS).start();
+        // 私钥错误, 不进行监听
+        if (cpProvider.address) {
+            // 监听 ETH合约事件
+            new HttpWatcher(web3.eth, 15000, ethPN, ETH_EVENTS).start();
+
+            // 监听 appChain合约事件
+            new HttpWatcher(CITA.base, 3000, appPN, CITA_EVENTS).start();
+        }
+
+        callbacks = new Map<L2_EVENT, L2_CB>();
     }
 
     /**
@@ -188,9 +193,12 @@ export class SDK {
         // 从 ETH 获取通道信息
         let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
 
-        // 通道未开通检测
-        if(!channelID) {
-            return false;
+        // 获取通道信息
+        let channel = await appPN.methods.channelMap(channelID).call();
+
+        // 通道状态异常
+        if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
+            throw new Error("channel status is not open");
         }
 
         // 转换金额 为BN, 便于计算
@@ -231,10 +239,10 @@ export class SDK {
         // 初始化 交易对象
         let tx = await Common.BuildAppChainTX();
 
-        console.log("channelID", channelID);
-        console.log("balance", reBalanceAmountBN);
-        console.log("nonce", nonce);
-        console.log("signature", signature);
+        // console.log("channelID", channelID);
+        // console.log("balance", reBalanceAmountBN);
+        // console.log("nonce", nonce);
+        // console.log("signature", signature);
 
         // 向 appChain 提交 ReBalance 数据
         let rs = await appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature).send(tx);
@@ -266,27 +274,47 @@ export class SDK {
      * @param userAddress
      * @constructor
      */
-    async CloseChannel(token: string, userAddress: string) {
+    async CloseChannel(userAddress: string, token: string = ADDRESS_ZERO) {
         // 从 ETH 获取通道信息
         let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
 
-        // 通道未开通 检测
-        if (!channelID) {
-            return false;
+        let settleData = ethPN.methods.settleChannel(channelID).encodeABI();
+
+        // 发送ETH交易
+        let hash1 = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, settleData);
+
+        console.log('Settle Channel HASH:', hash1);
+        return;
+
+        // 获取通道信息
+        let channel = await appPN.methods.channelMap(channelID).call();
+
+        console.log("channel", channel)
+
+        // 通道状态异常
+        if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
+            throw new Error("channel status is not open");
         }
 
         // AppChain 获取缓存数据
         let [{ balance, nonce, additionalHash, partnerSignature },
-            { inAmount, inNonce, regulatorSignature, inProviderSignature }]
-            = await Promise.all([
+            { inAmount, inNonce, regulatorSignature, inProviderSignature }] = await Promise.all([
             appPN.methods.balanceProofMap(channelID, cpProvider.address).call(),
             appPN.methods.rebalanceProofMap(channelID).call()
         ]);
 
-        // 向eth 提交强关请求
-        let rs = await ethPN.methods.closeChannel(
+        console.log(channelID, balance, nonce, additionalHash, partnerSignature, inAmount, inNonce, regulatorSignature, inProviderSignature);
+        return;
+
+        // 生成数据
+        let data = await ethPN.methods.closeChannel(
             channelID, balance, nonce, additionalHash, partnerSignature, inAmount, inNonce, regulatorSignature, inProviderSignature
-        ).call();
+        ).encodeABI();
+
+        // 发送交易
+        let hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
+
+        console.log(hash);
 
         // 等待 ChannelClosed 事件回调
     }
@@ -306,8 +334,10 @@ export class SDK {
         // 获取通道id
         let channelID = await ethPN.methods.getChannelID(to, token).call();
 
+        // 获取通道信息
         let channel = await appPN.methods.channelMap(channelID).call();
 
+        // 通道状态异常
         if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
             throw new Error("channel status is not open");
         }
@@ -315,6 +345,7 @@ export class SDK {
         // 构造交易结构体
         let tx = await Common.BuildAppChainTX();
 
+        // 金额转成BN
         let amountBN = web3.utils.toBN(amount);
 
         // get balance proof from appChain contract
@@ -349,11 +380,11 @@ export class SDK {
         // 进行签名
         let signature = Common.SignatureToHex(messageHash);
 
-        console.log("--balance--", balance);
-        console.log("--nonce--", nonce);
-        console.log("--additionalHash--", additionalHash);
-        console.log("--signature--", signature);
-        console.log("--tx--", tx);
+        // console.log("--balance--", balance);
+        // console.log("--nonce--", nonce);
+        // console.log("--additionalHash--", additionalHash);
+        // console.log("--signature--", signature);
+        // console.log("--tx--", tx);
         // return;
 
         // 发送转账交易
@@ -390,23 +421,7 @@ export class SDK {
      *
      * @constructor
      */
-    ConfirmUserWithdraw() {
-
-    }
-
-    /**
-     * 用户关闭通道, CP提交通道证据
-     *
-     * @description 从AppChain上获取最新的通道状态数据，提交到ETH支付合约
-     */
-    async UpdateProof(token: string) {
-    }
-
-    /**
-     *
-     * @constructor
-     */
-    SettleChannel() {
+    async SettleChannel(channelID: string) {
         // channelID
         // 设置定时器， 定时器为 区块号  eth  channelMap[channelID].settleBlock
     }
@@ -420,4 +435,73 @@ export class SDK {
         callbacks.set(event, callback);
     }
 
+    /* 查询接口部分 */
+
+    /**
+     * 获取支付通道信息
+     *
+     * @param token token地址
+     *
+     * @return json 支付通道信息
+     */
+    async GetPaymentNetwork(token: string = ADDRESS_ZERO) {
+        // 获取通道 可用金额
+        let [{ userCount, userTotalDeposit, userTotalWithdraw, providerDeposit, providerWithdraw, providerBalance, providerOnchainBalance }] = await Promise.all([ appPN.methods.paymentNetworkMap(token).call() ]);
+
+        return {
+            userCount: userCount,
+            userTotalDeposit: userTotalDeposit,
+            userTotalWithdraw: userTotalWithdraw,
+            providerDeposit: providerDeposit,
+            providerWithdraw: providerWithdraw,
+            providerBalance: providerBalance,
+            providerOnChainBalance: providerOnchainBalance,
+        };
+    }
+
+    async GetChannelInfo(userAddress: string, token: string = ADDRESS_ZERO) {
+        // 从 ETH 获取通道信息
+        let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
+
+        // 通道未开通检测
+        if(!channelID) {
+            return {
+                channel: {}
+            };
+        }
+
+        // 获取通道信息
+        return await appPN.methods.channelMap(channelID).call();
+    }
+
+    async GetAllTXs(token: string = ADDRESS_ZERO) {
+
+        let [inTXs, outTXs] = await Promise.all([
+            appPN.getPastEvents('Transfer', { filter: { to: cpProvider.address } }),
+            appPN.getPastEvents('Transfer', { filter: { from: cpProvider.address } })
+        ]);
+
+        const cmpNonce = (key: string) => {
+            return (a: any, b: any) => { return a[key] - b[key] }
+        };
+
+        let lastBalance = new BN(0);
+        const getTX = (tx: any) => {
+            let { channelID, balance, ...rest } = tx.returnValues;
+            balance = new BN(balance);
+            let amount = balance.sub(lastBalance).toString();
+            lastBalance = balance;
+
+            return {
+                id: tx.transactionHash,
+                amount,
+                ...rest,
+            }
+        };
+
+        inTXs = inTXs.sort(cmpNonce('nonce')).map(tx => getTX(tx));
+        outTXs = outTXs.sort(cmpNonce('nonce')).map(tx => getTX(tx));
+
+        return { in: inTXs, out: outTXs };
+    }
 }

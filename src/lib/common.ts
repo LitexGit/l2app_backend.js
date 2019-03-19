@@ -37,7 +37,7 @@ export class Common {
             value: web3.utils.toHex(value),
             // gasPrice: web3.utils.toHex(8 * 1e9),
             gasPrice: web3.utils.toHex(await web3.eth.getGasPrice()),
-            gasLimit: web3.utils.toHex(30000),
+            gasLimit: web3.utils.toHex(300000),
         };
 
         let tx = new TX(rawTx);
@@ -54,12 +54,19 @@ export class Common {
 
         let txData = "0x" + serializedTx.toString("hex");
 
+        console.log("SEND TX", rawTx);
+
         return new Promise((resolve, reject) => {
+            try {
             web3.eth.sendSignedTransaction(txData).on("transactionHash", (value)=>{
+                console.log("hash ---", value);
                 resolve(value);
             }).on('error', (error)=>{
-                reject(error);
+                // reject(error);
             });
+            } catch (e) {
+                // reject(e);
+            }
         });
     }
 

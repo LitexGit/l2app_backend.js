@@ -25,6 +25,10 @@ export default class HttpWatcher {
         console.log(fromBlockNumber, toBlockNumber, eventName, eventSetting);
         console.log('eventName is ', eventName);
 
+        // console.log('filter is ', eventSetting.filter);
+        // console.log('fromBlockNumber is ', fromBlockNumber);
+        // console.log('toBlockNumber is ', toBlockNumber);
+
         let events = await this.contract.getPastEvents(eventName, {
             filter: eventSetting.filter,
             fromBlock: fromBlockNumber,
@@ -41,7 +45,7 @@ export default class HttpWatcher {
 
     async start(lastBlockNumber: number = 0) {
         let currentBlockNumber = await this.base.getBlockNumber();
-        lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
+        lastBlockNumber = lastBlockNumber || currentBlockNumber - 100;
 
         console.log("start syncing process", lastBlockNumber, currentBlockNumber);
         while (lastBlockNumber < currentBlockNumber) {
