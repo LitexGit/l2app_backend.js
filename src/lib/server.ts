@@ -74,6 +74,8 @@ export class SDK {
 
         cpProvider = CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
 
+        callbacks = new Map<L2_EVENT, L2_CB>();
+
         // 私钥错误, 不进行监听
         if (cpProvider.address) {
             // 监听 ETH合约事件
@@ -82,8 +84,6 @@ export class SDK {
             // 监听 appChain合约事件
             new HttpWatcher(CITA.base, 3000, appPN, CITA_EVENTS).start();
         }
-
-        callbacks = new Map<L2_EVENT, L2_CB>();
     }
 
     /**
@@ -404,15 +404,6 @@ export class SDK {
      */
     SendMessage() {
 
-    }
-
-    /**
-     *
-     * @constructor
-     */
-    async SettleChannel(channelID: string) {
-        // channelID
-        // 设置定时器， 定时器为 区块号  eth  channelMap[channelID].settleBlock
     }
 
     /**
