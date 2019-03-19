@@ -58,10 +58,10 @@ export class Common {
 
         return new Promise((resolve, reject) => {
             try {
-            web3.eth.sendSignedTransaction(txData).on("transactionHash", (value)=>{
+            web3.eth.sendSignedTransaction(txData).on("transactionHash", (value: {} | PromiseLike<{}>)=>{
                 console.log("hash ---", value);
                 resolve(value);
-            }).on('error', (error)=>{
+            }).on('error', (error: any)=>{
                 // reject(error);
             });
             } catch (e) {
