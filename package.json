@@ -1,0 +1,61 @@
+{
+  "_from": "@nobrainr/typescript_server@^1.0.0",
+  "_id": "@nobrainr/typescript_server@1.0.0",
+  "_inBundle": false,
+  "_integrity": "sha512-pIe7a/7bfF1eksm6C4PT3W2+iOeTjup6l67vP/Z0moQOHYMmZ8XbMn+02x8K1s7DulaJ3uuhBQCq/dovg5hGzg==",
+  "_location": "/create-ts-lib/@nobrainr/typescript_server",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@nobrainr/typescript_server@^1.0.0",
+    "name": "@nobrainr/typescript_server",
+    "escapedName": "@nobrainr%2ftypescript_server",
+    "scope": "@nobrainr",
+    "rawSpec": "^1.0.0",
+    "saveSpec": null,
+    "fetchSpec": "^1.0.0"
+  },
+  "_requiredBy": [
+    "/create-ts-lib"
+  ],
+  "_resolved": "https://registry.npmjs.org/@nobrainr/typescript_server/-/typescript_server-1.0.0.tgz",
+  "_shasum": "9df35995bee00f9192b2781ed735f0badba21ed3",
+  "_spec": "@nobrainr/typescript_server@^1.0.0",
+  "_where": "/Users/paul/.npm/_npx/20460/lib/node_modules/create-ts-lib",
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/nobrainr/typescript-webpack-starter/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "",
+  "devDependencies": {
+    "nodemon": "^1.18.4",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.1.1"
+  },
+  "homepage": "https://github.com/nobrainr/typescript-webpack-starter#readme",
+  "license": "ISC",
+  "main": "src/index.ts",
+  "name": "my-typescript-lib",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nobrainr/typescript-webpack-starter.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node ./src/index.ts",
+    "prod": "npm run build && node ./dist/index.js",
+    "server": "nodemon ./src/index.ts",
+    "start": "npm run dev"
+  },
+  "version": "0.0.1",
+  "dependencies": {
+    "@cryptape/cita-sdk": "^0.21.2",
+    "ethereumjs-abi": "^0.6.6",
+    "ethereumjs-tx": "^1.3.7",
+    "ethereumjs-util": "^6.1.0",
+    "web3": "^1.0.0-beta.48"
+  }
+}
