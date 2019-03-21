@@ -66,7 +66,6 @@ export default class HttpWatcher {
         console.log("finish syncing process", currentBlockNumber);
 
         while (true) {
-
             await this.delay(this.blockInterval);
 
             lastBlockNumber = currentBlockNumber;

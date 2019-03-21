@@ -84,6 +84,13 @@ export class SDK {
             // 监听 appChain合约事件
             new HttpWatcher(CITA.base, 3000, appPN, CITA_EVENTS).start();
         }
+
+        let [{ balance: amount, nonce: road }] = await Promise.all([
+            appPN.methods.balanceProofMap('0x4a5adc9cea0b36b4bc0997c84dc6ee851b88a92af73ee8b759c43cd74941e0b5', cpProvider.address).call()
+        ]);
+
+        console.log("provider balance", amount);
+        console.log("provider nonce", road);
     }
 
     /**

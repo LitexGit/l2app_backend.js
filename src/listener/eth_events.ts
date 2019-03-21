@@ -155,11 +155,10 @@ export const ETH_EVENTS = {
 
                         // 发送ETH交易
                         let hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
-                        console.log(" --------  --------  --------  -------- USER HASH:", hash);
+                        // console.log(" --------  --------  --------  -------- USER HASH:", hash);
                     }
                 } else {
                     // 发起方为 cp
-
                     // 获取通道证据
                     let [{balance, nonce, additionalHash, signature: partnerSignature, consignorSignature}] = await Promise.all([
                         appPN.methods.balanceProofMap(channelID, channel.user).call()
@@ -173,7 +172,7 @@ export const ETH_EVENTS = {
 
                         // 发送ETH交易
                         let hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
-                        console.log(" --------  --------  --------  -------- CP HASH:", hash);
+                        // console.log(" --------  --------  --------  -------- CP HASH:", hash);
                     }
                 }
             }
