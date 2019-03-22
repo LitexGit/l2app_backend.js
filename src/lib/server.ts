@@ -424,16 +424,14 @@ export class SDK {
 
     /**
      * 测试启动session
+     *
+     * @param sessionID
      * @param game
      * @param customData
      * @constructor
      */
-    StartSession(game: string, customData: any) {
-        let sessionID = Common.GenerateSessionID(game);
-
+    StartSession(sessionID: string, game: string, customData: any) {
         Session.InitSession(sessionID, game, customData);
-
-        return sessionID;
     }
 
     async GetSession(sessionID: string): Promise<Session> {

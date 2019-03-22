@@ -1,7 +1,6 @@
 import {appPN, ethPN, cpProvider, callbacks, web3} from '../lib/server';
 import {
     USER_JOIN_EVENT,
-    PROVIDER_NEW_DEPOSIT_EVENT,
     USER_NEW_DEPOSIT_EVENT,
     PROVIDER_WITHDRAW_EVENT,
     USER_WITHDRAW_EVENT,
@@ -78,7 +77,6 @@ export const ETH_EVENTS = {
                 type: 2
             };
             if (callbacks.get('Withdraw')) {
-                // @ts-ignore
                 callbacks.get('Withdraw')(null, userWithdrawEvent);
             }
         }
@@ -94,7 +92,6 @@ export const ETH_EVENTS = {
 
             let userJoinEvent: USER_JOIN_EVENT = {sender, user, token, puppet, amount, settleWindow, channelID};
             if (callbacks.get('Asset')) {
-                // @ts-ignore
                 callbacks.get('Asset')(null, userJoinEvent);
             }
         }
@@ -110,8 +107,6 @@ export const ETH_EVENTS = {
 
             // 获取通道信息
             let channel = await ethPN.methods.channels(channelID).call();
-
-            console.log("channel ------------------------", channel);
 
             let data;
 
@@ -149,8 +144,7 @@ export const ETH_EVENTS = {
                         data = ethPN.methods.partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature).encodeABI();
 
                         // 发送ETH交易
-                        let hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
-                        // console.log(" --------  --------  --------  -------- USER HASH:", hash);
+                        await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
                     }
                 } else {
                     // 发起方为 cp
@@ -166,8 +160,7 @@ export const ETH_EVENTS = {
                         data = ethPN.methods.partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature).encodeABI();
 
                         // 发送ETH交易
-                        let hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
-                        // console.log(" --------  --------  --------  -------- CP HASH:", hash);
+                        await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data);
                     }
                 }
             }
@@ -178,8 +171,8 @@ export const ETH_EVENTS = {
             while (true) {
                 let current = await web3.eth.getBlockNumber();
 
-                console.log("current:", current);
-                console.log("settle", settle);
+                // console.log("current:", current);
+                // console.log("settle", settle);
 
                 if (current >= settle) {
                     let settleData = ethPN.methods.settleChannel(channelID).encodeABI();
@@ -198,7 +191,6 @@ export const ETH_EVENTS = {
             }
 
             // if (callbacks.get('Deposit') !== undefined) {
-            //     // @ts-ignore
             //     callbacks.get('Deposit')(null, null);
             // }
         }
@@ -214,7 +206,6 @@ export const ETH_EVENTS = {
 
             let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user};
             if (callbacks.get('UserLeave')) {
-                // @ts-ignore
                 callbacks.get('UserLeave')(null, userLeaveEvent);
             }
         }
@@ -230,7 +221,6 @@ export const ETH_EVENTS = {
 
             let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user};
             if (callbacks.get('UserLeave')) {
-                // @ts-ignore
                 callbacks.get('UserLeave')(null, userLeaveEvent);
             }
         }
