@@ -2,17 +2,21 @@ import { Contract } from 'web3-eth-contract/types';
 
 export default class HttpWatcher {
 
+    private enabled: boolean;
+
     private base: any;
     private blockInterval: number;
     private contract: Contract;
-    private eventHandlerList: any;
+    private watchList: any;
 
 
-    constructor(base: any, blockInterval: number, contract: Contract, eventHandlerList: any) {
-        this.contract = contract;
+    constructor(base: any, blockInterval: number, watchList: any) {
+        //   this.contract = contract;
         this.base = base;
         this.blockInterval = blockInterval;
-        this.eventHandlerList = eventHandlerList;
+        this.watchList = watchList;
+
+        this.enabled = true;
     }
 
     async delay(duration: number){
@@ -20,17 +24,14 @@ export default class HttpWatcher {
     }
 
 
-    async processEvent(fromBlockNumber: number, toBlockNumber: number, eventName: string, eventSetting: any) {
+    async processEvent(fromBlockNumber: number, toBlockNumber: number, contract:Contract, eventName: string, eventSetting: any) {
 
-        console.log(fromBlockNumber, toBlockNumber, eventName, eventSetting);
-        console.log('eventName is ', eventName);
+        // console.log(this.contract);
 
-        // console.log('filter is ', eventSetting.filter);
-        // console.log('fromBlockNumber is ', fromBlockNumber);
-        // console.log('toBlockNumber is ', toBlockNumber);
+        //   console.log('eventName is ', eventName, eventSetting.filter());
 
-        let events = await this.contract.getPastEvents(eventName, {
-            filter: eventSetting.filter,
+        let events = await contract.getPastEvents(eventName, {
+            filter: eventSetting.filter(),
             fromBlock: fromBlockNumber,
             toBlock: toBlockNumber
         });
@@ -38,24 +39,33 @@ export default class HttpWatcher {
         for (let event of events) {
             await eventSetting.handler(event);
             // process event
+            console.log('eventName is ', eventName, eventSetting.filter());
             console.log("event", event.transactionHash);
         }
-        console.log("get events ", events.length);
+        //   console.log("get events ", events.length);
     }
 
     async start(lastBlockNumber: number = 0) {
         let currentBlockNumber = await this.base.getBlockNumber();
-        lastBlockNumber = lastBlockNumber || currentBlockNumber - 100;
+        lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
 
         console.log("start syncing process", lastBlockNumber, currentBlockNumber);
-        while (lastBlockNumber < currentBlockNumber) {
-            for (let eventName in this.eventHandlerList) {
-                await this.processEvent(
-                    lastBlockNumber,
-                    currentBlockNumber,
-                    eventName,
-                    this.eventHandlerList[eventName]
-                );
+        while (lastBlockNumber <= currentBlockNumber) {
+            // console.log('watchList', this.watchList);
+            for (let watchItem of this.watchList) {
+                for (let eventName in watchItem.listener) {
+                    await this.processEvent(
+                        lastBlockNumber,
+                        currentBlockNumber,
+                        watchItem.contract,
+                        eventName,
+                        watchItem.listener[eventName]
+                    );
+                }
+
+                if (this.enabled == false) {
+                    return;
+                }
             }
 
             lastBlockNumber = currentBlockNumber + 1;
@@ -66,25 +76,36 @@ export default class HttpWatcher {
         console.log("finish syncing process", currentBlockNumber);
 
         while (true) {
+
             await this.delay(this.blockInterval);
 
-            lastBlockNumber = currentBlockNumber;
+            lastBlockNumber = currentBlockNumber + 1;
             currentBlockNumber = await this.base.getBlockNumber();
             console.log("watching event", lastBlockNumber, currentBlockNumber);
-            if (lastBlockNumber == currentBlockNumber) {
+            if (lastBlockNumber > currentBlockNumber) {
                 continue;
             }
 
-            for (let eventName in this.eventHandlerList) {
-                await this.processEvent(
-                    lastBlockNumber,
-                    currentBlockNumber,
-                    eventName,
-                    this.eventHandlerList[eventName]
-                );
-            }
+            for (let watchItem of this.watchList) {
+                for (let eventName in watchItem.listener) {
+                    await this.processEvent(
+                        lastBlockNumber,
+                        currentBlockNumber,
+                        watchItem.contract,
+                        eventName,
+                        watchItem.listener[eventName]
+                    );
+                }
 
+                if (this.enabled == false) {
+                    return;
+                }
+            }
         }
+    }
+
+    async stop(){
+        this.enabled = false;
     }
 }
   

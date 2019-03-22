@@ -9,6 +9,12 @@ export enum CHANNEL_STATUS {
     CHANNEL_STATUS_PENDING_SETTLE = 4,
 }
 
+export enum SESSION_STATUS {
+    SESSION_STATUS_INIT = 0,
+    SESSION_STATUS_OPEN,
+    SESSION_STATUS_CLOSE
+};
+
 export type ASSET_EVENT = {
     from: string,
     to: string,

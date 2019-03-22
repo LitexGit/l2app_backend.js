@@ -1,7 +1,6 @@
 import { appPN, ethPN, CITA, cpProvider, callbacks, web3 } from '../lib/server';
 import { Common } from "../lib/common";
 import { ASSET_EVENT } from "../conf/contract";
-import {signHash} from "../lib/sign";
 
 export const CITA_EVENTS = {
     /*
@@ -53,7 +52,7 @@ export const CITA_EVENTS = {
     },
     */
     'Transfer': {
-        filter: { },
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("Transfer event", event);
 
@@ -73,7 +72,7 @@ export const CITA_EVENTS = {
             console.log("channel", channel);
 
             // 查询费率
-            let { amount: feeProofAmount } = await appPN.methods.feeProofMap(token).call();
+            let { amount: feeProofAmount, nonce: road } = await appPN.methods.feeProofMap(token).call();
             console.log("feeProofAmount", feeProofAmount);
 
             //
@@ -81,7 +80,7 @@ export const CITA_EVENTS = {
             console.log("feeRate", feeRate);
 
             // 查询通道证据
-            let [{ balance: amount, nonce: road }] = await Promise.all([
+            let [{ balance: amount }] = await Promise.all([
                 appPN.methods.balanceProofMap(channelID, cpProvider.address).call()
             ]);
 
@@ -143,7 +142,7 @@ export const CITA_EVENTS = {
     },
     */
     'UserProposeWithdraw': {
-        filter: { },
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("UserProposeWithdraw event", event);
 
@@ -196,7 +195,7 @@ export const CITA_EVENTS = {
     },
 
     'ProposeCooperativeSettle': {
-        filter: { },
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("ProposeCooperativeSettle event", event);
 
@@ -237,7 +236,7 @@ export const CITA_EVENTS = {
     },
 
     'ConfirmProviderWithdraw': {
-        filter: { },
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("confirmProviderWithdraw event", event);
 

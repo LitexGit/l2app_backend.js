@@ -1,24 +1,45 @@
+import {SESSION_EVENTS} from "../listener/session_events";
+
+const Web3 = require('web3');
+
 import { Contract } from 'web3-eth-contract';
 import { provider } from 'web3-providers';
 import { BN } from 'web3-utils';
 
-
 import CITASDK from '@cryptape/cita-sdk';
 
-import { Common } from "./common";
-
 import { ERC20ABI, ADDRESS_ZERO, CHANNEL_STATUS, TYPED_DATA } from '../conf/contract';
+import { sessionPayNetwork } from "../conf/config.dev";
+
 import HttpWatcher from "../listener/listener";
 import {ETH_EVENTS} from "../listener/eth_events";
 import {CITA_EVENTS} from "../listener/cita_events";
 
-const Web3 = require('web3');
-import {signHash} from "./sign";
+import { Common } from "./common";
+import { signHash } from "./sign";
+import { Session } from "./session";
 
 // 定义 PaymentNetwork 合约对象
 export type PN = {
     address: string,
     abi: string
+};
+
+// 定义 SessionData 类型
+export type SessionData = {
+    sessionID: string,
+    mType: string,
+    content: string,
+    signature: string
+};
+
+// 定义 PaymentData 类型
+export type PaymentData = {
+    channelID: string,
+    balance: number,
+    nonce: number,
+    additionalHash: string,
+    paymentSignature: string
 };
 
 export type L2_EVENT = 'SessionMessage' | 'UserJoin' | 'Deposit' | 'Withdraw' | 'UserLeave' | 'Asset';
@@ -30,6 +51,7 @@ export let web3: any;
 export let ethPN: Contract;
 export let appPN: Contract;
 export let ERC20: Contract;
+export let sessionPN: Contract;
 export let callbacks: Map<L2_EVENT, L2_CB>;
 
 export class SDK {
@@ -47,6 +69,9 @@ export class SDK {
         return this.instance;
     }
 
+    private ethWatcher: HttpWatcher;
+    private appWatcher: HttpWatcher;
+
     /**
      * 初始化 SDK
      *
@@ -62,7 +87,7 @@ export class SDK {
 
         CITA = CITASDK(appRpcUrl);
 
-        ethPN  = new Contract(ethProvider, Common.Abi2JsonInterface(ethPaymentNetwork.abi), ethPaymentNetwork.address);
+        ethPN = new Contract(ethProvider, Common.Abi2JsonInterface(ethPaymentNetwork.abi), ethPaymentNetwork.address);
         appPN = new CITA.base.Contract(Common.Abi2JsonInterface(appPaymentNetwork.abi), appPaymentNetwork.address);
 
         ethPN.options.address = ethPaymentNetwork.address;
@@ -72,25 +97,16 @@ export class SDK {
 
         ERC20 = new Contract(ethProvider, Common.Abi2JsonInterface(ERC20ABI));
 
+        sessionPN = new CITA.base.Contract(Common.Abi2JsonInterface(sessionPayNetwork.abi), sessionPayNetwork.address);
+
         cpProvider = CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
 
         callbacks = new Map<L2_EVENT, L2_CB>();
 
         // 私钥错误, 不进行监听
         if (cpProvider.address) {
-            // 监听 ETH合约事件
-            new HttpWatcher(web3.eth, 15000, ethPN, ETH_EVENTS).start();
-
-            // 监听 appChain合约事件
-            new HttpWatcher(CITA.base, 3000, appPN, CITA_EVENTS).start();
+            await this.initListeners();
         }
-
-        let [{ balance: amount, nonce: road }] = await Promise.all([
-            appPN.methods.balanceProofMap('0x4a5adc9cea0b36b4bc0997c84dc6ee851b88a92af73ee8b759c43cd74941e0b5', cpProvider.address).call()
-        ]);
-
-        console.log("provider balance", amount);
-        console.log("provider nonce", road);
     }
 
     /**
@@ -405,12 +421,43 @@ export class SDK {
         // 等待 Transfer 事件回调
     }
 
+
     /**
-     *
+     * 测试启动session
+     * @param game
+     * @param customData
      * @constructor
      */
-    SendMessage() {
+    StartSession(game: string, customData: any) {
+        let sessionID = Common.GenerateSessionID(game);
 
+        Session.InitSession(sessionID, game, customData);
+
+        return sessionID;
+    }
+
+    async GetSession(sessionID: string): Promise<Session> {
+        let count_down = 10;
+
+        let session: Session;
+        for(let i = 0; i< count_down; i++){
+            session = await Session.GetSession(sessionID);
+            if (session) {
+                break;
+            }
+
+            await Common.Sleep(1000);
+        }
+
+        if (!session){
+            throw new Error("session not found");
+        }
+
+        return session;
+    }
+
+    async CloseSession(sessionID: string) {
+        await Session.CloseSession(sessionID);
     }
 
     /**
@@ -490,5 +537,47 @@ export class SDK {
         outTXs = outTXs.sort(cmpNonce('nonce')).map(tx => getTX(tx));
 
         return { in: inTXs, out: outTXs };
+    }
+
+
+    /**
+     * 根据SessionID 获取session的所有消息(数组)
+     *
+     * @param sessionID string sessionID
+     *
+     * @return
+     */
+    async GetMessagesBySessionId(sessionID: string) {
+        return await sessionPN.methods.messages(sessionID).call();
+    }
+
+    /**
+     * 根据SessionID 获取session的所有的玩家(数组)
+     *
+     * @param sessionID string sessionID
+     *
+     * @return
+     */
+    async GetPlayersBySessionId(sessionID: string) {
+        return await sessionPN.methods.players(sessionID).call();
+    }
+
+    private async initListeners() {
+        //before start new watcher, stop the old watcher
+        this.ethWatcher && this.ethWatcher.stop();
+
+        let ethWatchList = [{contract: ethPN, listener: ETH_EVENTS}];
+        this.ethWatcher = new HttpWatcher(web3.eth, 5000, ethWatchList);
+        this.ethWatcher.start();
+
+        //before start new watcher, stop the old watcher
+        this.appWatcher && this.appWatcher.stop();
+
+        let appWatchList = [
+            { contract: appPN, listener: CITA_EVENTS },
+            { contract: sessionPN, listener: SESSION_EVENTS }
+        ];
+        this.appWatcher = new HttpWatcher(CITA.base, 1000, appWatchList);
+        this.appWatcher.start();
     }
 }

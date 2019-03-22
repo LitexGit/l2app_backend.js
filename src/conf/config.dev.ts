@@ -8,6 +8,8 @@ export const ethPaymentNetwork: PN = {address: '0xA522665CEf690221850264696a02d4
 
 export const appPaymentNetwork: PN = {address: '0x9324C590040b140def29d8968Ea6c40b53F25C9c', abi: JSON.stringify(require('./offchainPayment.json'))};
 
+export const sessionPayNetwork: PN = {address: '0x322628380Ee3BbC82bdB1c5683AD4B074b63A84E', abi: JSON.stringify(require('./sessionPayment.json'))};
+
 export const  appRpcUrl = "http://wallet.milewan.com:8090";
 
 export const  ethRpcUrl = "http://54.250.21.165:8545";

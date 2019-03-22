@@ -11,15 +11,10 @@ import {Common} from "../lib/common";
 import {STATUS_CODES} from "http";
 
 // let cp = cpProvider.address;
-async function sleep(time: number): Promise<void> {
-    return new Promise<void>((res, rej) => {
-        setTimeout(res, time);
-    });
-}
 
 export const ETH_EVENTS = {
     'ProviderNewDeposit': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("ProviderNewDeposit event", event);
 
@@ -35,7 +30,7 @@ export const ETH_EVENTS = {
     },
 
     'ProviderWithdraw': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("ProviderWithdraw event", event);
 
@@ -51,7 +46,7 @@ export const ETH_EVENTS = {
     },
 
     'UserNewDeposit': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("UserNewDeposit event", event);
 
@@ -67,7 +62,7 @@ export const ETH_EVENTS = {
     },
 
     'UserWithdraw': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("UserWithdraw event", event);
 
@@ -90,7 +85,7 @@ export const ETH_EVENTS = {
     },
 
     'ChannelOpened': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("ChannelOpened event", event);
 
@@ -106,7 +101,7 @@ export const ETH_EVENTS = {
     },
 
     'ChannelClosed': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("ChannelClosed event", event);
 
@@ -197,7 +192,7 @@ export const ETH_EVENTS = {
                 }
 
                 // 休眠15s
-                await sleep(15000);
+                await Common.Sleep(15000);
 
                 console.log('settle count down. current:', current, 'target:', settle);
             }
@@ -210,7 +205,7 @@ export const ETH_EVENTS = {
     },
 
     'CooperativeSettled': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("ChannelClosed event", event);
 
@@ -226,7 +221,7 @@ export const ETH_EVENTS = {
     },
 
     'ChannelSettled': {
-        filter: {},
+        filter: () => { return {} },
         handler: async (event: any) => {
             console.log("ChannelClosed event", event);
 

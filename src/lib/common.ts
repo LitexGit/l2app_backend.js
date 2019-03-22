@@ -5,7 +5,7 @@ const ethUtil = require('ethereumjs-util');
 
 import {COMMIT_BLOCK_CONDITION, TX_BASE} from "../conf/contract";
 
-import {CITA, web3, cpProvider} from "./server";
+import {CITA, web3, cpProvider, ethPN} from "./server";
 
 export class Common {
 
@@ -104,4 +104,51 @@ export class Common {
         return ethUtil.toRpcSig(signatureObj.v, signatureObj.r, signatureObj.s).toString('hex');
     }
 
+    static RandomWord(randomFlag: boolean, min: number, max: number = 12): string {
+        let str = "",
+            range = min,
+            arr = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+
+        // 随机产生
+        if(randomFlag) {
+            range = Math.round(Math.random() * (max-min)) + min;
+        }
+
+        let pos: any;
+
+        for(let i=0; i<range; i++) {
+            pos = Math.round(Math.random() * (arr.length-1));
+            str += arr[pos];
+        }
+
+        return str;
+    }
+
+    /**
+     * 生成sessionID
+     *
+     * @param game 游戏标识
+     *
+     * @constructor
+     */
+    static GenerateSessionID(game: string) : string {
+        // 毫秒 时间戳
+        let timestamp = new Date().getTime();
+
+        // 生成32位随机数
+        let random = this.RandomWord(true, 6, 32);
+
+        // 计算hash 作为sessionID
+        return web3.utils.soliditySha3(
+            {v: game, t: 'address'},
+            {v: timestamp, t: 'uint256'},
+            {v: random, t: 'bytes32'},
+        );
+    }
+
+    static async Sleep(time: number): Promise<void> {
+        return new Promise<void>((res, rej) => {
+            setTimeout(res, time);
+        });
+    }
 }
