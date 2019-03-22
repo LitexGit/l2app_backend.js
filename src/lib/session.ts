@@ -54,7 +54,7 @@ export class Session {
      *
      * @return void
      */
-    async JoinSession(sessionID: string, user: string) {
+    static async JoinSession(sessionID: string, user: string) {
         // 初始化 交易对象
         let tx = await Common.BuildAppChainTX();
 
@@ -82,7 +82,7 @@ export class Session {
      *
      * @constructor
      */
-    async SendSessionMessage(from: string, to: string, sessionData: SessionData, paymentData: PaymentData) {
+    static async SendSessionMessage(from: string, to: string, sessionData: SessionData, paymentData: PaymentData) {
         // 初始化 交易对象
         let tx = await Common.BuildAppChainTX();
 
@@ -152,8 +152,11 @@ export class Session {
      *
      * @return 返回 session 信息
      */
-    static async GetSession(sessionID: string) {
-        // return await sessionPN.methods.sessions(sessionID).call();
+    static async GetSession(sessionID: string, fromLine: boolean = false) {
+        if (fromLine) {
+            return await sessionPN.methods.sessions(sessionID).call();
+        }
+
         let session = Session.sessionList.get(sessionID);
         if (!session) {
             let sessionExist = await Session.isExists(sessionID);
@@ -165,6 +168,7 @@ export class Session {
             await session.initialize();
             Session.sessionList.set(sessionID, session);
         }
+
         return session;
     }
 
@@ -180,7 +184,7 @@ export class Session {
 
     private async initialize() {
         // query session by _sessionPN
-        let { status, provider, game, paymentContract, data } = await sessionPN.methods.sessions(this.id).call();
+        let { status, game, data } = await sessionPN.methods.sessions(this.id).call();
         this.status = Number(status);
         this.game = game;
         this.customData = data;

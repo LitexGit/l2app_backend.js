@@ -41,6 +41,7 @@ app.get('/getSessionId', function (req: Request, res: Response) {
         status: 1,
         data: { sessionId: sessionId }
     });
+
 });
 
 app.get('/closeSession', async function (req: Request, res: Response) {

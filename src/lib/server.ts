@@ -430,8 +430,12 @@ export class SDK {
      * @param customData
      * @constructor
      */
-    StartSession(sessionID: string, game: string, customData: any) {
-        Session.InitSession(sessionID, game, customData);
+    async StartSession(sessionID: string, game: string, customData: any) {
+        if (await Session.isExists(sessionID)) {
+            return false;
+        } else {
+            await Session.InitSession(sessionID, game, customData);
+        }
     }
 
     async GetSession(sessionID: string): Promise<Session> {
@@ -455,7 +459,9 @@ export class SDK {
     }
 
     async CloseSession(sessionID: string) {
-        await Session.CloseSession(sessionID);
+        if(await Session.isExists(sessionID)) {
+            await Session.CloseSession(sessionID);
+        }
     }
 
     /**
