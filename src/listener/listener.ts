@@ -1,4 +1,4 @@
-import { Contract } from 'web3-eth-contract/types';
+import { Contract } from 'web3/node_modules/web3-eth-contract';
 
 export default class HttpWatcher {
 

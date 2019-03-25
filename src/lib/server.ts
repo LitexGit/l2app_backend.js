@@ -2,9 +2,8 @@ import {SESSION_EVENTS} from "../listener/session_events";
 
 const Web3 = require('web3');
 
-import { Contract } from 'web3-eth-contract';
+import { Contract } from 'web3/node_modules/web3-eth-contract';
 import { provider } from 'web3-providers';
-import { BN } from 'web3-utils';
 
 import CITASDK from '@cryptape/cita-sdk';
 
@@ -512,8 +511,7 @@ export class SDK {
         return await appPN.methods.channelMap(channelID).call();
     }
 
-    async GetAllTXs(token: string = ADDRESS_ZERO) {
-
+    async GetAllTXs(token: string = ADDRESS_ZERO): Promise<any> {
         let [inTXs, outTXs] = await Promise.all([
             appPN.getPastEvents('Transfer', { filter: { to: cpProvider.address } }),
             appPN.getPastEvents('Transfer', { filter: { from: cpProvider.address } })
@@ -523,10 +521,10 @@ export class SDK {
             return (a: any, b: any) => { return a[key] - b[key] }
         };
 
-        let lastBalance = new BN(0);
+        let lastBalance = web3.utils.toBN(0);
         const getTX = (tx: any) => {
-            let { channelID, balance, ...rest } = tx.returnValues;
-            balance = new BN(balance);
+            let { balance, ...rest } = tx.returnValues;
+            balance = web3.utils.toBN(balance);
             let amount = balance.sub(lastBalance).toString();
             lastBalance = balance;
 

@@ -1,5 +1,4 @@
-import { AbiItem } from 'web3-utils';
-import { BN } from 'web3-utils';
+import { AbiItem } from 'web3/node_modules/web3-utils';
 const TX = require('ethereumjs-tx');
 const ethUtil = require('ethereumjs-util');
 
@@ -25,7 +24,7 @@ export class Common {
         return chain === 'eth' ? await web3.eth.getBlockNumber() + COMMIT_BLOCK_CONDITION : await CITA.base.getBlockNumber() + 88;
     }
 
-    static async SendEthTransaction(from: string, to: string, value: number | string | BN, data: string) {
+    static async SendEthTransaction(from: string, to: string, value: number | string, data: string) {
         let nonce = await web3.eth.getTransactionCount(from);
 
         let rawTx = {
