@@ -42,7 +42,7 @@ export type PaymentData = {
 };
 
 export type L2_EVENT = 'SessionMessage' | 'UserJoin' | 'Deposit' | 'Withdraw' | 'UserLeave' | 'Asset';
-export type L2_CB = (err: any, res: any) => { };
+export type L2_CB = (err: any, res: any) => void;
 
 export let CITA: any;
 export let cpProvider: any;

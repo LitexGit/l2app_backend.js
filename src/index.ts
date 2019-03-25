@@ -15,6 +15,21 @@ import {Common} from "./lib/common";
 let l2 = L2.GetInstance();
 l2.Init(cpPrivateKey, ethProvider, ethPaymentNetwork, appRpcUrl, appPaymentNetwork);
 
+
+l2.on('Asset', (err: any, res: any)=>{
+    console.log("SDK Receive Asset", res);
+    let {from ,to, token, amount} = res;
+    // send back to user
+
+    l2.SendAsset(from, amount, token);
+
+});
+
+l2.on('UserJoin', (err: any, res: any)=>{
+    console.log("SDK Receive UserJoin", res);
+})
+
+
 const port: number = 9527;
 
 let express = require('express');

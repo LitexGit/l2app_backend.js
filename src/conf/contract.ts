@@ -16,12 +16,12 @@ export enum SESSION_STATUS {
 };
 
 export type ASSET_EVENT = {
-    from: string,
-    to: string,
-    channelID: string,
-    balance: number,
-    nonce: number,
-    additionalHash: string,
+    from: string;
+    to: string;
+    token: string;
+    amount: string;
+    additionalHash: string;
+    totalTransferredAmount: string;
 }
 
 export type USER_JOIN_EVENT = {

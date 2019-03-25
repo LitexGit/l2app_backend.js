@@ -79,27 +79,32 @@ export default class HttpWatcher {
 
             await this.delay(this.blockInterval);
 
-            lastBlockNumber = currentBlockNumber + 1;
-            currentBlockNumber = await this.base.getBlockNumber();
-            console.log("watching event", lastBlockNumber, currentBlockNumber);
-            if (lastBlockNumber > currentBlockNumber) {
-                continue;
-            }
+            try {
 
-            for (let watchItem of this.watchList) {
-                for (let eventName in watchItem.listener) {
-                    await this.processEvent(
-                        lastBlockNumber,
-                        currentBlockNumber,
-                        watchItem.contract,
-                        eventName,
-                        watchItem.listener[eventName]
-                    );
+                lastBlockNumber = currentBlockNumber + 1;
+                currentBlockNumber = await this.base.getBlockNumber();
+                console.log("watching event", lastBlockNumber, currentBlockNumber);
+                if (lastBlockNumber > currentBlockNumber) {
+                    continue;
                 }
 
-                if (this.enabled == false) {
-                    return;
+                for (let watchItem of this.watchList) {
+                    for (let eventName in watchItem.listener) {
+                        await this.processEvent(
+                            lastBlockNumber,
+                            currentBlockNumber,
+                            watchItem.contract,
+                            eventName,
+                            watchItem.listener[eventName]
+                        );
+                    }
+
+                    if (this.enabled == false) {
+                        return;
+                    }
                 }
+            } catch (err) {
+                console.error("watching error: ", err);
             }
         }
     }

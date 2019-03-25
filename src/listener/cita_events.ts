@@ -52,24 +52,24 @@ export const CITA_EVENTS = {
     },
     */
     'Transfer': {
-        filter: () => { return {} },
+        filter: () => { return { to: cpProvider.address } },
         handler: async (event: any) => {
             console.log("Transfer event", event);
 
             // 获取event事件内容
             let { returnValues: { from, to, channelID, balance, transferAmount, nonce, additionalHash } } = event;
 
-            let assetEvent: ASSET_EVENT = { from, to, channelID, balance, nonce, additionalHash };
-            if (callbacks.get('Asset')) {
-                // @ts-ignore
-                callbacks.get('Asset')(null, assetEvent);
-            }
 
             // 查询通道信息
             let channel = await appPN.methods.channelMap(channelID).call();
             let token = channel.token;
 
             console.log("channel", channel);
+            let assetEvent: ASSET_EVENT = { from, to, token, amount: transferAmount, additionalHash, totalTransferredAmount: balance };
+            if (callbacks.get('Asset')) {
+                // @ts-ignore
+                callbacks.get('Asset')(null, assetEvent);
+            }
 
             // 查询费率
             let { amount: feeProofAmount, nonce: road } = await appPN.methods.feeProofMap(token).call();
@@ -78,6 +78,9 @@ export const CITA_EVENTS = {
             //
             let feeRate = await appPN.methods.feeRateMap(token).call();
             console.log("feeRate", feeRate);
+            if(Number(feeRate) === 0){
+                return;
+            }
 
             // 查询通道证据
             let [{ balance: amount }] = await Promise.all([
