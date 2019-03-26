@@ -10,7 +10,7 @@ export class Session {
     public game: string;
     public customData: string;
 
-    public callbacks: Map<string, (err: Error, res: any) => void>;
+    // public callbacks: Map<string, (err: Error, res: any) => void>;
 
     static sessionList: Map<string, Session> = new Map<string, Session>();
 
@@ -80,7 +80,7 @@ export class Session {
     /**
      * 发送session消息
      *
-     * @constructor
+     * 
      */
     static async SendSessionMessage(from: string, to: string, sessionData: SessionData, paymentData: PaymentData) {
         // 初始化 交易对象
@@ -92,20 +92,28 @@ export class Session {
             sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature,
             paymentData.channelID, paymentData.balance, paymentData.nonce, paymentData.additionalHash, paymentData.paymentSignature
         ).send(tx);
+
+        console.log('sendMessage params', [
+            from, to,
+            sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature,
+            paymentData.channelID, paymentData.balance, paymentData.nonce, paymentData.additionalHash, paymentData.paymentSignature
+
+        ]);
+
         if (rs.hash) {
             let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
 
             if (!receipt.errorMessage) {
                 //确认成功
                 console.log("send CITA tx success", receipt);
-                return 'confirm success'
+                return rs.hash;
             } else {
                 //确认失败
-                return 'confirm fail'
+                throw new Error('CITA tx confirm fail' + receipt.errorMessage);
             }
         } else {
             // 提交失败
-            return 'send CITA tx fail'
+            throw new Error('send CITA tx fail');
         }
     }
 
@@ -137,11 +145,11 @@ export class Session {
         }
     }
 
-    async onMessage(
-        callback: (error: Error, res: any) => void
-    ) {
-        this.callbacks.set("message", callback);
-    }
+    // async onMessage(
+    //     callback: (error: Error, res: any) => void
+    // ) {
+    //     // this.callbacks.set("message", callback);
+    // }
 
     /* Query Session Infos */
 
@@ -189,7 +197,7 @@ export class Session {
         this.game = game;
         this.customData = data;
 
-        this.callbacks = this.callbacks || new Map<string, () => void>();
+        // this.callbacks = this.callbacks || new Map<string, () => void>();
 
     }
 }

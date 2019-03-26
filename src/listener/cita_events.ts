@@ -1,6 +1,6 @@
 import { appPN, ethPN, CITA, cpProvider, callbacks, web3 } from '../lib/server';
 import { Common } from "../lib/common";
-import { ASSET_EVENT } from "../conf/contract";
+import { TRANSFER_EVENT } from "../conf/contract";
 
 export const CITA_EVENTS = {
     /*
@@ -56,7 +56,7 @@ export const CITA_EVENTS = {
             console.log("Transfer event", event);
 
             // 获取event事件内容
-            let { returnValues: { from, to, channelID, balance, transferAmount } } = event;
+            let { returnValues: { from, to, channelID, balance, transferAmount, additionalHash } } = event;
 
 
             // 查询通道信息
@@ -64,10 +64,23 @@ export const CITA_EVENTS = {
             let token = channel.token;
 
             console.log("channel", channel);
-            let assetEvent: ASSET_EVENT = { sender: from, receiver: to, token, amount: transferAmount, totalTransferredAmount: balance };
-            if (callbacks.get('Asset')) {
-                // @ts-ignore
-                callbacks.get('Asset')(null, assetEvent);
+            let assetEvent: TRANSFER_EVENT = {
+              from: from,
+              to: to,
+              token,
+              amount: transferAmount,
+              additionalHash,
+              totalTransferredAmount: balance,
+            };
+
+            // will not emit Asset event when transfer is attached with sessionMessage
+            if (
+              callbacks.get("Transfer") &&
+              additionalHash ===
+                "0x0000000000000000000000000000000000000000000000000000000000000000"
+            ) {
+              // @ts-ignore
+              callbacks.get("Transfer")(null, assetEvent);
             }
 
             // 查询费率
@@ -89,9 +102,9 @@ export const CITA_EVENTS = {
             console.log("provider balance", amount);
             console.log("provider nonce", road);
 
-            let { balance: arrearBalance } = await appPN.methods.arrearBalanceProofMap(channelID).call();
+            // let { balance: arrearBalance } = await appPN.methods.arrearBalanceProofMap(channelID).call();
             console.log("event Balance", balance);
-            console.log("arrearBalance", arrearBalance);
+            // console.log("arrearBalance", arrearBalance);
 
             let bn = web3.utils.toBN;
             let feeAmount = bn(feeProofAmount).add( bn(feeRate).mul((bn(balance).sub(bn(amount)))).div(bn(10000)) ).toString();

@@ -130,12 +130,12 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "name": "provider",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "name": "game",
         "type": "address"
       },
@@ -157,12 +157,12 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "name": "sessionID",
         "type": "bytes32"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "name": "user",
         "type": "address"
       }
@@ -174,17 +174,17 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "name": "from",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "name": "to",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "name": "sessionID",
         "type": "bytes32"
       },
@@ -236,7 +236,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "name": "sessionID",
         "type": "bytes32"
       }
@@ -423,6 +423,25 @@
         ],
         "name": "",
         "type": "tuple[]"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "sessionID",
+        "type": "bytes32"
+      }
+    ],
+    "name": "exportPlayer",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]"
       }
     ],
     "payable": false,

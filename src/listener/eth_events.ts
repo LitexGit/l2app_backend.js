@@ -1,10 +1,9 @@
 import {appPN, ethPN, cpProvider, callbacks, web3} from '../lib/server';
 import {
-    USER_JOIN_EVENT,
-    USER_NEW_DEPOSIT_EVENT,
+    USER_DEPOSIT_EVENT,
     PROVIDER_WITHDRAW_EVENT,
     USER_WITHDRAW_EVENT,
-    USER_LEAVE_EVENT, CHANNEL_STATUS
+    USER_FORCEWITHDRAW_EVENT, CHANNEL_STATUS
 } from "../conf/contract";
 import {Common} from "../lib/common";
 import {STATUS_CODES} from "http";
@@ -34,12 +33,12 @@ export const ETH_EVENTS = {
             console.log("ProviderWithdraw event", event);
 
             // 获取事件内容
-            let {returnValues: {token, amount, balance}} = event;
+            let {returnValues: {token, amount, balance}, transactionHash: txhash} = event;
 
-            let providerWithdrawEvent: PROVIDER_WITHDRAW_EVENT = {token, withdraw: amount, totalWithdraw: balance, type: 1};
-            if (callbacks.get('Withdraw')) {
+            let providerWithdrawEvent: PROVIDER_WITHDRAW_EVENT = {token, amount: amount, totalWithdraw: balance, txhash};
+            if (callbacks.get('ProviderWithdraw')) {
                 // @ts-ignore
-                callbacks.get('Withdraw')(null, providerWithdrawEvent);
+                callbacks.get('ProviderWithdraw')(null, providerWithdrawEvent);
             }
         }
     },
@@ -50,12 +49,23 @@ export const ETH_EVENTS = {
             console.log("UserNewDeposit event", event);
 
             // 获取事件内容
-            let {returnValues: {channelID, user, newDeposit, totalDeposit,}} = event;
+            let {returnValues: {channelID, user, newDeposit, totalDeposit}, transactionHash: txhash} = event;
 
-            let userNewDepositEvent: USER_NEW_DEPOSIT_EVENT = {channelID, user, deposit: newDeposit, totalDeposit, type: 2};
-            if (callbacks.get('Deposit')) {
+            let { token } = await appPN.methods.channelMap(channelID).call();
+
+            // TODO get real sender
+            let userNewDepositEvent: USER_DEPOSIT_EVENT = {
+              sender: user,
+              user,
+              type: 2,
+              token,
+              amount: newDeposit,
+              totalDeposit,
+              txhash
+            };
+            if (callbacks.get('UserDeposit')) {
                 // @ts-ignore
-                callbacks.get('Deposit')(null, userNewDepositEvent);
+                callbacks.get('UserDeposit')(null, userNewDepositEvent);
             }
         }
     },
@@ -66,17 +76,20 @@ export const ETH_EVENTS = {
             console.log("UserWithdraw event", event);
 
             // 获取event事件内容
-            let {returnValues: {channelID, user, amount, totalWithdraw}} = event;
+            let {returnValues: {channelID, user, amount, totalWithdraw}, transactionHash: txhash} = event;
+
+            let { token } = await appPN.methods.channelMap(channelID).call();
 
             let userWithdrawEvent: USER_WITHDRAW_EVENT = {
-                channelID,
                 user,
-                withdraw: amount,
+                type: 1,
+                token,
+                amount,
                 totalWithdraw,
-                type: 2
+                txhash
             };
-            if (callbacks.get('Withdraw')) {
-                callbacks.get('Withdraw')(null, userWithdrawEvent);
+            if (callbacks.get('UserWithdraw')) {
+                callbacks.get('UserWithdraw')(null, userWithdrawEvent);
             }
         }
     },
@@ -87,11 +100,19 @@ export const ETH_EVENTS = {
             console.log("ChannelOpened event", event);
 
             // 获取事件内容
-            let {returnValues: {sender, user, token, amount, channelID}} = event;
+            let {returnValues: {sender, user, token, amount, channelID}, transactionHash: txhash} = event;
 
-            let userJoinEvent: USER_JOIN_EVENT = {sender, user, token, userDeposit: amount, channelID};
-            if (callbacks.get('Asset')) {
-                callbacks.get('Asset')(null, userJoinEvent);
+            let userJoinEvent: USER_DEPOSIT_EVENT = {
+              sender,
+              user,
+              type: 1,
+              token,
+              amount,
+              totalDeposit: amount,
+              txhash
+            };
+            if (callbacks.get('UserDeposit')) {
+                callbacks.get('UserDeposit')(null, userJoinEvent);
             }
         }
     },
@@ -201,14 +222,18 @@ export const ETH_EVENTS = {
             console.log("ChannelClosed event", event);
 
             // 获取event事件内容
-            let {returnValues: {channelID, user}} = event;
+            let {returnValues: {channelID, user, token, balance}, transactionHash: txhash} = event;
 
-            // 获取通道信息
-            let channel = await ethPN.methods.channels(channelID).call();
-
-            let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user, amount: channel.userBalance};
-            if (callbacks.get('UserLeave')) {
-                callbacks.get('UserLeave')(null, userLeaveEvent);
+            let userLeaveEvent: USER_WITHDRAW_EVENT = {
+              user,
+              type: 2,
+              token,
+              amount: balance,
+              totalWithdraw: '',
+              txhash
+            };
+            if (callbacks.get('UserWithdraw')) {
+                callbacks.get('UserWithdraw')(null, userLeaveEvent);
             }
         }
     },
@@ -219,14 +244,23 @@ export const ETH_EVENTS = {
             console.log("ChannelClosed event", event);
 
             // 获取event事件内容
-            let {returnValues: {channelID, user}} = event;
+            let { returnValues: { channelID, user, token, transferTouserAmount, transferToProviderAmount }, transactionHash: txhash } = event;
 
             // 获取通道信息
-            let channel = await ethPN.methods.channels(channelID).call();
+             let channel = await ethPN.methods.channels(channelID).call();
 
-            let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user, amount: channel.userBalance};
-            if (callbacks.get('UserLeave')) {
-                callbacks.get('UserLeave')(null, userLeaveEvent);
+             let { closer } = await appPN.methods.closingChannelMap(channelID).call();
+
+            let userLeaveEvent: USER_FORCEWITHDRAW_EVENT = {
+              closer,
+              user,
+              token,
+              userSettleAmount: transferTouserAmount,
+              providerSettleAmount: transferToProviderAmount,
+              txhash
+            };
+            if (callbacks.get('UserForceWithdraw')) {
+                callbacks.get('UserForceWithdraw')(null, userLeaveEvent);
             }
         }
     },

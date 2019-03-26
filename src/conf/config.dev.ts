@@ -8,9 +8,10 @@ export const ethPaymentNetwork: PN = {address: '0x276B5d0202967D1aa26C86e135A94B
 
 export const appPaymentNetwork: PN = {address: '0x8C4391F387B6d20d4F38b7e5449D755fC0B7DB0E', abi: JSON.stringify(require('./offchainPayment.json'))};
 
-export const sessionPayNetwork: PN = {address: '0x322628380Ee3BbC82bdB1c5683AD4B074b63A84E', abi: JSON.stringify(require('./sessionPayment.json'))};
+export const sessionPayNetwork: PN = {address: '0x418bDb873b3e8B200662571a643F65f7D90B468e', abi: JSON.stringify(require('./sessionPayment.json'))};
 
-export const  appRpcUrl = "http://wallet.milewan.com:8090";
+// export const  appRpcUrl = "http://wallet.milewan.com:8090";
+export const  appRpcUrl = "ws://wallet.milewan.com:4337";
 
 export const  ethRpcUrl = "http://54.250.21.165:8545";
 export const  ethProvider = new Web3.providers.HttpProvider(ethRpcUrl);

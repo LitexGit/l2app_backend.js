@@ -35,13 +35,13 @@ export type SessionData = {
 // 定义 PaymentData 类型
 export type PaymentData = {
     channelID: string,
-    balance: number,
-    nonce: number,
+    balance: string,
+    nonce: string,
     additionalHash: string,
     paymentSignature: string
 };
 
-export type L2_EVENT = 'SessionMessage' | 'UserJoin' | 'Deposit' | 'Withdraw' | 'UserLeave' | 'Asset';
+export type L2_EVENT = 'Message' | 'UserDeposit' | 'UserWithdraw' | 'UserForceWithdraw' | 'ProviderWithdraw' | 'Transfer';
 export type L2_CB = (err: any, res: any) => void;
 
 export let CITA: any;
@@ -153,7 +153,7 @@ export class SDK {
      *
      * @returns string 返回交易hash
      */
-    async ProposeWithdraw(amount: number | string, token: string = ADDRESS_ZERO) {
+    async Withdraw(amount: number | string, token: string = ADDRESS_ZERO) {
         let amountBN = web3.utils.toBN(amount);
 
         let [{ providerOnchainBalance, providerBalance }] = await Promise.all([ appPN.methods.paymentNetworkMap(token).call() ]);
@@ -211,7 +211,7 @@ export class SDK {
      *
      * @return
      */
-    async ProposeReBalance(userAddress: string, amount: number | string, token: string = ADDRESS_ZERO) {
+    async Rebalance(userAddress: string, amount: number | string, token: string = ADDRESS_ZERO) {
         // 从 ETH 获取通道信息
         let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
 
@@ -296,7 +296,7 @@ export class SDK {
      * @param userAddress
      * @constructor
      */
-    async CloseChannel(userAddress: string, token: string = ADDRESS_ZERO) {
+    async KickUser(userAddress: string, token: string = ADDRESS_ZERO) {
         // 从 ETH 获取通道信息
         let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
 
@@ -341,7 +341,7 @@ export class SDK {
      *
      * @constructor
      */
-    async SendAsset (to: string, amount: number | string, token: string = ADDRESS_ZERO) {
+    async Transfer (to: string, amount: number | string, token: string = ADDRESS_ZERO) {
         // 获取通道id
         let channelID = await ethPN.methods.getChannelID(to, token).call();
 
@@ -457,6 +457,91 @@ export class SDK {
         return session;
     }
 
+    /**
+     * send a session message to user
+     * 
+     * @param sessionID 
+     * @param to   receiver address of the message
+     * @param type  type of encoding
+     * @param content encoded message content
+     * @param amount OPTIONAL transfer token amount, default: '0'
+     * @param token  OPTIONAL transfer token address, default: '0x0000000000000000000000000000000000000000'
+     */
+    async SendMessage(sessionID: string, to: string, type: string, content: string, amount: string = "0", token: string = ADDRESS_ZERO): Promise<string> {
+
+        if (await Session.isExists(sessionID)){
+            let from = cpProvider.address;
+
+            let messageHash = web3.utils.soliditySha3(
+              { t: "address", v: from },
+              { t: "address", v: to },
+              { t: "bytes32", v: sessionID },
+              { t: "string", v: type },
+              { t: "bytes", v: content }
+            );
+            let signature = Common.SignatureToHex(messageHash);
+
+            let channelID = "0x0";
+            let balance = "0";
+            let nonce = "0";
+            let additionalHash = "0x0";
+            let paymentSignature = "0x0";
+
+            if (Number(amount) > 0) {
+                channelID = await ethPN.methods.getChannelID(to, token).call();
+                let channel = await appPN.methods.channelMap(channelID).call();
+          
+                // check channel status
+                if (Number(channel.status) !== CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
+                    throw new Error("app channel status is not open, can not transfer now");
+                }
+                // check provider's balance is enough
+                if (web3.utils.toBN(channel.providerBalance).lt(web3.utils.toBN(amount))) {
+                    throw new Error("provider's balance is less than transfer amount");
+                }
+          
+                // build transfer message
+                // get balance proof from eth contract
+                let balanceProof = await appPN.methods
+                  .balanceProofMap(channelID, to)
+                  .call();
+          
+                balance = web3.utils.toBN(amount).add(web3.utils.toBN(balanceProof.balance)).toString();
+                nonce = web3.utils.toBN(balanceProof.nonce).add(web3.utils.toBN(1)).toString(); 
+                additionalHash = messageHash;
+          
+                // sign data with typed data v3
+                let messageHash2 = signHash({
+                    channelID: channelID,
+                    balance: balance,
+                    nonce: nonce,
+                    additionalHash: additionalHash
+                });
+                paymentSignature = Common.SignatureToHex(messageHash2);
+            }
+
+            return Session.SendSessionMessage(cpProvider.address, to, {
+                sessionID,
+                mType: type,
+                content,
+                signature
+            }, {
+                channelID,
+                balance,
+                nonce,
+                additionalHash,
+                paymentSignature
+            });
+
+        }else{
+            throw new Error('Session is not open');
+        }
+
+
+
+
+    }
+
     async CloseSession(sessionID: string) {
         if(await Session.isExists(sessionID)) {
             await Session.CloseSession(sessionID);
@@ -561,7 +646,7 @@ export class SDK {
      * @return
      */
     async GetPlayersBySessionId(sessionID: string) {
-        return await sessionPN.methods.players(sessionID).call();
+        return await sessionPN.methods.exportPlayer(sessionID).call();
     }
 
     private async initListeners() {
