@@ -47,7 +47,6 @@ export const CITA_EVENTS = {
         filter: { },
         handler: async (event: any) => {
             console.log("ConfirmRebalance event", event);
-            // TODO
         }
     },
     */
@@ -57,7 +56,7 @@ export const CITA_EVENTS = {
             console.log("Transfer event", event);
 
             // 获取event事件内容
-            let { returnValues: { from, to, channelID, balance, transferAmount, nonce, additionalHash } } = event;
+            let { returnValues: { from, to, channelID, balance, transferAmount } } = event;
 
 
             // 查询通道信息
@@ -65,7 +64,7 @@ export const CITA_EVENTS = {
             let token = channel.token;
 
             console.log("channel", channel);
-            let assetEvent: ASSET_EVENT = { from, to, token, amount: transferAmount, additionalHash, totalTransferredAmount: balance };
+            let assetEvent: ASSET_EVENT = { sender: from, receiver: to, token, amount: transferAmount, totalTransferredAmount: balance };
             if (callbacks.get('Asset')) {
                 // @ts-ignore
                 callbacks.get('Asset')(null, assetEvent);
@@ -150,7 +149,7 @@ export const CITA_EVENTS = {
             console.log("UserProposeWithdraw event", event);
 
             // 获取event事件内容
-            let { returnValues: { channelID, amount: balance, lastCommitBlock } } = event;
+            let { returnValues: { channelID, lastCommitBlock } } = event;
 
             let [{ amount }] = await Promise.all([
                 appPN.methods.userWithdrawProofMap(channelID).call()

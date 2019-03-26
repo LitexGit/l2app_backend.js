@@ -34,9 +34,9 @@ export const ETH_EVENTS = {
             console.log("ProviderWithdraw event", event);
 
             // 获取事件内容
-            let {returnValues: {token, amount, balance, lastCommitBlock}} = event;
+            let {returnValues: {token, amount, balance}} = event;
 
-            let providerWithdrawEvent: PROVIDER_WITHDRAW_EVENT = {token, amount, balance, lastCommitBlock, type: 1};
+            let providerWithdrawEvent: PROVIDER_WITHDRAW_EVENT = {token, withdraw: amount, totalWithdraw: balance, type: 1};
             if (callbacks.get('Withdraw')) {
                 // @ts-ignore
                 callbacks.get('Withdraw')(null, providerWithdrawEvent);
@@ -52,7 +52,7 @@ export const ETH_EVENTS = {
             // 获取事件内容
             let {returnValues: {channelID, user, newDeposit, totalDeposit,}} = event;
 
-            let userNewDepositEvent: USER_NEW_DEPOSIT_EVENT = {channelID, user, newDeposit, totalDeposit, type: 2};
+            let userNewDepositEvent: USER_NEW_DEPOSIT_EVENT = {channelID, user, deposit: newDeposit, totalDeposit, type: 2};
             if (callbacks.get('Deposit')) {
                 // @ts-ignore
                 callbacks.get('Deposit')(null, userNewDepositEvent);
@@ -66,14 +66,13 @@ export const ETH_EVENTS = {
             console.log("UserWithdraw event", event);
 
             // 获取event事件内容
-            let {returnValues: {channelID, user, amount, totalWithdraw, lastCommitBlock}} = event;
+            let {returnValues: {channelID, user, amount, totalWithdraw}} = event;
 
             let userWithdrawEvent: USER_WITHDRAW_EVENT = {
                 channelID,
                 user,
-                amount,
+                withdraw: amount,
                 totalWithdraw,
-                lastCommitBlock,
                 type: 2
             };
             if (callbacks.get('Withdraw')) {
@@ -88,9 +87,9 @@ export const ETH_EVENTS = {
             console.log("ChannelOpened event", event);
 
             // 获取事件内容
-            let {returnValues: {sender, user, token, puppet, amount, settleWindow, channelID}} = event;
+            let {returnValues: {sender, user, token, amount, channelID}} = event;
 
-            let userJoinEvent: USER_JOIN_EVENT = {sender, user, token, puppet, amount, settleWindow, channelID};
+            let userJoinEvent: USER_JOIN_EVENT = {sender, user, token, userDeposit: amount, channelID};
             if (callbacks.get('Asset')) {
                 callbacks.get('Asset')(null, userJoinEvent);
             }
@@ -204,7 +203,10 @@ export const ETH_EVENTS = {
             // 获取event事件内容
             let {returnValues: {channelID, user}} = event;
 
-            let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user};
+            // 获取通道信息
+            let channel = await ethPN.methods.channels(channelID).call();
+
+            let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user, amount: channel.userBalance};
             if (callbacks.get('UserLeave')) {
                 callbacks.get('UserLeave')(null, userLeaveEvent);
             }
@@ -219,7 +221,10 @@ export const ETH_EVENTS = {
             // 获取event事件内容
             let {returnValues: {channelID, user}} = event;
 
-            let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user};
+            // 获取通道信息
+            let channel = await ethPN.methods.channels(channelID).call();
+
+            let userLeaveEvent: USER_LEAVE_EVENT = {channelID, user, amount: channel.userBalance};
             if (callbacks.get('UserLeave')) {
                 callbacks.get('UserLeave')(null, userLeaveEvent);
             }

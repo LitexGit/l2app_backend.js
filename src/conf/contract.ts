@@ -15,12 +15,13 @@ export enum SESSION_STATUS {
     SESSION_STATUS_CLOSE
 };
 
+// 转账事件
 export type ASSET_EVENT = {
-    from: string;
-    to: string;
+    sender: string;
+    receiver: string;
     token: string;
     amount: string;
-    additionalHash: string;
+    // additionalHash: string;
     totalTransferredAmount: string;
 }
 
@@ -28,47 +29,48 @@ export type USER_JOIN_EVENT = {
     sender: string,
     user: string,
     token: string,
-    puppet: string,
-    amount: number,
-    settleWindow: number,
+    // puppet: string,
+    userDeposit: number,
+    // settleWindow: number,
     channelID: string,
 }
 
-export type PROVIDER_NEW_DEPOSIT_EVENT = {
-    token: string,
-    amount: number,
-    balance: number,
-    type: number,
-}
+// export type PROVIDER_NEW_DEPOSIT_EVENT = {
+//     token: string,
+//     deposit: number,
+//     totalDeposit: number,
+//     type: number,
+// }
 
 export type USER_NEW_DEPOSIT_EVENT = {
     channelID: string,
     user: string,
-    newDeposit: number,
+    deposit: number,
     totalDeposit: number,
     type: number,
 }
 
 export type PROVIDER_WITHDRAW_EVENT = {
     token: string,
-    amount: number,
-    balance: number,
-    lastCommitBlock: number,
+    withdraw: number,
+    totalWithdraw: number,
+    // lastCommitBlock: number,
     type: number,
 }
 
 export type USER_WITHDRAW_EVENT = {
     channelID: string,
     user: string,
-    amount: number,
+    withdraw: number,
     totalWithdraw: number,
-    lastCommitBlock: number,
+    // lastCommitBlock: number,
     type: number,
 }
 
 export type USER_LEAVE_EVENT = {
     channelID: string,
     user: string,
+    amount: string,
 }
 
 export const TX_BASE = {
