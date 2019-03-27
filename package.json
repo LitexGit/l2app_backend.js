@@ -38,8 +38,8 @@
   },
   "homepage": "https://github.com/nobrainr/typescript-webpack-starter#readme",
   "license": "ISC",
-  "main": "src/index.ts",
-  "name": "my-typescript-lib",
+  "main": "dist/src/index.js",
+  "name": "l2server.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nobrainr/typescript-webpack-starter.git"
