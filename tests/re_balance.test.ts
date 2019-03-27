@@ -14,7 +14,7 @@ describe('单元测试', () => {
     l2.Init(cpPrivateKey, ethProvider, ethPaymentNetwork, appRpcUrl, appPaymentNetwork);
 
     it('CP ReBalance', async () => {
-        let rs = await l2.ProposeReBalance('', 1e16);
+        let rs = await l2.Rebalance('', 1e16);
         console.log("CP ReBalance 结束， 操作结果:", rs);
     });
 

@@ -12,3 +12,5 @@ run/
 *.un~
 config/config.prod.js
 config/env
+dist/tests
+dist/src/*.map
