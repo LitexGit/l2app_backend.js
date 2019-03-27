@@ -68,7 +68,7 @@ l2.on('Message', function (err, res) { return __awaiter(_this, void 0, void 0, f
             case 0:
                 console.log("SDK Receive Message", res);
                 sessionID = res.sessionID, user = res.from, type = res.type, content = res.content, token = res.token, amount = res.amount;
-                return [4, l2.GetPlayersBySessionId(sessionID)];
+                return [4, l2.GetPlayersBySessionID(sessionID)];
             case 1:
                 players = _a.sent();
                 console.log('session players', players);
@@ -90,24 +90,24 @@ app.use(function (req, res, next) {
     res.header('Content-Type', 'application/json;charset=utf-8');
     next();
 });
-app.get('/getSessionId', function (req, res) {
+app.get('/getSessionID', function (req, res) {
     var game = "0x605a409Dc63cFd7e35ef7cb2d2cab8B66b136928";
     var customData = "hello world";
-    var sessionId = common_1.Common.GenerateSessionID(game);
-    l2.StartSession(sessionId, game, customData);
+    var sessionID = common_1.Common.GenerateSessionID(game);
+    l2.StartSession(sessionID, game, customData);
     res.json({
         status: 1,
-        data: { sessionId: sessionId }
+        data: { sessionID: sessionID }
     });
 });
 app.get('/closeSession', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var sessionId;
+        var sessionID;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    sessionId = req.query.sessionId;
-                    return [4, l2.CloseSession(sessionId)];
+                    sessionID = req.query.sessionID;
+                    return [4, l2.CloseSession(sessionID)];
                 case 1:
                     _a.sent();
                     res.json({
@@ -121,9 +121,9 @@ app.get('/closeSession', function (req, res) {
 });
 app.get('/getTransactions', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var sessionId;
+        var sessionID;
         return __generator(this, function (_a) {
-            sessionId = req.query.sessionId;
+            sessionID = req.query.sessionID;
             res.json({
                 status: 1,
                 data: { msg: 'ok' }
@@ -134,9 +134,9 @@ app.get('/getTransactions', function (req, res) {
 });
 app.get('/providerWithdraw', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var sessionId;
+        var sessionID;
         return __generator(this, function (_a) {
-            sessionId = req.query.sessionId;
+            sessionID = req.query.sessionID;
             res.json({
                 status: 1,
                 data: { msg: 'ok' }
@@ -147,9 +147,9 @@ app.get('/providerWithdraw', function (req, res) {
 });
 app.get('/rebalance', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var sessionId;
+        var sessionID;
         return __generator(this, function (_a) {
-            sessionId = req.query.sessionId;
+            sessionID = req.query.sessionID;
             res.json({
                 status: 1,
                 data: { msg: 'ok' }
@@ -160,9 +160,9 @@ app.get('/rebalance', function (req, res) {
 });
 app.get('/forceClose', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var sessionId;
+        var sessionID;
         return __generator(this, function (_a) {
-            sessionId = req.query.sessionId;
+            sessionID = req.query.sessionID;
             res.json({
                 status: 1,
                 data: { msg: 'ok' }

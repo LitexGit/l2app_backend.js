@@ -46,7 +46,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node ./src/index.ts",
+    "dev": "ts-node ./src/index_test.ts",
     "prod": "npm run build && node ./dist/index.js",
     "server": "nodemon ./src/index.ts",
     "start": "npm run dev",

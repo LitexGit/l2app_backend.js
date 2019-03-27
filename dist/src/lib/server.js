@@ -531,7 +531,7 @@ var SDK = (function () {
             });
         });
     };
-    SDK.prototype.GetMessagesBySessionId = function (sessionID) {
+    SDK.prototype.GetMessagesBySessionID = function (sessionID) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -541,7 +541,7 @@ var SDK = (function () {
             });
         });
     };
-    SDK.prototype.GetPlayersBySessionId = function (sessionID) {
+    SDK.prototype.GetPlayersBySessionID = function (sessionID) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {

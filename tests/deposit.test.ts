@@ -17,15 +17,15 @@ describe('单元测试', () => {
     l2.Init(cpPrivateKey, ethProvider, ethPaymentNetwork, appRpcUrl, appPaymentNetwork);
 
     it('CP充值', async () => {
-        // let sessionId = l2.StartSession('0x605a409Dc63cFd7e35ef7cb2d2cab8B66b136928', 'hello world');
-        // let session = await l2.GetSession(sessionId);
+        // let sessionID = l2.StartSession('0x605a409Dc63cFd7e35ef7cb2d2cab8B66b136928', 'hello world');
+        // let session = await l2.GetSession(sessionID);
 
-        let sessionId = '0x967156520cc68aa5d0752af396e41255243416b87ef4ea4d9947e7c8effa365e';
-        let session = await l2.GetSession(sessionId);
+        let sessionID = '0x967156520cc68aa5d0752af396e41255243416b87ef4ea4d9947e7c8effa365e';
+        let session = await l2.GetSession(sessionID);
 
         console.log(session);
 
-        l2.CloseSession(sessionId);
+        l2.CloseSession(sessionID);
 
         // let hash = await l2.Deposit(1e16);
         // console.log("CP充值操作结束， HASH:", hash);

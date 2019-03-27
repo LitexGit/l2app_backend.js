@@ -51,7 +51,7 @@ l2.on('UserForceWithdraw', (err: any, res: any)=>{
 l2.on('Message', async (err: any, res: any)=>{
     console.log("SDK Receive Message", res);
     let { sessionID, from: user, type, content, token, amount } = res;
-    let players = await l2.GetPlayersBySessionId(sessionID);
+    let players = await l2.GetPlayersBySessionID(sessionID);
 
     console.log('session players', players);
 
@@ -77,24 +77,24 @@ app.use(function (req: Request, res: Response, next: any) {
     next();
 });
 
-app.get('/getSessionId', function (req: Request, res: Response) {
+app.get('/getSessionID', function (req: Request, res: Response) {
     let game = "0x605a409Dc63cFd7e35ef7cb2d2cab8B66b136928";
     let customData = "hello world";
-    let sessionId = Common.GenerateSessionID(game);
+    let sessionID = Common.GenerateSessionID(game);
 
-    l2.StartSession(sessionId, game, customData);
+    l2.StartSession(sessionID, game, customData);
 
     res.json({
         status: 1,
-        data: { sessionId: sessionId }
+        data: { sessionID: sessionID }
     });
 
 });
 
 app.get('/closeSession', async function (req: Request, res: Response) {
-    let sessionId = req.query.sessionId;
+    let sessionID = req.query.sessionID;
 
-    await l2.CloseSession(sessionId);
+    await l2.CloseSession(sessionID);
 
     res.json({
         status: 1,
@@ -104,9 +104,9 @@ app.get('/closeSession', async function (req: Request, res: Response) {
 
 
 app.get('/getTransactions', async function (req: Request, res: Response) {
-    let sessionId = req.query.sessionId;
+    let sessionID = req.query.sessionID;
 
-    // await l2.CloseSession(sessionId);
+    // await l2.CloseSession(sessionID);
 
     res.json({
         status: 1,
@@ -115,9 +115,9 @@ app.get('/getTransactions', async function (req: Request, res: Response) {
 });
 
 app.get('/providerWithdraw', async function (req: Request, res: Response) {
-    let sessionId = req.query.sessionId;
+    let sessionID = req.query.sessionID;
 
-    // await l2.CloseSession(sessionId);
+    // await l2.CloseSession(sessionID);
 
     res.json({
         status: 1,
@@ -126,9 +126,9 @@ app.get('/providerWithdraw', async function (req: Request, res: Response) {
 });
 
 app.get('/rebalance', async function (req: Request, res: Response) {
-    let sessionId = req.query.sessionId;
+    let sessionID = req.query.sessionID;
 
-    // await l2.CloseSession(sessionId);
+    // await l2.CloseSession(sessionID);
 
     res.json({
         status: 1,
@@ -138,9 +138,9 @@ app.get('/rebalance', async function (req: Request, res: Response) {
 
 
 app.get('/forceClose', async function (req: Request, res: Response) {
-    let sessionId = req.query.sessionId;
+    let sessionID = req.query.sessionID;
 
-    // await l2.CloseSession(sessionId);
+    // await l2.CloseSession(sessionID);
 
     res.json({
         status: 1,

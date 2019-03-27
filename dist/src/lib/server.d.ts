@@ -56,7 +56,7 @@ export declare class SDK {
     }>;
     GetChannelInfo(userAddress: string, token?: string): Promise<any>;
     GetAllTXs(token?: string): Promise<any>;
-    GetMessagesBySessionId(sessionID: string): Promise<any>;
-    GetPlayersBySessionId(sessionID: string): Promise<any>;
+    GetMessagesBySessionID(sessionID: string): Promise<any>;
+    GetPlayersBySessionID(sessionID: string): Promise<any>;
     private initListeners;
 }

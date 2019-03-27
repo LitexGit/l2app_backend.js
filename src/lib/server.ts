@@ -634,7 +634,7 @@ export class SDK {
      *
      * @return
      */
-    async GetMessagesBySessionId(sessionID: string) {
+    async GetMessagesBySessionID(sessionID: string) {
         return await sessionPN.methods.messages(sessionID).call();
     }
 
@@ -645,7 +645,7 @@ export class SDK {
      *
      * @return
      */
-    async GetPlayersBySessionId(sessionID: string) {
+    async GetPlayersBySessionID(sessionID: string) {
         return await sessionPN.methods.exportPlayer(sessionID).call();
     }
 
