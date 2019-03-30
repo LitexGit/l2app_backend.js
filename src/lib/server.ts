@@ -214,31 +214,17 @@ export class SDK {
       return false;
     }
 
-    // 初始化 交易对象
-    let tx = await Common.BuildAppChainTX();
-
     // ETH lastCommitBlock
     let lastCommitBlock = await Common.GetLastCommitBlock();
 
     // 发送交易 到 AppChain
-    let rs = await appPN.methods
-      .providerProposeWithdraw(token, balance.toString(), lastCommitBlock)
-      .send(tx);
-    if (rs.hash) {
-      let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
-
-      if (!receipt.errorMessage) {
-        //确认成功
-        console.log("send CITA tx success", receipt);
-        return "confirm success";
-      } else {
-        //确认失败
-        return "confirm fail";
-      }
-    } else {
-      // 提交失败
-      return "send CITA tx fail";
-    }
+    await Common.SendAppChainTX(
+      appPN.methods.providerProposeWithdraw(
+        token,
+        balance.toString(),
+        lastCommitBlock
+      )
+    );
 
     // 等待 ProviderProposeWithdraw 事件回调
   }
@@ -312,35 +298,20 @@ export class SDK {
     // 进行签名
     let signature = Common.SignatureToHex(messageHash);
 
-    // 初始化 交易对象
-    let tx = await Common.BuildAppChainTX();
-
     // console.log("channelID", channelID);
     // console.log("balance", reBalanceAmountBN);
     // console.log("nonce", nonce);
     // console.log("signature", signature);
 
     // 向 appChain 提交 ReBalance 数据
-    let rs = await appPN.methods
-      .proposeRebalance(channelID, reBalanceAmountBN, nonce, signature)
-      .send(tx);
-    if (rs.hash) {
-      let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
-
-      if (!receipt.errorMessage) {
-        //确认成功
-        console.log("send CITA tx success", receipt);
-        return "confirm success";
-      } else {
-        //确认失败
-        console.log("confirm fail", receipt.errorMessage);
-        return "confirm fail";
-      }
-    } else {
-      // 提交失败
-      console.log("send CITA tx fail");
-      return "send CITA tx fail";
-    }
+    await Common.SendAppChainTX(
+      appPN.methods.proposeRebalance(
+        channelID,
+        reBalanceAmountBN,
+        nonce,
+        signature
+      )
+    );
 
     // 等待 ConfirmRebalance 事件回调
   }
@@ -430,9 +401,6 @@ export class SDK {
       throw new Error("channel status is not open");
     }
 
-    // 构造交易结构体
-    let tx = await Common.BuildAppChainTX();
-
     // 金额转成BN
     let amountBN = web3.utils.toBN(amount);
 
@@ -479,25 +447,16 @@ export class SDK {
     // return;
 
     // 发送转账交易
-    let rs = await appPN.methods
-      .transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature)
-      .send(tx);
-    if (rs.hash) {
-      let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
-
-      if (!receipt.errorMessage) {
-        //确认成功
-        console.log("send CITA tx success", receipt);
-        return "confirm success";
-      } else {
-        //确认失败
-        console.log("confirm fail", receipt.errorMessage);
-        return "confirm fail";
-      }
-    } else {
-      // 提交失败
-      return "send CITA tx fail";
-    }
+    await Common.SendAppChainTX(
+      appPN.methods.transfer(
+        to,
+        channelID,
+        assetAmountBN,
+        nonce,
+        additionalHash,
+        signature
+      )
+    );
 
     // 等待 Transfer 事件回调
   }
@@ -568,7 +527,12 @@ export class SDK {
       );
       let signature = Common.SignatureToHex(messageHash);
 
-      let transferData = await this.buildTransferData(to, amount, token, messageHash);
+      let transferData = await this.buildTransferData(
+        to,
+        amount,
+        token,
+        messageHash
+      );
 
       return Session.SendSessionMessage(
         cpProvider.address,
@@ -786,16 +750,16 @@ export class SDK {
     // Exemplary payload
     let payload = {
       channelID: hexToBytes(channelID),
-    //   balance: hexToBytes(numberToHex(balance)),
-    //   nonce: hexToBytes(numberToHex(nonce)),
-    //   amount: hexToBytes(numberToHex(amount)),
-      balance: [0],
-      nonce: [0],
-      amount: [0],
+      balance: hexToBytes(numberToHex(balance)),
+      nonce: hexToBytes(numberToHex(nonce)),
+      amount: hexToBytes(numberToHex(amount)),
+      // balance: [0],
+      // nonce: [0],
+      // amount: [0],
       additionalHash: hexToBytes(additionalHash)
     };
 
-    console.log("payload", payload);
+    // console.log("payload", payload);
     // Verify the payload if necessary (i.e. when possibly incomplete or invalid)
     let errMsg = Transfer.verify(payload);
     if (errMsg) throw Error(errMsg);
@@ -803,10 +767,10 @@ export class SDK {
     let message = Transfer.create(payload); // or use .fromObject if conversion is necessary
     // Encode a message to an Uint8Array (browser) or Buffer (node)
     let buffer = Transfer.encode(message).finish();
-    console.log("buildTransferData", {
-      transferData: buffer,
-      paymentSignature
-    });
+    // console.log("buildTransferData", {
+    //   transferData: buffer,
+    //   paymentSignature
+    // });
 
     return { transferData: buffer, paymentSignature };
   }

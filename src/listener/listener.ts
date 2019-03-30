@@ -39,8 +39,7 @@ export default class HttpWatcher {
         for (let event of events) {
             await eventSetting.handler(event);
             // process event
-            console.log('eventName is ', eventName, eventSetting.filter());
-            console.log("event", event.transactionHash);
+            // console.log('eventName is ', eventName, event.transactionHash);
         }
         //   console.log("get events ", events.length);
     }
@@ -83,7 +82,7 @@ export default class HttpWatcher {
 
                 lastBlockNumber = currentBlockNumber + 1;
                 currentBlockNumber = await this.base.getBlockNumber();
-                console.log("watching event", lastBlockNumber, currentBlockNumber);
+                // console.log("watching event", lastBlockNumber, currentBlockNumber);
                 if (lastBlockNumber > currentBlockNumber) {
                     continue;
                 }
