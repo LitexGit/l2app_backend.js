@@ -90,14 +90,13 @@ export class Session {
         let rs = await sessionPN.methods.sendMessage(
             from, to,
             sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature,
-            paymentData.channelID, paymentData.balance, paymentData.nonce, paymentData.additionalHash, paymentData.paymentSignature
+            paymentData.transferData, paymentData.paymentSignature
         ).send(tx);
 
         console.log('sendMessage params', [
             from, to,
             sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature,
-            paymentData.channelID, paymentData.balance, paymentData.nonce, paymentData.additionalHash, paymentData.paymentSignature
-
+            paymentData.transferData, paymentData.paymentSignature
         ]);
 
         if (rs.hash) {

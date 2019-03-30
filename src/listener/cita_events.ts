@@ -3,53 +3,6 @@ import { Common } from "../lib/common";
 import { TRANSFER_EVENT } from "../conf/contract";
 
 export const CITA_EVENTS = {
-    /*
-    'ProviderProposeWithdraw': {
-        filter: { },
-        handler: async (event: any) => {
-            console.log("ProviderProposeWithdraw event", event);
-
-            // 获取event事件内容
-            let {returnValues: { token, balance, lastCommitBlock }} = event;
-
-            // 检测交易是否成功
-
-            // 签署消息
-            let messageHash = web3.utils.soliditySha3(
-                {v: ethPN.options.address, t: 'address'},
-                {v: token, t: 'address'},
-                {v: balance, t: 'int256'},
-                {v: lastCommitBlock, t: 'uint256'},
-            );
-            let signature = Common.SignatureToHex(messageHash);
-
-            // 提交到合约
-            let tx = await Common.BuildAppChainTX();
-
-            let res = await appPN.methods.confirmProviderWithdraw(token, signature).send(tx);
-            if (res.hash) {
-                let receipt = await CITA.listeners.listenToTransactionReceipt(res.hash);
-
-                if (!receipt.errorMessage) {
-                    //确认成功
-                    console.log("send CITA tx success", receipt);
-                } else {
-                    //确认失败
-                }
-            } else {
-                // 提交失败
-            }
-
-        }
-    },
-
-    'ConfirmRebalance': {
-        filter: { },
-        handler: async (event: any) => {
-            console.log("ConfirmRebalance event", event);
-        }
-    },
-    */
     'Transfer': {
         filter: () => { return { to: cpProvider.address } },
         handler: async (event: any) => {
@@ -162,25 +115,26 @@ export const CITA_EVENTS = {
             console.log("UserProposeWithdraw event", event);
 
             // 获取event事件内容
-            let { returnValues: { channelID, lastCommitBlock } } = event;
-
-            let [{ amount }] = await Promise.all([
-                appPN.methods.userWithdrawProofMap(channelID).call()
-            ]);
+            let { returnValues: {         user,
+                channelID,
+                amount,
+                balance,
+                receiver,
+                lastCommitBlock } } = event;
 
             console.log("UserProposeWithdraw DEBUG INFO",
                 {v: ethPN.options.address, t: 'address'},
 
 
                 {v: channelID, t: 'bytes32'},
-                {v: amount, t: 'uint256'},
+                {v: balance, t: 'uint256'},
                 {v: lastCommitBlock, t: 'uint256'});
 
             // 签署消息
             let messageHash = web3.utils.soliditySha3(
                 {v: ethPN.options.address, t: 'address'},
                 {v: channelID, t: 'bytes32'},
-                {v: amount, t: 'uint256'},
+                {v: balance, t: 'uint256'},
                 {v: lastCommitBlock, t: 'uint256'},
             );
 
