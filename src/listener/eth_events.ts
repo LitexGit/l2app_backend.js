@@ -1,13 +1,6 @@
-import { appPN, ethPN, cpProvider, callbacks, web3 } from "../lib/server";
-import {
-  USER_DEPOSIT_EVENT,
-  PROVIDER_WITHDRAW_EVENT,
-  USER_WITHDRAW_EVENT,
-  USER_FORCEWITHDRAW_EVENT,
-  CHANNEL_STATUS
-} from "../conf/contract";
+import { appPN, ethPN, cpProvider, web3 } from "../lib/server";
+import { CHANNEL_STATUS } from "../conf/contract";
 import { Common } from "../lib/common";
-import { STATUS_CODES } from "http";
 
 // let cp = cpProvider.address;
 
@@ -16,9 +9,7 @@ export const ETH_EVENTS = {
     filter: () => {
       return {};
     },
-    handler: async (event: any) => {
-
-    }
+    handler: async (event: any) => {}
   },
 
   ProviderWithdraw: {
@@ -52,7 +43,6 @@ export const ETH_EVENTS = {
       console.log(
         "--------------------Handle ETH UserWithdraw--------------------"
       );
-
     }
   },
 
@@ -78,10 +68,17 @@ export const ETH_EVENTS = {
 
       // 获取事件内容
       let {
-        returnValues: { channelID }
+        returnValues: { channelID, balance, nonce, inAmount, inNonce }
       } = event;
 
-      console.log("channelID: [%s]", channelID);
+      console.log(
+        "channelID: [%s], balance: [%s], nonce: [%s], inAmount: [%s], inNonce: [%s]",
+        channelID,
+        balance,
+        nonce,
+        inAmount,
+        inNonce
+      );
       // 获取通道信息
       let channel = await ethPN.methods.channels(channelID).call();
 
@@ -104,6 +101,7 @@ export const ETH_EVENTS = {
           ]);
 
           if (Number(nonce) === 0) {
+            console.log("no transfer data, will not submit proof");
           } else {
             // CP 签名
             let messageHash = web3.utils.soliditySha3(
@@ -118,6 +116,16 @@ export const ETH_EVENTS = {
             // 进行签名
             let consignorSignature = Common.SignatureToHex(messageHash);
 
+            console.log("user close the channel, provider will submit proof");
+            console.log(
+              "proof data: channelID: [%s], balance: [%s], nonce: [%s], additionalHash: [%s], partnerSignature: [%s], consignorSignature: [%s]",
+              channelID,
+              balance,
+              nonce,
+              additionalHash,
+              partnerSignature,
+              consignorSignature
+            );
             // 获取 user数据
             data = ethPN.methods
               .partnerUpdateProof(
@@ -154,8 +162,20 @@ export const ETH_EVENTS = {
           ]);
 
           if (Number(nonce) === 0) {
+            console.log("no transfer data, will not submit proof");
           } else {
             // 获取 cp数据
+
+            console.log("provider close the channel, will submit user's proof");
+            console.log(
+              "proof data: channelID: [%s], balance: [%s], nonce: [%s], additionalHash: [%s], partnerSignature: [%s], consignorSignature: [%s]",
+              channelID,
+              balance,
+              nonce,
+              additionalHash,
+              partnerSignature,
+              consignorSignature
+            );
             data = ethPN.methods
               .partnerUpdateProof(
                 channelID,
@@ -188,6 +208,7 @@ export const ETH_EVENTS = {
         // console.log("settle", settle);
 
         if (current >= settle) {
+          console.log("settle time is up, channelID: ", channelID);
           let settleData = ethPN.methods.settleChannel(channelID).encodeABI();
 
           // 发送ETH交易
@@ -207,10 +228,6 @@ export const ETH_EVENTS = {
 
         console.log("settle count down. current:", current, "target:", settle);
       }
-
-      // if (callbacks.get('Deposit') !== undefined) {
-      //     callbacks.get('Deposit')(null, null);
-      // }
     }
   },
 

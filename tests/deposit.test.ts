@@ -1,34 +1,66 @@
+import { initL2 } from "./test_util";
 import { L2 } from "../src/sdk/sdk";
+import { Common } from "../src/lib/common";
+import { web3, cpProvider } from "../src/lib/server";
+jest.setTimeout(600000);
 
-import {
-    appPaymentNetwork,
-    appRpcUrl,
-    cpPrivateKey,
-    ethPaymentNetwork,
-    ethProvider
-} from "../src/conf/config.dev";
-import {cpProvider, ERC20, ethPN, web3} from "../src/lib/server";
+describe("单元测试", () => {
+  let l2: L2;
 
-const TX = require('ethereumjs-tx');
+  beforeAll(async () => {
+    l2 = await initL2();
+  });
 
-describe('单元测试', () => {
+  beforeEach(() => {
+    console.log("*****************NEXT IT***********************");
+  });
 
-    let l2 = L2.GetInstance();
-    l2.Init(cpPrivateKey, ethProvider, ethPaymentNetwork, appRpcUrl, appPaymentNetwork);
-
-    it('CP充值', async () => {
-        // let sessionID = l2.StartSession('0x605a409Dc63cFd7e35ef7cb2d2cab8B66b136928', 'hello world');
-        // let session = await l2.GetSession(sessionID);
-
-        let sessionID = '0x967156520cc68aa5d0752af396e41255243416b87ef4ea4d9947e7c8effa365e';
-        let session = await l2.GetSession(sessionID);
-
-        console.log(session);
-
-        l2.CloseSession(sessionID);
-
-        // let hash = await l2.Deposit(1e16);
-        // console.log("CP充值操作结束， HASH:", hash);
+  it("CP deposit", async () => {
+    let depositAmount = 1e16;
+    let watchDepsoit = new Promise((resolve, reject) => {
+      l2.on("ProviderDeposit", (err, res) => {
+        console.log("Receive ProviderDeposit", res);
+        expect(res.amount).toBe(depositAmount + "");
+        resolve(res);
+      });
     });
 
+    let beforePN = await l2.GetPaymentNetwork();
+    Promise.all([await l2.Deposit(depositAmount), await watchDepsoit]);
+    await Common.Sleep(2000);
+    let afterPN = await l2.GetPaymentNetwork();
+
+    console.log("beforePN", beforePN);
+    console.log("afterPN", afterPN);
+    expect(Number(afterPN.providerDeposit)).toBe(
+      Number(beforePN.providerDeposit) + depositAmount
+    );
+    expect(Number(afterPN.providerBalance)).toBe(
+      Number(beforePN.providerBalance) + depositAmount
+    );
+  });
+
+  it("CP withdraw", async () => {
+    let withdrawAmount = 1e15;
+
+    let watchWithdraw = new Promise((resolve, reject) => {
+      l2.on("ProviderWithdraw", (err, res) => {
+        console.log("Receive ProviderWithdraw", res);
+        expect(res.amount).toBe(withdrawAmount + "");
+        resolve(res);
+      });
+    });
+
+    // let beforeBalance = await web3.eth.getBalance(cpProvider.address);
+    let beforePN = await l2.GetPaymentNetwork();
+    Promise.all([await l2.Withdraw(withdrawAmount), await watchWithdraw]);
+    await Common.Sleep(2000);
+    let afterPN = await l2.GetPaymentNetwork();
+    // let afterBalance = await web3.eth.getBalance(cpProvider.address);
+    console.log("beforePN", beforePN);
+    console.log("afterPN", afterPN);
+    expect(Number(afterPN.providerBalance)).toBe(
+      Number(beforePN.providerBalance) - withdrawAmount
+    );
+  });
 });

@@ -90,6 +90,7 @@ export class Common {
   }
 
   static async SendAppChainTX(action: any) {
+
     let tx = await this.BuildAppChainTX();
     let rs = await action.send(tx);
 
@@ -99,16 +100,14 @@ export class Common {
       if (!receipt.errorMessage) {
         //确认成功
         console.log("send CITA tx success");
-        return "confirm success";
+        return rs.hash;
       } else {
-        console.log("send CITA tx error", receipt.errorMessage);
         //确认失败
-        return "confirm fail";
+        throw new Error(`confirm fail ${receipt.errorMessage}`);
       }
     } else {
       // 提交失败
-      console.log("send CITA tx fail");
-      return "send CITA tx fail";
+      throw new Error("send CITA tx fail");
     }
   }
 

@@ -31,10 +31,13 @@
   "deprecated": false,
   "description": "",
   "devDependencies": {
+    "@types/jest": "^24.0.11",
+    "jest": "^24.5.0",
     "mocha": "^6.0.2",
     "nodemon": "^1.18.4",
+    "ts-jest": "^24.0.1",
     "ts-node": "^7.0.1",
-    "typescript": "^3.1.1"
+    "typescript": "^3.4.1"
   },
   "homepage": "https://github.com/nobrainr/typescript-webpack-starter#readme",
   "license": "ISC",
@@ -50,6 +53,7 @@
     "prod": "npm run build && node ./dist/index.js",
     "server": "nodemon ./src/index.ts",
     "start": "npm run dev",
+    "test": "jest",
     "test:deposit": "mocha --require ts-node/register ./tests/deposit.test.ts",
     "test:withdraw": "mocha --require ts-node/register ./tests/withdraw.test.ts",
     "test:rebalance": "mocha --require ts-node/register ./tests/re_balance.test.ts",

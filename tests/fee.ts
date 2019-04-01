@@ -1,6 +1,6 @@
 import CITASDK from '@cryptape/cita-sdk';
 import { TX_BASE } from "../src/conf/contract";
-import { appPaymentNetwork, appRpcUrl, ethProvider } from "../src/conf/config.dev";
+import { appPaymentNetwork, appRpcUrl, ethRpcUrl } from "../src/conf/config.dev";
 import { Common } from "../src/lib/common";
 import {ERC20, ethPN} from "../src/lib/server";
 
@@ -16,7 +16,7 @@ let CITA = CITASDK(appRpcUrl);
 let operatorContract = new CITA.base.Contract(require('../src/conf/operatorContract.json'), operatorAddress);
 let appChainContract = new CITA.base.Contract(Common.Abi2JsonInterface(appPaymentNetwork.abi), appPaymentNetwork.address);
 
-let web3 = new Web3(Web3.givenProvider || ethProvider);
+let web3 = new Web3(Web3.givenProvider || ethRpcUrl);
 
 function randomWord(randomFlag: boolean, min: number, max: number = 0): string {
     let str = "",

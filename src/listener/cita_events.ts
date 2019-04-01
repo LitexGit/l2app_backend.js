@@ -1,38 +1,17 @@
-import { appPN, ethPN, CITA, cpProvider, callbacks, web3 } from "../lib/server";
+import { appPN, ethPN, cpProvider, callbacks, web3 } from "../lib/server";
 import { Common } from "../lib/common";
 import {
   TRANSFER_EVENT,
   PROVIDER_WITHDRAW_EVENT,
   USER_DEPOSIT_EVENT,
   USER_WITHDRAW_EVENT,
-  USER_FORCEWITHDRAW_EVENT
+  USER_FORCEWITHDRAW_EVENT,
+  PROVIDER_DEPOSIT_EVENT
 } from "../conf/contract";
-
-const submitCitaTx = async action => {
-  // 构建交易
-  let tx = await Common.BuildAppChainTX();
-  let rs = await action.send(tx);
-  if (rs.hash) {
-    let receipt = await CITA.listeners.listenToTransactionReceipt(rs.hash);
-
-    if (!receipt.errorMessage) {
-      //确认成功
-      console.log("send CITA tx success");
-    } else {
-      //确认失败
-      console.log("send CITA tx fail", receipt.errorMessage);
-    }
-  } else {
-    // 提交失败
-    console.log("submit fail");
-  }
-};
 
 export const CITA_EVENTS = {
   Transfer: {
-    filter: () => {
-      return { to: cpProvider.address };
-    },
+    filter: () => ({ to: cpProvider.address }),
     handler: async (event: any) => {
       // 获取event事件内容
       let {
@@ -147,7 +126,7 @@ export const CITA_EVENTS = {
         signature
       );
 
-      await submitCitaTx(
+      Common.SendAppChainTX(
         appPN.methods.submitFee(
           channelID,
           token,
@@ -169,9 +148,7 @@ export const CITA_EVENTS = {
     },
     */
   UserProposeWithdraw: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
       // 获取event事件内容
       let {
@@ -210,16 +187,14 @@ export const CITA_EVENTS = {
       let signature = Common.SignatureToHex(messageHash);
 
       // 提交到合约
-      await submitCitaTx(
+      Common.SendAppChainTX(
         appPN.methods.confirmUserWithdraw(channelID, signature)
       );
     }
   },
 
   ProposeCooperativeSettle: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
       // 获取event事件内容
       let {
@@ -247,35 +222,30 @@ export const CITA_EVENTS = {
       let signature = Common.SignatureToHex(messageHash);
 
       // 提交到合约
-      await submitCitaTx(
+      Common.SendAppChainTX(
         appPN.methods.confirmCooperativeSettle(channelID, signature)
       );
     }
   },
 
   ConfirmProviderWithdraw: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
       // 获取event事件内容
       let {
-        returnValues: { token, balance, lastCommitBlock }
+        returnValues: { token, balance, lastCommitBlock, signature }
       } = event;
 
       console.log(
         "--------------------Handle CITA ConfirmProviderWithdraw--------------------"
       );
       console.log(
-        " token: [%s], balance: [%s], lastCommitBlock: [%s]",
+        " token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]",
         token,
         balance,
-        lastCommitBlock
+        lastCommitBlock,
+        signature
       );
-      // 从 APPChain 获取 cp 签名
-      let [{ signature }] = await Promise.all([
-        appPN.methods.providerWithdrawProofMap(event.returnValues.token).call()
-      ]);
 
       // 获取数据
       let data = await ethPN.methods
@@ -283,30 +253,27 @@ export const CITA_EVENTS = {
         .encodeABI();
 
       // 提交数据到 ETH
-      let hash = await Common.SendEthTransaction(
+      Common.SendEthTransaction(
         cpProvider.address,
         ethPN.options.address,
         0,
         data
       );
-      console.log("hash: [%s]", hash);
     }
   },
   /***************************Operator Related Onchain Event*********************************/
 
   OnchainProviderWithdraw: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
-      "--------------------Handle CITA OnchainProviderWithdraw--------------------";
-      let {
-        returnValues: { token, amount, balance },
-        transactionHash: txhash
-      } = event;
+      console.log(
+        "--------------------Handle CITA OnchainProviderWithdraw--------------------"
+      );
+      let { returnValues, transactionHash: txhash } = event;
+      let { token, amount, balance } = returnValues;
 
       console.log(
-        "token: [%s], amount: [%s], balance: [%s]",
+        "token:[%s], amount:[%s], balance:[%s]",
         token,
         amount,
         balance
@@ -315,7 +282,7 @@ export const CITA_EVENTS = {
       let providerWithdrawEvent: PROVIDER_WITHDRAW_EVENT = {
         token,
         amount: amount,
-        totalWithdraw: balance,
+        totalWithdraw: amount,
         txhash
       };
       if (callbacks.get("ProviderWithdraw")) {
@@ -324,12 +291,32 @@ export const CITA_EVENTS = {
       }
     }
   },
-  OnchainUserDeposit: {
-    filter: () => {
-      return {};
-    },
+  OnchainProviderDeposit: {
+    filter: () => ({}),
     handler: async (event: any) => {
-      "--------------------Handle CITA OnchainUserDeposit--------------------";
+      console.log(
+        "--------------------Handle CITA OnchainProviderDeposit--------------------"
+      );
+      let { returnValues, transactionHash: txhash } = event;
+      let { token, amount } = returnValues;
+      console.log("token:[%s], amount:[%s]", token, amount);
+      let providerDepositEvent: PROVIDER_DEPOSIT_EVENT = {
+        token,
+        amount,
+        totalDeposit: amount,
+        txhash
+      };
+      if (callbacks.get("ProviderDeposit")) {
+        callbacks.get("ProviderDeposit")(null, providerDepositEvent);
+      }
+    }
+  },
+  OnchainUserDeposit: {
+    filter: () => ({}),
+    handler: async (event: any) => {
+      console.log(
+        "--------------------Handle CITA OnchainUserDeposit--------------------"
+      );
       // 获取事件内容
       let {
         returnValues: { channelID, user, deposit: newDeposit, totalDeposit },
@@ -362,11 +349,11 @@ export const CITA_EVENTS = {
     }
   },
   OnchainUserWithdraw: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
-      "--------------------Handle CITA OnchainUserWithdraw--------------------";
+      console.log(
+        "--------------------Handle CITA OnchainUserWithdraw--------------------"
+      );
       // 获取event事件内容
       let {
         returnValues: { channelID, user, amount, withdraw: totalWithdraw },
@@ -396,11 +383,11 @@ export const CITA_EVENTS = {
     }
   },
   OnchainOpenChannel: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
-      "--------------------Handle CITA OnchainOpenChannel--------------------";
+      console.log(
+        "--------------------Handle CITA OnchainOpenChannel--------------------"
+      );
       // 获取事件内容
       let {
         returnValues: { user, token, amount, channelID },
@@ -431,11 +418,11 @@ export const CITA_EVENTS = {
     }
   },
   OnchainCooperativeSettleChannel: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
-      "--------------------Handle CITA OnchainCooperativeSettleChannel--------------------";
+      console.log(
+        "--------------------Handle CITA OnchainCooperativeSettleChannel--------------------"
+      );
       // 获取event事件内容
       let {
         returnValues: { channelID, user, token, balance },
@@ -464,11 +451,11 @@ export const CITA_EVENTS = {
     }
   },
   OnchainSettleChannel: {
-    filter: () => {
-      return {};
-    },
+    filter: () => ({}),
     handler: async (event: any) => {
-      "--------------------Handle CITA OnchainSettleChannel--------------------";
+      console.log(
+        "--------------------Handle CITA OnchainSettleChannel--------------------"
+      );
       // 获取event事件内容
       let {
         returnValues: {
