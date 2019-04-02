@@ -46,15 +46,24 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var TX = require('ethereumjs-tx');
-var ethUtil = require('ethereumjs-util');
+var TX = require("ethereumjs-tx");
+var ethUtil = require("ethereumjs-util");
+var ethNonce = new Map();
+function getEthNonce(address) {
+    if (ethNonce.get(address) > 0) {
+        return ethNonce.get(address);
+    }
+    else {
+        return 0;
+    }
+}
 var contract_1 = require("../conf/contract");
 var server_1 = require("./server");
 var Common = (function () {
     function Common() {
     }
     Common.Abi2JsonInterface = function (abi) {
-        var abiItem = JSON.parse('{}');
+        var abiItem = JSON.parse("{}");
         try {
             var abiArray = JSON.parse(abi);
             if (!Array.isArray(abiArray))
@@ -66,13 +75,13 @@ var Common = (function () {
         }
     };
     Common.GetLastCommitBlock = function (chain) {
-        if (chain === void 0) { chain = 'eth'; }
+        if (chain === void 0) { chain = "eth"; }
         return __awaiter(this, void 0, void 0, function () {
             var _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        if (!(chain === 'eth')) return [3, 2];
+                        if (!(chain === "eth")) return [3, 2];
                         return [4, server_1.web3.eth.getBlockNumber()];
                     case 1:
                         _a = (_b.sent()) + contract_1.COMMIT_BLOCK_CONDITION;
@@ -86,7 +95,7 @@ var Common = (function () {
             });
         });
     };
-    Common.SendEthTransaction = function (from, to, value, data) {
+    Common.SendEthTransaction = function (from, to, value, data, privateKey) {
         return __awaiter(this, void 0, void 0, function () {
             var nonce, rawTx, _a, _b, _c, tx, priKey, serializedTx, txData;
             return __generator(this, function (_d) {
@@ -94,6 +103,13 @@ var Common = (function () {
                     case 0: return [4, server_1.web3.eth.getTransactionCount(from)];
                     case 1:
                         nonce = _d.sent();
+                        if (nonce > getEthNonce(from)) {
+                            ethNonce.set(from, nonce);
+                        }
+                        else {
+                            nonce = getEthNonce(from) + 1;
+                            ethNonce.set(from, nonce);
+                        }
                         _a = {
                             from: from,
                             nonce: "0x" + nonce.toString(16)
@@ -111,39 +127,46 @@ var Common = (function () {
                             _a.gasLimit = server_1.web3.utils.toHex(300000),
                             _a);
                         tx = new TX(rawTx);
-                        priKey = server_1.cpProvider.privateKey;
-                        if (priKey.substr(0, 2) === '0x') {
-                            tx.sign(Buffer.from(priKey.substr(2), 'hex'));
+                        priKey = privateKey;
+                        if (priKey.substr(0, 2) === "0x") {
+                            tx.sign(Buffer.from(priKey.substr(2), "hex"));
                         }
                         else {
-                            tx.sign(Buffer.from(priKey, 'hex'));
+                            tx.sign(Buffer.from(priKey, "hex"));
                         }
                         serializedTx = tx.serialize();
                         txData = "0x" + serializedTx.toString("hex");
                         console.log("SEND TX", rawTx);
                         return [2, new Promise(function (resolve, reject) {
                                 try {
-                                    server_1.web3.eth.sendSignedTransaction(txData).on("transactionHash", function (value) {
+                                    server_1.web3.eth
+                                        .sendSignedTransaction(txData)
+                                        .on("transactionHash", function (value) {
+                                        console.log("transactionHash: ", value);
                                         resolve(value);
-                                    }).on('error', function (error) {
+                                    })
+                                        .on("error", function (error) {
+                                        reject(error);
                                     });
                                 }
                                 catch (e) {
+                                    reject(e);
                                 }
                             })];
                 }
             });
         });
     };
-    Common.BuildAppChainTX = function () {
+    Common.BuildAppChainTX = function (from, privateKey) {
         return __awaiter(this, void 0, void 0, function () {
             var tx, _a;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        tx = __assign({}, contract_1.TX_BASE, { privateKey: server_1.cpProvider.privateKey, from: server_1.cpProvider.address });
+                        tx = __assign({}, contract_1.TX_BASE, { privateKey: privateKey,
+                            from: from });
                         _a = tx;
-                        return [4, Common.GetLastCommitBlock('cita')];
+                        return [4, Common.GetLastCommitBlock("cita")];
                     case 1:
                         _a.validUntilBlock = _b.sent();
                         return [2, tx];
@@ -151,26 +174,93 @@ var Common = (function () {
             });
         });
     };
+    Common.SendAppChainTX = function (action, from, privateKey) {
+        return __awaiter(this, void 0, void 0, function () {
+            var tx, rs, receipt;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, this.BuildAppChainTX(from, privateKey)];
+                    case 1:
+                        tx = _a.sent();
+                        return [4, action.send(tx)];
+                    case 2:
+                        rs = _a.sent();
+                        if (!rs.hash) return [3, 4];
+                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
+                    case 3:
+                        receipt = _a.sent();
+                        if (!receipt.errorMessage) {
+                            console.log("send CITA tx success");
+                            return [2, rs.hash];
+                        }
+                        else {
+                            throw new Error("confirm fail " + receipt.errorMessage);
+                        }
+                        return [3, 5];
+                    case 4: throw new Error("send CITA tx fail");
+                    case 5: return [2];
+                }
+            });
+        });
+    };
     Common.CheckSignature = function (messageHash, signature, address) {
-        var messageHashBuffer = Buffer.from(messageHash.replace("0x", ""), 'hex');
-        var sigDecoded = ethUtil.fromRpcSig(Buffer.from(signature.replace("0x", ""), 'hex'));
+        var messageHashBuffer = Buffer.from(messageHash.replace("0x", ""), "hex");
+        var sigDecoded = ethUtil.fromRpcSig(Buffer.from(signature.replace("0x", ""), "hex"));
         var recoveredPub = ethUtil.ecrecover(messageHashBuffer, sigDecoded.v, sigDecoded.r, sigDecoded.s);
         var recoveredAddress = ethUtil.pubToAddress(recoveredPub).toString("hex");
         recoveredAddress = "0x" + recoveredAddress;
         return recoveredAddress.toLowerCase() == address.toLowerCase();
     };
-    Common.SignatureToHex = function (messageHash) {
-        var privateKey = server_1.cpProvider.privateKey;
-        var messageHex = messageHash.substr(0, 2) == '0x' ? messageHash.substr(2) : messageHash;
-        var privateKeyHex = privateKey.substr(0, 2) == '0x' ? privateKey.substr(2) : privateKey;
-        var messageBuffer = Buffer.from(messageHex, 'hex');
-        var privateKeyBuffer = Buffer.from(privateKeyHex, 'hex');
+    Common.SignatureToHex = function (messageHash, privateKey) {
+        var messageHex = messageHash.substr(0, 2) == "0x" ? messageHash.substr(2) : messageHash;
+        var privateKeyHex = privateKey.substr(0, 2) == "0x" ? privateKey.substr(2) : privateKey;
+        var messageBuffer = Buffer.from(messageHex, "hex");
+        var privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
         var signatureObj = ethUtil.ecsign(messageBuffer, privateKeyBuffer);
-        return ethUtil.toRpcSig(signatureObj.v, signatureObj.r, signatureObj.s).toString('hex');
+        return ethUtil
+            .toRpcSig(signatureObj.v, signatureObj.r, signatureObj.s)
+            .toString("hex");
     };
     Common.RandomWord = function (randomFlag, min, max) {
         if (max === void 0) { max = 12; }
-        var str = "", range = min, arr = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+        var str = "", range = min, arr = [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z"
+        ];
         if (randomFlag) {
             range = Math.round(Math.random() * (max - min)) + min;
         }
@@ -184,7 +274,7 @@ var Common = (function () {
     Common.GenerateSessionID = function (game) {
         var timestamp = new Date().getTime();
         var random = this.RandomWord(true, 6, 32);
-        return server_1.web3.utils.soliditySha3({ v: game, t: 'address' }, { v: timestamp, t: 'uint256' }, { v: random, t: 'bytes32' });
+        return server_1.web3.utils.soliditySha3({ v: game, t: "address" }, { v: timestamp, t: "uint256" }, { v: random, t: "bytes32" });
     };
     Common.Sleep = function (time) {
         return __awaiter(this, void 0, void 0, function () {

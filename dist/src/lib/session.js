@@ -42,123 +42,44 @@ var Session = (function () {
     function Session(sessionID) {
         this.id = sessionID;
     }
-    Session.InitSession = function (sessionID, game, customData) {
+    Session.InitSession = function (sessionID, game, userList, customData) {
         return __awaiter(this, void 0, void 0, function () {
-            var tx, rs, receipt;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, common_1.Common.BuildAppChainTX()];
-                    case 1:
-                        tx = _a.sent();
-                        return [4, server_1.sessionPN.methods.initSession(sessionID, server_1.cpProvider.address, game, [server_1.cpProvider.address], server_1.appPN.options.address, server_1.web3.utils.toHex(customData)).send(tx)];
-                    case 2:
-                        rs = _a.sent();
-                        if (!rs.hash) return [3, 4];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
-                    case 3:
-                        receipt = _a.sent();
-                        if (!receipt.errorMessage) {
-                            console.log("send CITA tx success", receipt);
-                            return [2, 'confirm success'];
-                        }
-                        else {
-                            return [2, 'confirm fail'];
-                        }
-                        return [3, 5];
-                    case 4: return [2, 'send CITA tx fail'];
-                    case 5: return [2];
+                    case 0: return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.initSession(sessionID, server_1.cpProvider.address, game, userList, server_1.appPN.options.address, server_1.web3.utils.toHex(customData)), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
+                    case 1: return [2, _a.sent()];
                 }
             });
         });
     };
     Session.JoinSession = function (sessionID, user) {
         return __awaiter(this, void 0, void 0, function () {
-            var tx, rs, receipt;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, common_1.Common.BuildAppChainTX()];
-                    case 1:
-                        tx = _a.sent();
-                        return [4, server_1.sessionPN.methods.joinSession(sessionID, user).send(tx)];
-                    case 2:
-                        rs = _a.sent();
-                        if (!rs.hash) return [3, 4];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
-                    case 3:
-                        receipt = _a.sent();
-                        if (!receipt.errorMessage) {
-                            console.log("send CITA tx success", receipt);
-                            return [2, 'confirm success'];
-                        }
-                        else {
-                            return [2, 'confirm fail'];
-                        }
-                        return [3, 5];
-                    case 4: return [2, 'send CITA tx fail'];
-                    case 5: return [2];
+                    case 0: return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.joinSession(sessionID, user), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
+                    case 1: return [2, _a.sent()];
                 }
             });
         });
     };
     Session.SendSessionMessage = function (from, to, sessionData, paymentData) {
         return __awaiter(this, void 0, void 0, function () {
-            var tx, rs, receipt;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, common_1.Common.BuildAppChainTX()];
-                    case 1:
-                        tx = _a.sent();
-                        return [4, server_1.sessionPN.methods.sendMessage(from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData.channelID, paymentData.balance, paymentData.nonce, paymentData.additionalHash, paymentData.paymentSignature).send(tx)];
-                    case 2:
-                        rs = _a.sent();
-                        console.log('sendMessage params', [
-                            from, to,
-                            sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature,
-                            paymentData.channelID, paymentData.balance, paymentData.nonce, paymentData.additionalHash, paymentData.paymentSignature
-                        ]);
-                        if (!rs.hash) return [3, 4];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
-                    case 3:
-                        receipt = _a.sent();
-                        if (!receipt.errorMessage) {
-                            console.log("send CITA tx success", receipt);
-                            return [2, rs.hash];
-                        }
-                        else {
-                            throw new Error('CITA tx confirm fail' + receipt.errorMessage);
-                        }
-                        return [3, 5];
-                    case 4: throw new Error('send CITA tx fail');
-                    case 5: return [2];
+                    case 0:
+                        console.log("sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData.transferData: [%o], paymentData.paymentSignature:[%s] ", from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData.transferData, paymentData.paymentSignature);
+                        return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.sendMessage(from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData.transferData, paymentData.paymentSignature), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
+                    case 1: return [2, _a.sent()];
                 }
             });
         });
     };
     Session.CloseSession = function (sessionID) {
         return __awaiter(this, void 0, void 0, function () {
-            var tx, rs, receipt;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, common_1.Common.BuildAppChainTX()];
-                    case 1:
-                        tx = _a.sent();
-                        return [4, server_1.sessionPN.methods.closeSession(sessionID).send(tx)];
-                    case 2:
-                        rs = _a.sent();
-                        if (!rs.hash) return [3, 4];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
-                    case 3:
-                        receipt = _a.sent();
-                        if (!receipt.errorMessage) {
-                            console.log("send CITA tx success", receipt);
-                            return [2, 'confirm success'];
-                        }
-                        else {
-                            return [2, 'confirm fail'];
-                        }
-                        return [3, 5];
-                    case 4: return [2, 'send CITA tx fail'];
-                    case 5: return [2];
+                    case 0: return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.closeSession(sessionID), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
+                    case 1: return [2, _a.sent()];
                 }
             });
         });
@@ -214,7 +135,9 @@ var Session = (function () {
             var _a, status, game, data;
             return __generator(this, function (_b) {
                 switch (_b.label) {
-                    case 0: return [4, server_1.sessionPN.methods.sessions(this.id).call()];
+                    case 0: return [4, server_1.sessionPN.methods
+                            .sessions(this.id)
+                            .call()];
                     case 1:
                         _a = _b.sent(), status = _a.status, game = _a.game, data = _a.data;
                         this.status = Number(status);

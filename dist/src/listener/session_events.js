@@ -36,89 +36,69 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
-var contract_1 = require("../conf/contract");
 var server_1 = require("../lib/server");
 exports.SESSION_EVENTS = {
-    'InitSession': {
-        filter: function () { return {}; },
+    InitSession: {
+        filter: function () {
+            return {};
+        },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("InitSession event", event);
+                console.log("--------------------Handle CITA InitSession--------------------");
                 return [2];
             });
         }); }
     },
-    'JoinSession': {
-        filter: function () { return {}; },
+    JoinSession: {
+        filter: function () {
+            return {};
+        },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("JoinSession event", event);
+                console.log("--------------------Handle CITA JoinSession--------------------");
                 return [2];
             });
         }); }
     },
-    'SendMessage': {
-        filter: function () { return { to: server_1.cpProvider.address }; },
+    SendMessage: {
+        filter: function () {
+            return { to: server_1.cpProvider.address };
+        },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
-            var _a, from, to, sessionID, type, content, balance, nonce, transactionHash, amount, token, receipt, transferEvent, channel, message;
+            var _a, from, to, sessionID, type, content, balance, nonce, amount, channelID, transactionHash, token, message;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        console.log("SendMessage event", event);
-                        _a = event.returnValues, from = _a.from, to = _a.to, sessionID = _a.sessionID, type = _a.mType, content = _a.content, balance = _a.balance, nonce = _a.nonce, transactionHash = event.transactionHash;
-                        amount = '0';
-                        token = contract_1.ADDRESS_ZERO;
-                        if (!(Number(balance) !== 0 && Number(nonce) !== 0)) return [3, 3];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(transactionHash)];
+                        console.log("--------------------Handle CITA SendMessage--------------------");
+                        _a = event.returnValues, from = _a.from, to = _a.to, sessionID = _a.sessionID, type = _a.mType, content = _a.content, balance = _a.balance, nonce = _a.nonce, amount = _a.amount, channelID = _a.channelID, transactionHash = event.transactionHash;
+                        console.log(" from: [%s], to: [%s], sessionID: [%s], type: [%s], content: [%s], balance: [%s], nonce: [%s], amount: [%s], channelID: [%s] ", from, to, sessionID, type, content, balance, nonce, amount, channelID);
+                        return [4, server_1.appPN.methods.channelMap(channelID).call()];
                     case 1:
-                        receipt = _b.sent();
-                        transferEvent = extractEventFromReceipt(receipt, server_1.appPN, 'Transfer');
-                        console.log('extract TransferEvent is ', transferEvent);
-                        if (!(transferEvent !== null)) return [3, 3];
-                        return [4, server_1.appPN.methods.channelMap(transferEvent.channelID).call()];
-                    case 2:
-                        channel = _b.sent();
-                        token = channel.token;
-                        amount = transferEvent.transferAmount;
-                        _b.label = 3;
-                    case 3:
-                        message = { from: from, sessionID: sessionID, type: type, content: content, amount: amount, token: token };
-                        server_1.callbacks.get('Message') && server_1.callbacks.get('Message')(null, message);
+                        token = (_b.sent()).token;
+                        message = {
+                            from: from,
+                            sessionID: sessionID,
+                            type: type,
+                            content: content,
+                            amount: amount,
+                            token: token
+                        };
+                        server_1.callbacks.get("Message") && server_1.callbacks.get("Message")(null, message);
                         return [2];
                 }
             });
         }); }
     },
-    'CloseSession': {
-        filter: function () { return {}; },
+    CloseSession: {
+        filter: function () {
+            return {};
+        },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("CloseSession event", event);
+                console.log("--------------------Handle CITA CloseSession--------------------");
                 return [2];
             });
         }); }
-    },
+    }
 };
-function extractEventFromReceipt(receipt, contract, name) {
-    var abiItems = contract.options.jsonInterface;
-    var eventDefinition = null;
-    for (var _i = 0, abiItems_1 = abiItems; _i < abiItems_1.length; _i++) {
-        var abiItem = abiItems_1[_i];
-        if (abiItem.type === 'event' && abiItem.name === name) {
-            eventDefinition = abiItem;
-            break;
-        }
-    }
-    if (eventDefinition === null) {
-        return null;
-    }
-    var eventSignature = server_1.web3.eth.abi.encodeEventSignature(eventDefinition);
-    for (var _a = 0, _b = receipt.logs; _a < _b.length; _a++) {
-        var log = _b[_a];
-        if (log.topics[0] === eventSignature) {
-            return server_1.web3.eth.abi.decodeLog(eventDefinition.inputs, log.data, log.topics.slice(1));
-        }
-    }
-    return null;
-}
 //# sourceMappingURL=session_events.js.map

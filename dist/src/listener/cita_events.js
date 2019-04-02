@@ -39,15 +39,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var server_1 = require("../lib/server");
 var common_1 = require("../lib/common");
 exports.CITA_EVENTS = {
-    'Transfer': {
-        filter: function () { return { to: server_1.cpProvider.address }; },
+    Transfer: {
+        filter: function () { return ({ to: server_1.cpProvider.address }); },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
-            var _a, from, to, channelID, balance, transferAmount, additionalHash, channel, token, assetEvent, _b, feeProofAmount, road, feeRate, amount, bn, feeAmount, feeNonce, messageHash, signature, tx, rs, receipt;
+            var _a, from, to, channelID, balance, transferAmount, additionalHash, channel, token, assetEvent, _b, feeProofAmount, road, feeRate, amount, bn, feeAmount, feeNonce, messageHash, signature;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
-                        console.log("Transfer event", event);
                         _a = event.returnValues, from = _a.from, to = _a.to, channelID = _a.channelID, balance = _a.balance, transferAmount = _a.transferAmount, additionalHash = _a.additionalHash;
+                        console.log("--------------------Handle CITA Transfer--------------------");
+                        console.log("from :[%s], to :[%s], channelID :[%s], balance :[%s], transferAmount :[%s], additionalHash :[%s]", from, to, channelID, balance, transferAmount, additionalHash);
                         return [4, server_1.appPN.methods.channelMap(channelID).call()];
                     case 1:
                         channel = _c.sent();
@@ -59,7 +60,7 @@ exports.CITA_EVENTS = {
                             token: token,
                             amount: transferAmount,
                             additionalHash: additionalHash,
-                            totalTransferredAmount: balance,
+                            totalTransferredAmount: balance
                         };
                         if (server_1.callbacks.get("Transfer") &&
                             additionalHash ===
@@ -69,155 +70,277 @@ exports.CITA_EVENTS = {
                         return [4, server_1.appPN.methods.feeProofMap(token).call()];
                     case 2:
                         _b = _c.sent(), feeProofAmount = _b.amount, road = _b.nonce;
-                        console.log("feeProofAmount", feeProofAmount);
                         return [4, server_1.appPN.methods.feeRateMap(token).call()];
                     case 3:
                         feeRate = _c.sent();
-                        console.log("feeRate", feeRate);
                         if (Number(feeRate) === 0) {
+                            console.log("feeRate is 0, will do nothing");
                             return [2];
                         }
+                        console.log("start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]", feeProofAmount, feeRate);
                         return [4, Promise.all([
                                 server_1.appPN.methods.balanceProofMap(channelID, server_1.cpProvider.address).call()
                             ])];
                     case 4:
                         amount = (_c.sent())[0].balance;
-                        console.log("provider balance", amount);
-                        console.log("provider nonce", road);
-                        console.log("event Balance", balance);
                         bn = server_1.web3.utils.toBN;
-                        feeAmount = bn(feeProofAmount).add(bn(feeRate).mul((bn(balance).sub(bn(amount)))).div(bn(10000))).toString();
-                        console.log("feeAmount = ", feeAmount);
+                        feeAmount = bn(feeProofAmount)
+                            .add(bn(feeRate)
+                            .mul(bn(balance).sub(bn(amount)))
+                            .div(bn(10000)))
+                            .toString();
+                        console.log("provider balance :[%s], provider nonce :[%s], event Balance :[%s], feeAmount :[%s]", amount, road, balance, feeAmount);
                         feeNonce = Number(road) + 1;
-                        messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: 'address' }, { v: token, t: 'address' }, { v: feeAmount, t: 'uint256' }, { v: feeNonce, t: 'uint256' });
-                        signature = common_1.Common.SignatureToHex(messageHash);
-                        return [4, common_1.Common.BuildAppChainTX()];
-                    case 5:
-                        tx = _c.sent();
-                        console.log("infos", { channelID: channelID, token: token, feeAmount: feeAmount, feeNonce: feeNonce, signature: signature });
-                        return [4, server_1.appPN.methods.submitFee(channelID, token, feeAmount, feeNonce, signature).send(tx)];
-                    case 6:
-                        rs = _c.sent();
-                        if (!rs.hash) return [3, 8];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
-                    case 7:
-                        receipt = _c.sent();
-                        if (!receipt.errorMessage) {
-                            console.log("send CITA tx success", receipt);
-                        }
-                        else {
-                            console.log("send CITA tx fail", receipt.errorMessage);
-                        }
-                        return [3, 9];
-                    case 8:
-                        console.log("submit fail");
-                        _c.label = 9;
-                    case 9: return [2];
-                }
-            });
-        }); }
-    },
-    'UserProposeWithdraw': {
-        filter: function () { return {}; },
-        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
-            var _a, channelID, lastCommitBlock, amount, messageHash, signature, tx, rs, receipt;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        console.log("UserProposeWithdraw event", event);
-                        _a = event.returnValues, channelID = _a.channelID, lastCommitBlock = _a.lastCommitBlock;
-                        return [4, Promise.all([
-                                server_1.appPN.methods.userWithdrawProofMap(channelID).call()
-                            ])];
-                    case 1:
-                        amount = (_b.sent())[0].amount;
-                        console.log("UserProposeWithdraw DEBUG INFO", { v: server_1.ethPN.options.address, t: 'address' }, { v: channelID, t: 'bytes32' }, { v: amount, t: 'uint256' }, { v: lastCommitBlock, t: 'uint256' });
-                        messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: 'address' }, { v: channelID, t: 'bytes32' }, { v: amount, t: 'uint256' }, { v: lastCommitBlock, t: 'uint256' });
-                        signature = common_1.Common.SignatureToHex(messageHash);
-                        return [4, common_1.Common.BuildAppChainTX()];
-                    case 2:
-                        tx = _b.sent();
-                        return [4, server_1.appPN.methods.confirmUserWithdraw(channelID, signature).send(tx)];
-                    case 3:
-                        rs = _b.sent();
-                        if (!rs.hash) return [3, 5];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
-                    case 4:
-                        receipt = _b.sent();
-                        if (!receipt.errorMessage) {
-                            console.log("send CITA tx success", receipt);
-                        }
-                        else {
-                            console.log("send CITA tx fail", receipt.errorMessage);
-                        }
-                        return [3, 6];
-                    case 5:
-                        console.log("submit fail");
-                        _b.label = 6;
-                    case 6: return [2];
-                }
-            });
-        }); }
-    },
-    'ProposeCooperativeSettle': {
-        filter: function () { return {}; },
-        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
-            var _a, channelID, balance, lastCommitBlock, messageHash, signature, tx, rs, receipt;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        console.log("ProposeCooperativeSettle event", event);
-                        _a = event.returnValues, channelID = _a.channelID, balance = _a.balance, lastCommitBlock = _a.lastCommitBlock;
-                        messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: 'address' }, { v: channelID, t: 'bytes32' }, { v: balance, t: 'uint256' }, { v: lastCommitBlock, t: 'uint256' });
-                        signature = common_1.Common.SignatureToHex(messageHash);
-                        return [4, common_1.Common.BuildAppChainTX()];
-                    case 1:
-                        tx = _b.sent();
-                        return [4, server_1.appPN.methods.confirmCooperativeSettle(channelID, signature).send(tx)];
-                    case 2:
-                        rs = _b.sent();
-                        if (!rs.hash) return [3, 4];
-                        return [4, server_1.CITA.listeners.listenToTransactionReceipt(rs.hash)];
-                    case 3:
-                        receipt = _b.sent();
-                        if (!receipt.errorMessage) {
-                            console.log("send CITA tx success", receipt);
-                        }
-                        else {
-                            console.log("confirm fail, error message:", receipt.errorMessage);
-                        }
-                        return [3, 5];
-                    case 4:
-                        console.log("send CITA tx fail");
-                        _b.label = 5;
-                    case 5: return [2];
-                }
-            });
-        }); }
-    },
-    'ConfirmProviderWithdraw': {
-        filter: function () { return {}; },
-        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
-            var _a, token, balance, lastCommitBlock, signature, data, hash;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        console.log("confirmProviderWithdraw event", event);
-                        _a = event.returnValues, token = _a.token, balance = _a.balance, lastCommitBlock = _a.lastCommitBlock;
-                        return [4, Promise.all([
-                                server_1.appPN.methods.providerWithdrawProofMap(event.returnValues.token).call()
-                            ])];
-                    case 1:
-                        signature = (_b.sent())[0].signature;
-                        return [4, server_1.ethPN.methods.providerWithdraw(token, balance, lastCommitBlock, signature).encodeABI()];
-                    case 2:
-                        data = _b.sent();
-                        hash = common_1.Common.SendEthTransaction(server_1.cpProvider.address, server_1.ethPN.options.address, 0, data);
-                        console.log(hash);
+                        messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: token, t: "address" }, { v: feeAmount, t: "uint256" }, { v: feeNonce, t: "uint256" });
+                        signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
+                        console.log("infos:  channelID :[%s], token :[%s], feeAmount :[%s], feeNonce :[%s], signature :[%s]", channelID, token, feeAmount, feeNonce, signature);
+                        common_1.Common.SendAppChainTX(server_1.appPN.methods.submitFee(channelID, token, feeAmount, feeNonce, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
                         return [2];
                 }
             });
         }); }
     },
+    SubmitFee: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, token, amount, nonce;
+            return __generator(this, function (_b) {
+                console.log("--------------------Handle CITA SubmitFee--------------------");
+                _a = event.returnValues, token = _a.token, amount = _a.amount, nonce = _a.nonce;
+                console.log("token:[%s], amount:[%s], nonce:[%s]", token, amount, nonce);
+                return [2];
+            });
+        }); }
+    },
+    UserProposeWithdraw: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, user, channelID, amount, balance, receiver, lastCommitBlock, messageHash, signature;
+            return __generator(this, function (_b) {
+                _a = event.returnValues, user = _a.user, channelID = _a.channelID, amount = _a.amount, balance = _a.balance, receiver = _a.receiver, lastCommitBlock = _a.lastCommitBlock;
+                console.log("--------------------Handle CITA UserProposeWithdraw--------------------");
+                console.log("user :[%s], channelID :[%s], amount :[%s], balance :[%s], receiver :[%s], lastCommitBlock :[%s] ", user, channelID, amount, balance, receiver, lastCommitBlock);
+                messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: balance, t: "uint256" }, { v: lastCommitBlock, t: "uint256" });
+                signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
+                common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmUserWithdraw(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+                return [2];
+            });
+        }); }
+    },
+    ProposeCooperativeSettle: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, channelID, balance, lastCommitBlock, messageHash, signature;
+            return __generator(this, function (_b) {
+                _a = event.returnValues, channelID = _a.channelID, balance = _a.balance, lastCommitBlock = _a.lastCommitBlock;
+                console.log("--------------------Handle CITA ProposeCooperativeSettle--------------------");
+                console.log(" channelID: [%s], balance:[%s], lastCommitBlock:[%s] ", channelID, balance, lastCommitBlock);
+                messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: balance, t: "uint256" }, { v: lastCommitBlock, t: "uint256" });
+                signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
+                common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmCooperativeSettle(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+                return [2];
+            });
+        }); }
+    },
+    ConfirmProviderWithdraw: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, token, balance, lastCommitBlock, signature, data;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = event.returnValues, token = _a.token, balance = _a.balance, lastCommitBlock = _a.lastCommitBlock, signature = _a.signature;
+                        console.log("--------------------Handle CITA ConfirmProviderWithdraw--------------------");
+                        console.log(" token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]", token, balance, lastCommitBlock, signature);
+                        return [4, server_1.ethPN.methods
+                                .providerWithdraw(token, balance, lastCommitBlock, signature)
+                                .encodeABI()];
+                    case 1:
+                        data = _b.sent();
+                        common_1.Common.SendEthTransaction(server_1.cpProvider.address, server_1.ethPN.options.address, 0, data, server_1.cpProvider.privateKey);
+                        return [2];
+                }
+            });
+        }); }
+    },
+    OnchainProviderWithdraw: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var returnValues, txhash, token, amount, balance, providerWithdrawEvent;
+            return __generator(this, function (_a) {
+                console.log("--------------------Handle CITA OnchainProviderWithdraw--------------------");
+                returnValues = event.returnValues, txhash = event.transactionHash;
+                token = returnValues.token, amount = returnValues.amount, balance = returnValues.balance;
+                console.log("token:[%s], amount:[%s], balance:[%s]", token, amount, balance);
+                providerWithdrawEvent = {
+                    token: token,
+                    amount: amount,
+                    totalWithdraw: amount,
+                    txhash: txhash
+                };
+                if (server_1.callbacks.get("ProviderWithdraw")) {
+                    server_1.callbacks.get("ProviderWithdraw")(null, providerWithdrawEvent);
+                }
+                return [2];
+            });
+        }); }
+    },
+    OnchainProviderDeposit: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var returnValues, txhash, token, amount, providerDepositEvent;
+            return __generator(this, function (_a) {
+                console.log("--------------------Handle CITA OnchainProviderDeposit--------------------");
+                returnValues = event.returnValues, txhash = event.transactionHash;
+                token = returnValues.token, amount = returnValues.amount;
+                console.log("token:[%s], amount:[%s]", token, amount);
+                providerDepositEvent = {
+                    token: token,
+                    amount: amount,
+                    totalDeposit: amount,
+                    txhash: txhash
+                };
+                if (server_1.callbacks.get("ProviderDeposit")) {
+                    server_1.callbacks.get("ProviderDeposit")(null, providerDepositEvent);
+                }
+                return [2];
+            });
+        }); }
+    },
+    OnchainUserDeposit: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, channelID, user, newDeposit, totalDeposit, txhash, token, userNewDepositEvent;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        console.log("--------------------Handle CITA OnchainUserDeposit--------------------");
+                        _a = event.returnValues, channelID = _a.channelID, user = _a.user, newDeposit = _a.deposit, totalDeposit = _a.totalDeposit, txhash = event.transactionHash;
+                        console.log(" channelID: [%s], user: [%s], newDeposit: [%s], totalDeposit: [%s] ", channelID, user, newDeposit, totalDeposit);
+                        return [4, server_1.appPN.methods.channelMap(channelID).call()];
+                    case 1:
+                        token = (_b.sent()).token;
+                        userNewDepositEvent = {
+                            sender: user,
+                            user: user,
+                            type: 2,
+                            token: token,
+                            amount: newDeposit,
+                            totalDeposit: totalDeposit,
+                            txhash: txhash
+                        };
+                        if (server_1.callbacks.get("UserDeposit")) {
+                            server_1.callbacks.get("UserDeposit")(null, userNewDepositEvent);
+                        }
+                        return [2];
+                }
+            });
+        }); }
+    },
+    OnchainUserWithdraw: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, channelID, user, amount, totalWithdraw, txhash, token, userWithdrawEvent;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        console.log("--------------------Handle CITA OnchainUserWithdraw--------------------");
+                        _a = event.returnValues, channelID = _a.channelID, user = _a.user, amount = _a.amount, totalWithdraw = _a.withdraw, txhash = event.transactionHash;
+                        console.log(" channelID: [%s], user: [%s], amount: [%s], totalWithdraw: [%s] ", channelID, user, amount, totalWithdraw);
+                        return [4, server_1.appPN.methods.channelMap(channelID).call()];
+                    case 1:
+                        token = (_b.sent()).token;
+                        userWithdrawEvent = {
+                            user: user,
+                            type: 1,
+                            token: token,
+                            amount: amount,
+                            totalWithdraw: totalWithdraw,
+                            txhash: txhash
+                        };
+                        if (server_1.callbacks.get("UserWithdraw")) {
+                            server_1.callbacks.get("UserWithdraw")(null, userWithdrawEvent);
+                        }
+                        return [2];
+                }
+            });
+        }); }
+    },
+    OnchainOpenChannel: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, user, token, amount, channelID, txhash, userJoinEvent;
+            return __generator(this, function (_b) {
+                console.log("--------------------Handle CITA OnchainOpenChannel--------------------");
+                _a = event.returnValues, user = _a.user, token = _a.token, amount = _a.amount, channelID = _a.channelID, txhash = event.transactionHash;
+                console.log(" sender: [%s], user: [%s], token: [%s], amount: [%s], channelID: [%s] ", user, user, token, amount, channelID);
+                userJoinEvent = {
+                    sender: user,
+                    user: user,
+                    type: 1,
+                    token: token,
+                    amount: amount,
+                    totalDeposit: amount,
+                    txhash: txhash
+                };
+                if (server_1.callbacks.get("UserDeposit")) {
+                    server_1.callbacks.get("UserDeposit")(null, userJoinEvent);
+                }
+                return [2];
+            });
+        }); }
+    },
+    OnchainCooperativeSettleChannel: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, channelID, user, token, balance, txhash, userLeaveEvent;
+            return __generator(this, function (_b) {
+                console.log("--------------------Handle CITA OnchainCooperativeSettleChannel--------------------");
+                _a = event.returnValues, channelID = _a.channelID, user = _a.user, token = _a.token, balance = _a.balance, txhash = event.transactionHash;
+                console.log(" channelID: [%s], user: [%s], token: [%s], balance: [%s] ", channelID, user, token, balance);
+                userLeaveEvent = {
+                    user: user,
+                    type: 2,
+                    token: token,
+                    amount: balance,
+                    totalWithdraw: "",
+                    txhash: txhash
+                };
+                if (server_1.callbacks.get("UserWithdraw")) {
+                    server_1.callbacks.get("UserWithdraw")(null, userLeaveEvent);
+                }
+                return [2];
+            });
+        }); }
+    },
+    OnchainSettleChannel: {
+        filter: function () { return ({}); },
+        handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
+            var _a, channelID, user, token, transferTouserAmount, transferToProviderAmount, txhash, closer, userLeaveEvent;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        console.log("--------------------Handle CITA OnchainSettleChannel--------------------");
+                        _a = event.returnValues, channelID = _a.channelID, user = _a.user, token = _a.token, transferTouserAmount = _a.userSettleAmount, transferToProviderAmount = _a.providerSettleAmount, txhash = event.transactionHash;
+                        console.log(" channelID: [%s], user: [%s], token: [%s], transferTouserAmount: [%s], transferToProviderAmount: [%s] ", channelID, user, token, transferTouserAmount, transferToProviderAmount);
+                        return [4, server_1.appPN.methods.closingChannelMap(channelID).call()];
+                    case 1:
+                        closer = (_b.sent()).closer;
+                        userLeaveEvent = {
+                            closer: closer,
+                            user: user,
+                            token: token,
+                            userSettleAmount: transferTouserAmount,
+                            providerSettleAmount: transferToProviderAmount,
+                            txhash: txhash
+                        };
+                        if (server_1.callbacks.get("UserForceWithdraw")) {
+                            server_1.callbacks.get("UserForceWithdraw")(null, userLeaveEvent);
+                        }
+                        return [2];
+                }
+            });
+        }); }
+    }
 };
 //# sourceMappingURL=cita_events.js.map

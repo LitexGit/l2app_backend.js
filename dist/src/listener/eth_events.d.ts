@@ -1,33 +1,33 @@
 export declare const ETH_EVENTS: {
-    'ProviderNewDeposit': {
+    ProviderNewDeposit: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'ProviderWithdraw': {
+    ProviderWithdraw: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'UserNewDeposit': {
+    UserNewDeposit: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'UserWithdraw': {
+    UserWithdraw: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'ChannelOpened': {
+    ChannelOpened: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'ChannelClosed': {
+    ChannelClosed: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'CooperativeSettled': {
+    CooperativeSettled: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'ChannelSettled': {
+    ChannelSettled: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };

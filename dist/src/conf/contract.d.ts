@@ -11,6 +11,22 @@ export declare enum SESSION_STATUS {
     SESSION_STATUS_OPEN = 1,
     SESSION_STATUS_CLOSE = 2
 }
+export declare type PN = {
+    address: string;
+    abi: string;
+};
+export declare type SessionData = {
+    sessionID: string;
+    mType: number;
+    content: string;
+    signature: string;
+};
+export declare type PaymentData = {
+    transferData: any;
+    paymentSignature: string;
+};
+export declare type L2_EVENT = "Message" | "UserDeposit" | "UserWithdraw" | "UserForceWithdraw" | "ProviderWithdraw" | "ProviderDeposit" | "Transfer";
+export declare type L2_CB = (err: any, res: any) => void;
 export declare type TRANSFER_EVENT = {
     from: string;
     to: string;
@@ -40,6 +56,12 @@ export declare type PROVIDER_WITHDRAW_EVENT = {
     token: string;
     amount: string;
     totalWithdraw: string;
+    txhash: string;
+};
+export declare type PROVIDER_DEPOSIT_EVENT = {
+    token: string;
+    amount: string;
+    totalDeposit: string;
     txhash: string;
 };
 export declare type USER_FORCEWITHDRAW_EVENT = {

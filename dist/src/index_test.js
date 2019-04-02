@@ -39,133 +39,131 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var sdk_1 = require("./sdk/sdk");
 var config_dev_1 = require("./conf/config.dev");
 var common_1 = require("./lib/common");
-process.on('unhandledRejection', function (reason, p) {
-    console.log('Unhandled Rejection at:', p, 'reason:', reason);
+process.on("unhandledRejection", function (reason, p) {
+    console.log("Unhandled Rejection at:", p, "reason:", reason);
 });
 var l2 = sdk_1.L2.GetInstance();
-l2.Init(config_dev_1.cpPrivateKey, config_dev_1.ethProvider, config_dev_1.ethPaymentNetwork, config_dev_1.appRpcUrl, config_dev_1.appPaymentNetwork);
-l2.on('Transfer', function (err, res) {
+l2.init(config_dev_1.cpPrivateKey, config_dev_1.ethRpcUrl, config_dev_1.ethPaymentNetwork, config_dev_1.appRpcUrl, config_dev_1.appPaymentNetwork, config_dev_1.sessionPayNetwork);
+l2.on("Transfer", function (err, res) {
     console.log("SDK Receive Asset", res);
-    var sender = res.sender, receiver = res.receiver, token = res.token, amount = res.amount, totalTransferredAmount = res.totalTransferredAmount;
-    l2.Transfer(sender, amount, token);
+    var from = res.from, to = res.to, token = res.token, amount = res.amount, totalTransferredAmount = res.totalTransferredAmount;
 });
-l2.on('UserDeposit', function (err, res) {
+l2.on("UserDeposit", function (err, res) {
     console.log("SDK Receive UserDeposit", res);
 });
-l2.on('UserWithdraw', function (err, res) {
+l2.on("UserWithdraw", function (err, res) {
     console.log("SDK Receive UserWithdraw", res);
 });
-l2.on('ProviderWithdraw', function (err, res) {
+l2.on("ProviderWithdraw", function (err, res) {
     console.log("SDK Receive ProviderWithdraw", res);
 });
-l2.on('UserForceWithdraw', function (err, res) {
+l2.on("UserForceWithdraw", function (err, res) {
     console.log("SDK Receive UserForceWithdraw", res);
 });
-l2.on('Message', function (err, res) { return __awaiter(_this, void 0, void 0, function () {
+l2.on("Message", function (err, res) { return __awaiter(_this, void 0, void 0, function () {
     var sessionID, user, type, content, token, amount, players;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 console.log("SDK Receive Message", res);
                 sessionID = res.sessionID, user = res.from, type = res.type, content = res.content, token = res.token, amount = res.amount;
-                return [4, l2.GetPlayersBySessionID(sessionID)];
+                return [4, l2.getPlayersBySessionID(sessionID)];
             case 1:
                 players = _a.sent();
-                console.log('session players', players);
-                return [4, l2.SendMessage(sessionID, user, type + 'res', content, amount, token)];
-            case 2:
-                _a.sent();
+                console.log("session players", players);
                 return [2];
         }
     });
 }); });
 var port = 9527;
-var express = require('express');
+var express = require("express");
 var app = express();
 app.use(function (req, res, next) {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-    res.header('Access-Control-Allow-Methods', 'GET');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Content-Type', 'application/json;charset=utf-8');
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+    res.header("Access-Control-Allow-Methods", "GET");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Content-Type", "application/json;charset=utf-8");
     next();
 });
-app.get('/getSessionID', function (req, res) {
+app.get("/getSessionID", function (req, res) {
+    var user = req.query.user;
     var game = "0x605a409Dc63cFd7e35ef7cb2d2cab8B66b136928";
     var customData = "hello world";
     var sessionID = common_1.Common.GenerateSessionID(game);
-    l2.StartSession(sessionID, game, customData);
+    console.log("getSessionID user is ", user);
+    l2.startSession(sessionID, game, [user], customData);
     res.json({
         status: 1,
         data: { sessionID: sessionID }
     });
 });
-app.get('/closeSession', function (req, res) {
+app.get("/closeSession", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var sessionID;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     sessionID = req.query.sessionID;
-                    return [4, l2.CloseSession(sessionID)];
+                    return [4, l2.closeSession(sessionID)];
                 case 1:
                     _a.sent();
                     res.json({
                         status: 1,
-                        data: { msg: 'ok' }
+                        data: { msg: "ok" }
                     });
                     return [2];
             }
         });
     });
 });
-app.get('/getTransactions', function (req, res) {
+app.get("/getTransactions", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var sessionID;
         return __generator(this, function (_a) {
             sessionID = req.query.sessionID;
             res.json({
                 status: 1,
-                data: { msg: 'ok' }
+                data: { msg: "ok" }
             });
             return [2];
         });
     });
 });
-app.get('/providerWithdraw', function (req, res) {
+app.get("/providerWithdraw", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var sessionID;
         return __generator(this, function (_a) {
             sessionID = req.query.sessionID;
             res.json({
                 status: 1,
-                data: { msg: 'ok' }
+                data: { msg: "ok" }
             });
             return [2];
         });
     });
 });
-app.get('/rebalance', function (req, res) {
+app.get("/rebalance", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var sessionID;
         return __generator(this, function (_a) {
             sessionID = req.query.sessionID;
             res.json({
                 status: 1,
-                data: { msg: 'ok' }
+                data: { msg: "ok" }
             });
             return [2];
         });
     });
 });
-app.get('/forceClose', function (req, res) {
+app.get("/forceClose", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var sessionID;
         return __generator(this, function (_a) {
             sessionID = req.query.sessionID;
             res.json({
                 status: 1,
-                data: { msg: 'ok' }
+                data: { msg: "ok" }
             });
             return [2];
         });

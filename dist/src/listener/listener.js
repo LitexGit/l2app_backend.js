@@ -35,20 +35,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var common_1 = require("../lib/common");
 var HttpWatcher = (function () {
-    function HttpWatcher(base, blockInterval, watchList) {
+    function HttpWatcher(base, provider, blockInterval, watchList) {
         this.base = base;
+        this.provider = provider;
         this.blockInterval = blockInterval;
         this.watchList = watchList;
         this.enabled = true;
     }
-    HttpWatcher.prototype.delay = function (duration) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                return [2, new Promise(function (resolve) { return setTimeout(resolve, duration); })];
-            });
-        });
-    };
     HttpWatcher.prototype.processEvent = function (fromBlockNumber, toBlockNumber, contract, eventName, eventSetting) {
         return __awaiter(this, void 0, void 0, function () {
             var events, _i, events_1, event_1;
@@ -61,21 +56,16 @@ var HttpWatcher = (function () {
                         })];
                     case 1:
                         events = _a.sent();
-                        _i = 0, events_1 = events;
-                        _a.label = 2;
-                    case 2:
-                        if (!(_i < events_1.length)) return [3, 5];
-                        event_1 = events_1[_i];
-                        return [4, eventSetting.handler(event_1)];
-                    case 3:
-                        _a.sent();
-                        console.log('eventName is ', eventName, eventSetting.filter());
-                        console.log("event", event_1.transactionHash);
-                        _a.label = 4;
-                    case 4:
-                        _i++;
-                        return [3, 2];
-                    case 5: return [2];
+                        for (_i = 0, events_1 = events; _i < events_1.length; _i++) {
+                            event_1 = events_1[_i];
+                            try {
+                                eventSetting.handler(event_1);
+                            }
+                            catch (err) {
+                                console.log("process event: ", eventName, err);
+                            }
+                        }
+                        return [2];
                 }
             });
         });
@@ -133,7 +123,7 @@ var HttpWatcher = (function () {
                         _k.label = 12;
                     case 12:
                         if (!true) return [3, 25];
-                        return [4, this.delay(this.blockInterval)];
+                        return [4, common_1.Common.Sleep(this.blockInterval)];
                     case 13:
                         _k.sent();
                         _k.label = 14;
@@ -143,7 +133,6 @@ var HttpWatcher = (function () {
                         return [4, this.base.getBlockNumber()];
                     case 15:
                         currentBlockNumber = _k.sent();
-                        console.log("watching event", lastBlockNumber, currentBlockNumber);
                         if (lastBlockNumber > currentBlockNumber) {
                             return [3, 12];
                         }

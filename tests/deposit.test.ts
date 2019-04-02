@@ -1,8 +1,18 @@
 import { initL2 } from "./test_util";
 import { L2 } from "../src/sdk/sdk";
 import { Common } from "../src/lib/common";
-import { web3, cpProvider } from "../src/lib/server";
-jest.setTimeout(600000);
+import { config as testConfig } from "./config_test";
+let {
+  userAddress,
+  userPrivateKey,
+  operatorPrivateKey,
+  token,
+  feeRate,
+  jestTimeout,
+  sleepInterval
+} = testConfig;
+
+jest.setTimeout(jestTimeout);
 
 describe("单元测试", () => {
   let l2: L2;
@@ -25,10 +35,10 @@ describe("单元测试", () => {
       });
     });
 
-    let beforePN = await l2.GetPaymentNetwork();
-    Promise.all([await l2.Deposit(depositAmount), await watchDepsoit]);
-    await Common.Sleep(2000);
-    let afterPN = await l2.GetPaymentNetwork();
+    let beforePN = await l2.getPaymentNetwork(token);
+    Promise.all([await l2.deposit(depositAmount, token), await watchDepsoit]);
+    await Common.Sleep(sleepInterval);
+    let afterPN = await l2.getPaymentNetwork(token);
 
     console.log("beforePN", beforePN);
     console.log("afterPN", afterPN);
@@ -52,10 +62,10 @@ describe("单元测试", () => {
     });
 
     // let beforeBalance = await web3.eth.getBalance(cpProvider.address);
-    let beforePN = await l2.GetPaymentNetwork();
-    Promise.all([await l2.Withdraw(withdrawAmount), await watchWithdraw]);
-    await Common.Sleep(2000);
-    let afterPN = await l2.GetPaymentNetwork();
+    let beforePN = await l2.getPaymentNetwork(token);
+    Promise.all([await l2.withdraw(withdrawAmount, token), await watchWithdraw]);
+    await Common.Sleep(sleepInterval);
+    let afterPN = await l2.getPaymentNetwork(token);
     // let afterBalance = await web3.eth.getBalance(cpProvider.address);
     console.log("beforePN", beforePN);
     console.log("afterPN", afterPN);

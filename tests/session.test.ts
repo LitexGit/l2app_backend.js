@@ -1,13 +1,26 @@
-import { userOpenChannel, initL2 } from "./test_util";
+import { userOpenChannel, initL2, userCloseChannel } from "./test_util";
 import { L2 } from "../src/sdk/sdk";
+import { config as testConfig } from "./config_test";
+import { Common } from "../src/lib/common";
+import { web3, cpProvider } from "../src/lib/server";
+import { SESSION_STATUS } from "../src/conf/contract";
+let {
+  userAddress,
+  userPrivateKey,
+  operatorPrivateKey,
+  token,
+  feeRate,
+  jestTimeout,
+  sleepInterval
+} = testConfig;
 
-jest.setTimeout(600000);
+jest.setTimeout(jestTimeout);
 
-describe("channel test", () => {
+describe("session test", () => {
   let l2: L2;
-  let user = "0x56d77fcb5e4Fd52193805EbaDeF7a9D75325bdC0";
-  let userPrivateKey =
-    "118538D2E2B08396D49AB77565F3038510B033A74C7D920C1C9C7E457276A3FB";
+
+  let sessionID: string;
+
   beforeAll(async () => {
     l2 = await initL2();
     let depositAmount = 1e14;
@@ -19,7 +32,7 @@ describe("channel test", () => {
     });
     await Promise.all([
       watchDeposit,
-      userOpenChannel(user, userPrivateKey, depositAmount)
+      userOpenChannel(userAddress, userPrivateKey, depositAmount, token)
     ]);
   });
 
@@ -30,20 +43,136 @@ describe("channel test", () => {
         resolve(res);
       });
     });
-    await Promise.all([l2.KickUser(user), watchForceWithdraw]);
+    await Promise.all([
+      userCloseChannel(userAddress, userPrivateKey, token),
+      watchForceWithdraw
+    ]);
   });
 
-  it("ReBalance", async () => {});
+  beforeEach(async () => {
+    console.log(
+      "/************************NEXT IT***********************************/"
+    );
+    await Common.Sleep(sleepInterval);
+  });
 
-  it("Transfer", async () => {});
+  it("ReBalance", async () => {
+    let pnInfo = await l2.getPaymentNetwork(token);
+    console.log("pnInfo: ", pnInfo);
 
-  it("CreateSession", async () => {});
+    let depositAmount = Number(pnInfo.providerBalance) / 10;
 
-  it("JoinSession", async () => {});
+    let beforeChannelInfo = await l2.getChannelInfo(userAddress, token);
+    console.log("before channel info is ", beforeChannelInfo);
 
-  it("SendMessage", async () => {});
+    let res = await l2.rebalance(userAddress, depositAmount, token);
+    await Common.Sleep(sleepInterval);
+    let afterChannelInfo = await l2.getChannelInfo(userAddress, token);
+    console.log("after channel info is ", afterChannelInfo);
 
-  it("SendMessageWithAsset", async () => {});
+    expect(Number(afterChannelInfo.providerBalance)).toBe(
+      Number(beforeChannelInfo.providerBalance) + depositAmount
+    );
+  });
 
-  it("CloseSession", async () => {});
+  it("CreateSession", async () => {
+    sessionID = web3.utils.sha3("hello world" + new Date().toISOString());
+    await l2.startSession(
+      sessionID,
+      userAddress,
+      [userAddress],
+      web3.utils.toHex("hello world")
+    );
+    await Common.Sleep(sleepInterval);
+
+    let session = await l2.getSession(sessionID);
+    console.log("session: ", session);
+    expect(session.game).toBe(userAddress);
+    expect(session.status).toBe(SESSION_STATUS.SESSION_STATUS_OPEN);
+
+    let players = await l2.getPlayersBySessionID(sessionID);
+    console.log("players: ", players);
+    expect(players.length).toBe(1);
+    expect(players[0]).toBe(userAddress);
+  });
+
+  it("JoinSession", async () => {
+    // let session = await l2.GetSession(sessionID);
+    let res = await l2.joinSession(sessionID, cpProvider.address);
+    await Common.Sleep(sleepInterval);
+
+    let players = await l2.getPlayersBySessionID(sessionID);
+    console.log("players: ", players);
+    expect(players.length).toBeGreaterThanOrEqual(1);
+    expect(players[players.length - 1]).toBe(cpProvider.address);
+  });
+
+  it("SendMessage", async () => {
+    // let session = await l2.GetSession(sessionID)
+    let messageContent = web3.utils.toHex(
+      "hello world" + new Date().toISOString()
+    );
+    await l2.sendMessage(sessionID, userAddress, 2, messageContent);
+    await Common.Sleep(sleepInterval);
+
+    let messages = await l2.getMessagesBySessionID(sessionID);
+    console.log("messages: ", messages);
+    expect(messages.length).toBeGreaterThanOrEqual(1);
+    expect(messages[messages.length - 1].content).toBe(messageContent);
+  });
+
+  it("SendMessageWithAsset", async () => {
+    let channelInfo = await l2.getChannelInfo(userAddress, token);
+    let sendAmount = Number(channelInfo.providerBalance) / 10 + "";
+    // let session = await l2.GetSession(sessionID)
+    let messageContent = web3.utils.toHex("hello world with money");
+    await l2.sendMessage(
+      sessionID,
+      userAddress,
+      3,
+      messageContent,
+      sendAmount,
+      token
+    );
+
+    await Common.Sleep(sleepInterval);
+    let messages = await l2.getMessagesBySessionID(sessionID);
+    console.log("messages: ", messages);
+    expect(messages.length).toBeGreaterThanOrEqual(1);
+    let lastMessage = messages[messages.length - 1];
+    expect(lastMessage.content).toBe(messageContent);
+    expect(lastMessage.amount).toBe(sendAmount);
+
+    let afterChannelInfo = await l2.getChannelInfo(userAddress, token);
+    expect(afterChannelInfo.providerBalance).toBe(
+      Number((channelInfo.providerBalance * 9) / 10) + ""
+    );
+  });
+
+  it("exportSessionBytes", async () => {
+    // for (let i = 0; i < 10; i++) {
+    //   let messageContent = web3.utils.toHex(
+    //     "hello world" + i + new Date().toISOString()
+    //   );
+    //   await l2.SendMessage(sessionID, userAddress, 2, messageContent);
+    // }
+    // await Common.Sleep(sleepInterval * 2);
+
+    let messages = await l2.getMessagesBySessionID(sessionID);
+    console.log("messages length", messages.length);
+    console.log("messages: ", messages);
+
+    let bytes = await l2.exportSessionBytes(sessionID);
+    console.log("export session bytes", bytes);
+  });
+
+  it("CloseSession", async () => {
+    let res = await l2.closeSession(sessionID);
+    await Common.Sleep(sleepInterval);
+    await Common.Sleep(sleepInterval);
+
+    let session = await l2.getSession(sessionID);
+    console.log("session: ", session);
+    expect(session.status).toBe(SESSION_STATUS.SESSION_STATUS_CLOSE);
+  });
 });

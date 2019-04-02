@@ -37,7 +37,9 @@ export class Session {
         userList,
         appPN.options.address,
         web3.utils.toHex(customData)
-      )
+      ),
+      cpProvider.address,
+      cpProvider.privateKey
     );
   }
 
@@ -52,7 +54,9 @@ export class Session {
   static async JoinSession(sessionID: string, user: string) {
     // 发送交易 到 AppChain
     return await Common.SendAppChainTX(
-      sessionPN.methods.joinSession(sessionID, user)
+      sessionPN.methods.joinSession(sessionID, user),
+      cpProvider.address,
+      cpProvider.privateKey
     );
   }
 
@@ -90,7 +94,9 @@ export class Session {
         sessionData.signature,
         paymentData.transferData,
         paymentData.paymentSignature
-      )
+      ),
+      cpProvider.address,
+      cpProvider.privateKey
     );
   }
 
@@ -101,7 +107,9 @@ export class Session {
    */
   static async CloseSession(sessionID: string) {
     return await Common.SendAppChainTX(
-      sessionPN.methods.closeSession(sessionID)
+      sessionPN.methods.closeSession(sessionID),
+      cpProvider.address,
+      cpProvider.privateKey
     );
   }
 

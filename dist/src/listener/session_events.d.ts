@@ -1,19 +1,19 @@
 export declare const SESSION_EVENTS: {
-    'InitSession': {
+    InitSession: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'JoinSession': {
+    JoinSession: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };
-    'SendMessage': {
+    SendMessage: {
         filter: () => {
             to: any;
         };
         handler: (event: any) => Promise<void>;
     };
-    'CloseSession': {
+    CloseSession: {
         filter: () => {};
         handler: (event: any) => Promise<void>;
     };

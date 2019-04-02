@@ -70,15 +70,16 @@ export const CITA_EVENTS = {
 
       //
       let feeRate = await appPN.methods.feeRateMap(token).call();
-      console.log(
-        "feeProofAmount :[%s], feeRate :[%s]",
-        feeProofAmount,
-        feeRate
-      );
       if (Number(feeRate) === 0) {
+        console.log("feeRate is 0, will do nothing");
         return;
       }
 
+      console.log(
+        "start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]",
+        feeProofAmount,
+        feeRate
+      );
       // 查询通道证据
       let [{ balance: amount }] = await Promise.all([
         appPN.methods.balanceProofMap(channelID, cpProvider.address).call()
@@ -115,7 +116,7 @@ export const CITA_EVENTS = {
       );
 
       // 进行签名
-      let signature = Common.SignatureToHex(messageHash);
+      let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
       console.log(
         "infos:  channelID :[%s], token :[%s], feeAmount :[%s], feeNonce :[%s], signature :[%s]",
@@ -133,20 +134,22 @@ export const CITA_EVENTS = {
           feeAmount,
           feeNonce,
           signature
-        )
+        ),
+        cpProvider.address,
+        cpProvider.privateKey
       );
     }
   },
-  /*
-    'SubmitFee': {
-        filter: { },
-        handler: async (event: any) => {
-            console.log("SubmitFee event", event);
-
-
-        }
-    },
-    */
+  SubmitFee: {
+    filter: () => ({}),
+    handler: async (event: any) => {
+      console.log(
+        "--------------------Handle CITA SubmitFee--------------------"
+      );
+      let { token, amount, nonce } = event.returnValues;
+      console.log("token:[%s], amount:[%s], nonce:[%s]", token, amount, nonce);
+    }
+  },
   UserProposeWithdraw: {
     filter: () => ({}),
     handler: async (event: any) => {
@@ -184,11 +187,13 @@ export const CITA_EVENTS = {
       );
 
       // 进行签名
-      let signature = Common.SignatureToHex(messageHash);
+      let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
       // 提交到合约
       Common.SendAppChainTX(
-        appPN.methods.confirmUserWithdraw(channelID, signature)
+        appPN.methods.confirmUserWithdraw(channelID, signature),
+        cpProvider.address,
+        cpProvider.privateKey
       );
     }
   },
@@ -219,11 +224,13 @@ export const CITA_EVENTS = {
       );
 
       // 进行签名
-      let signature = Common.SignatureToHex(messageHash);
+      let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
       // 提交到合约
       Common.SendAppChainTX(
-        appPN.methods.confirmCooperativeSettle(channelID, signature)
+        appPN.methods.confirmCooperativeSettle(channelID, signature),
+        cpProvider.address,
+        cpProvider.privateKey
       );
     }
   },
@@ -257,7 +264,8 @@ export const CITA_EVENTS = {
         cpProvider.address,
         ethPN.options.address,
         0,
-        data
+        data,
+        cpProvider.privateKey
       );
     }
   },

@@ -2,9 +2,18 @@ import { AbiItem } from "web3/node_modules/web3-utils";
 const TX = require("ethereumjs-tx");
 const ethUtil = require("ethereumjs-util");
 
+let ethNonce = new Map<string, number>();
+function getEthNonce(address) {
+  if (ethNonce.get(address) > 0) {
+    return ethNonce.get(address);
+  } else {
+    return 0;
+  }
+}
+
 import { COMMIT_BLOCK_CONDITION, TX_BASE } from "../conf/contract";
 
-import { CITA, web3, cpProvider, ethPN } from "./server";
+import { CITA, web3, ethPN } from "./server";
 
 export class Common {
   static Abi2JsonInterface(abi: string): AbiItem[] | AbiItem {
@@ -29,9 +38,18 @@ export class Common {
     from: string,
     to: string,
     value: number | string,
-    data: string
+    data: string,
+    privateKey: string
   ) {
+
+    //TODO: fetch nonce from persist storage
     let nonce = await web3.eth.getTransactionCount(from);
+    if (nonce > getEthNonce(from)) {
+      ethNonce.set(from, nonce);
+    } else {
+      nonce = getEthNonce(from) + 1;
+      ethNonce.set(from, nonce);
+    }
 
     let rawTx = {
       from: from,
@@ -47,7 +65,7 @@ export class Common {
 
     let tx = new TX(rawTx);
 
-    let priKey = cpProvider.privateKey;
+    let priKey = privateKey;
 
     if (priKey.substr(0, 2) === "0x") {
       tx.sign(Buffer.from(priKey.substr(2), "hex"));
@@ -66,22 +84,23 @@ export class Common {
         web3.eth
           .sendSignedTransaction(txData)
           .on("transactionHash", (value: {} | PromiseLike<{}>) => {
+            console.log("transactionHash: ", value);
             resolve(value);
           })
           .on("error", (error: any) => {
-            // reject(error);
+            reject(error);
           });
       } catch (e) {
-        // reject(e);
+        reject(e);
       }
     });
   }
 
-  static async BuildAppChainTX() {
+  static async BuildAppChainTX(from: string, privateKey: string) {
     let tx = {
       ...TX_BASE,
-      privateKey: cpProvider.privateKey,
-      from: cpProvider.address
+      privateKey,
+      from
     };
 
     tx.validUntilBlock = await Common.GetLastCommitBlock("cita");
@@ -89,9 +108,8 @@ export class Common {
     return tx;
   }
 
-  static async SendAppChainTX(action: any) {
-
-    let tx = await this.BuildAppChainTX();
+  static async SendAppChainTX(action: any, from: string, privateKey: string) {
+    let tx = await this.BuildAppChainTX(from, privateKey);
     let rs = await action.send(tx);
 
     if (rs.hash) {
@@ -132,9 +150,7 @@ export class Common {
     return recoveredAddress.toLowerCase() == address.toLowerCase();
   }
 
-  static SignatureToHex(messageHash: string) {
-    let privateKey = cpProvider.privateKey;
-
+  static SignatureToHex(messageHash: string, privateKey: string) {
     let messageHex =
       messageHash.substr(0, 2) == "0x" ? messageHash.substr(2) : messageHash;
     let privateKeyHex =

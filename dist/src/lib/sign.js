@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var ethereumjs_util_1 = require("ethereumjs-util");
 var contract_1 = require("../conf/contract");
-var abi = require('ethereumjs-abi');
+var abi = require("ethereumjs-abi");
 var types = contract_1.TYPED_DATA.types;
 function dependencies(primaryType, found) {
     if (found === void 0) { found = []; }
@@ -28,13 +28,15 @@ function encodeType(primaryType) {
     var deps = dependencies(primaryType);
     deps = deps.filter(function (t) { return t != primaryType; });
     deps = [primaryType].concat(deps.sort());
-    var result = '';
+    var result = "";
     for (var _i = 0, deps_1 = deps; _i < deps_1.length; _i++) {
         var type = deps_1[_i];
-        result += type + "(" + types[type].map(function (_a) {
+        result += type + "(" + types[type]
+            .map(function (_a) {
             var name = _a.name, type = _a.type;
             return type + " " + name;
-        }).join(',') + ")";
+        })
+            .join(",") + ")";
     }
     return result;
 }
@@ -44,23 +46,23 @@ function typeHash(primaryType) {
 function encodeData(primaryType, data) {
     var encTypes = [];
     var encValues = [];
-    encTypes.push('bytes32');
+    encTypes.push("bytes32");
     encValues.push(typeHash(primaryType));
     for (var _i = 0, _a = types[primaryType]; _i < _a.length; _i++) {
         var field = _a[_i];
         var value = data[field.name];
-        if (field.type == 'string' || field.type == 'bytes') {
-            encTypes.push('bytes32');
+        if (field.type == "string" || field.type == "bytes") {
+            encTypes.push("bytes32");
             value = ethereumjs_util_1.keccak256(value);
             encValues.push(value);
         }
         else if (types[field.type] !== undefined) {
-            encTypes.push('bytes32');
+            encTypes.push("bytes32");
             value = ethereumjs_util_1.keccak256(encodeData(field.type, value));
             encValues.push(value);
         }
-        else if (field.type.lastIndexOf(']') === field.type.length - 1) {
-            throw 'TODO: Arrays currently unimplemented in encodeData';
+        else if (field.type.lastIndexOf("]") === field.type.length - 1) {
+            throw "TODO: Arrays currently unimplemented in encodeData";
         }
         else {
             encTypes.push(field.type);
@@ -74,10 +76,10 @@ function structHash(primaryType, data) {
 }
 function signHash(message) {
     return ethereumjs_util_1.keccak256(Buffer.concat([
-        Buffer.from('1901', 'hex'),
-        structHash('EIP712Domain', contract_1.TYPED_DATA.domain),
-        structHash(contract_1.TYPED_DATA.primaryType, message),
-    ])).toString('hex');
+        Buffer.from("1901", "hex"),
+        structHash("EIP712Domain", contract_1.TYPED_DATA.domain),
+        structHash(contract_1.TYPED_DATA.primaryType, message)
+    ])).toString("hex");
 }
 exports.signHash = signHash;
 //# sourceMappingURL=sign.js.map

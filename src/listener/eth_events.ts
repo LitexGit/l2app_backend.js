@@ -114,7 +114,10 @@ export const ETH_EVENTS = {
             );
 
             // 进行签名
-            let consignorSignature = Common.SignatureToHex(messageHash);
+            let consignorSignature = Common.SignatureToHex(
+              messageHash,
+              cpProvider.privateKey
+            );
 
             console.log("user close the channel, provider will submit proof");
             console.log(
@@ -143,7 +146,8 @@ export const ETH_EVENTS = {
               cpProvider.address,
               ethPN.options.address,
               0,
-              data
+              data,
+              cpProvider.privateKey
             );
           }
         } else {
@@ -176,24 +180,30 @@ export const ETH_EVENTS = {
               partnerSignature,
               consignorSignature
             );
-            data = ethPN.methods
-              .partnerUpdateProof(
-                channelID,
-                balance,
-                nonce,
-                additionalHash,
-                partnerSignature,
-                consignorSignature
-              )
-              .encodeABI();
 
-            // 发送ETH交易
-            await Common.SendEthTransaction(
-              cpProvider.address,
-              ethPN.options.address,
-              0,
-              data
-            );
+            if (consignorSignature == null || consignorSignature == "") {
+              console.log("no user proof signature, will not submit proof");
+            } else {
+              data = ethPN.methods
+                .partnerUpdateProof(
+                  channelID,
+                  balance,
+                  nonce,
+                  additionalHash,
+                  partnerSignature,
+                  consignorSignature
+                )
+                .encodeABI();
+
+              // 发送ETH交易
+              await Common.SendEthTransaction(
+                cpProvider.address,
+                ethPN.options.address,
+                0,
+                data,
+                cpProvider.privateKey
+              );
+            }
           }
         }
       }
@@ -216,7 +226,8 @@ export const ETH_EVENTS = {
             cpProvider.address,
             ethPN.options.address,
             0,
-            settleData
+            settleData,
+            cpProvider.privateKey
           );
 
           console.log("Settle Channel HASH:", hash);

@@ -20,7 +20,7 @@ process.on("unhandledRejection", (reason, p) => {
 });
 
 let l2 = L2.GetInstance();
-l2.Init(
+l2.init(
   cpPrivateKey,
   ethRpcUrl,
   ethPaymentNetwork,
@@ -56,7 +56,7 @@ l2.on("UserForceWithdraw", (err: any, res: any) => {
 l2.on("Message", async (err: any, res: any) => {
   console.log("SDK Receive Message", res);
   let { sessionID, from: user, type, content, token, amount } = res;
-  let players = await l2.GetPlayersBySessionID(sessionID);
+  let players = await l2.getPlayersBySessionID(sessionID);
 
   console.log("session players", players);
 
@@ -87,7 +87,7 @@ app.get("/getSessionID", function(req: Request, res: Response) {
   let sessionID = Common.GenerateSessionID(game);
   console.log("getSessionID user is ", user);
 
-  l2.StartSession(sessionID, game, [user], customData);
+  l2.startSession(sessionID, game, [user], customData);
 
   res.json({
     status: 1,
@@ -98,7 +98,7 @@ app.get("/getSessionID", function(req: Request, res: Response) {
 app.get("/closeSession", async function(req: Request, res: Response) {
   let sessionID = req.query.sessionID;
 
-  await l2.CloseSession(sessionID);
+  await l2.closeSession(sessionID);
 
   res.json({
     status: 1,

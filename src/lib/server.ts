@@ -9,7 +9,8 @@ import {
   TYPED_DATA,
   L2_CB,
   L2_EVENT,
-  PN
+  PN,
+  SESSION_STATUS
 } from "../conf/contract";
 import HttpWatcher from "../listener/listener";
 import { ETH_EVENTS } from "../listener/eth_events";
@@ -61,7 +62,7 @@ export class SDK {
    * @param sessionPayNetwork PN
    * @constructor
    */
-  async Init(
+  async init(
     cpPrivateKey: string,
     ethRpcUrl: string,
     ethPaymentNetwork: PN,
@@ -128,7 +129,7 @@ export class SDK {
    *
    * @returns string 返回交易hash
    */
-  async Deposit(amount: number | string, token: string = ADDRESS_ZERO) {
+  async deposit(amount: number | string, token: string = ADDRESS_ZERO) {
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
@@ -151,9 +152,10 @@ export class SDK {
       // 发送ERC20交易
       await Common.SendEthTransaction(
         cpProvider.address,
-        ethPN.options.address,
+        token,
         0,
-        erc20Data
+        erc20Data,
+        cpProvider.privateKey
       );
 
       // 发送ETH交易
@@ -161,7 +163,8 @@ export class SDK {
         cpProvider.address,
         ethPN.options.address,
         0,
-        data
+        data,
+        cpProvider.privateKey
       );
     } else {
       // 发送ETH交易
@@ -169,7 +172,8 @@ export class SDK {
         cpProvider.address,
         ethPN.options.address,
         amountBN,
-        data
+        data,
+        cpProvider.privateKey
       );
     }
   }
@@ -184,7 +188,7 @@ export class SDK {
    *
    * @returns string 返回交易hash
    */
-  async Withdraw(amount: number | string, token: string = ADDRESS_ZERO) {
+  async withdraw(amount: number | string, token: string = ADDRESS_ZERO) {
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
@@ -239,7 +243,9 @@ export class SDK {
         token,
         balance.toString(),
         lastCommitBlock
-      )
+      ),
+      cpProvider.address,
+      cpProvider.privateKey
     );
 
     // 等待 ProviderProposeWithdraw 事件回调
@@ -256,7 +262,7 @@ export class SDK {
    *
    * @return
    */
-  async Rebalance(
+  async rebalance(
     userAddress: string,
     amount: number | string,
     token: string = ADDRESS_ZERO
@@ -320,7 +326,7 @@ export class SDK {
     );
 
     // 进行签名
-    let signature = Common.SignatureToHex(messageHash);
+    let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
     // 向 appChain 提交 ReBalance 数据
     return await Common.SendAppChainTX(
@@ -329,7 +335,9 @@ export class SDK {
         reBalanceAmountBN,
         nonce,
         signature
-      )
+      ),
+      cpProvider.address,
+      cpProvider.privateKey
     );
 
     // 等待 ConfirmRebalance 事件回调
@@ -342,7 +350,7 @@ export class SDK {
    * @param userAddress
    * @constructor
    */
-  async KickUser(userAddress: string, token: string = ADDRESS_ZERO) {
+  async kickUser(userAddress: string, token: string = ADDRESS_ZERO) {
     if (!web3.utils.isAddress(userAddress)) {
       throw new Error(`userAddress [${userAddress}] is not a valid address`);
     }
@@ -371,7 +379,7 @@ export class SDK {
         amount: inAmount,
         nonce: inNonce,
         regulatorSignature,
-        inProviderSignature
+        providerSignature
       }
     ] = await Promise.all([
       appPN.methods.balanceProofMap(channelID, cpProvider.address).call(),
@@ -380,7 +388,7 @@ export class SDK {
 
     partnerSignature = partnerSignature || "0x0";
     regulatorSignature = regulatorSignature || "0x0";
-    inProviderSignature = inProviderSignature || "0x0";
+    providerSignature = providerSignature || "0x0";
 
     console.log(
       "closeChannel params:  channelID:[%s], balance:[%s], nonce:[%s], additionalHash:[%s], partnerSignature:[%s], inAmount:[%s], inNonce:[%s], regulatorSignature:[%s], inProviderSignature:[%s]",
@@ -392,7 +400,7 @@ export class SDK {
       inAmount,
       inNonce,
       regulatorSignature,
-      inProviderSignature
+      providerSignature
     );
     // 生成数据
     let data = await ethPN.methods
@@ -405,7 +413,7 @@ export class SDK {
         inAmount,
         inNonce,
         regulatorSignature,
-        inProviderSignature
+        providerSignature
       )
       .encodeABI();
 
@@ -414,7 +422,8 @@ export class SDK {
       cpProvider.address,
       ethPN.options.address,
       0,
-      data
+      data,
+      cpProvider.privateKey
     );
   }
 
@@ -429,7 +438,7 @@ export class SDK {
    *
    * @constructor
    */
-  async Transfer(
+  async transfer(
     to: string,
     amount: number | string,
     token: string = ADDRESS_ZERO
@@ -477,7 +486,7 @@ export class SDK {
       additionalHash: additionalHash
     });
 
-    let signature = Common.SignatureToHex(messageHash);
+    let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
     return await Common.SendAppChainTX(
       appPN.methods.transfer(
         to,
@@ -486,7 +495,9 @@ export class SDK {
         nonce,
         additionalHash,
         signature
-      )
+      ),
+      cpProvider.address,
+      cpProvider.privateKey
     );
   }
 
@@ -498,7 +509,7 @@ export class SDK {
    * @param customData
    * @constructor
    */
-  async StartSession(
+  async startSession(
     sessionID: string,
     game: string,
     userList: string[],
@@ -512,13 +523,41 @@ export class SDK {
       customData
     );
     if (await Session.isExists(sessionID)) {
-      return false;
+      throw new Error("session is already exist, can not start again");
     } else {
       await Session.InitSession(sessionID, game, userList, customData);
     }
   }
 
-  async GetSession(sessionID: string): Promise<Session> {
+  /**
+   * make a user join in a session
+   *
+   * @param sessionID
+   * @param user user's eth address
+   *
+   * @returns if success, return join session tx hash, else throw err
+   */
+  async joinSession(sessionID: string, user: string): Promise<string> {
+    if (!web3.utils.isAddress(user)) {
+      throw new Error(`user[${user}] is not valid address`);
+    }
+
+    let session = await Session.GetSession(sessionID);
+    if (Number(session.status) !== SESSION_STATUS.SESSION_STATUS_OPEN) {
+      throw new Error(`session is not open now. status = [${session.status}]`);
+    }
+
+    return await Session.JoinSession(sessionID, user);
+  }
+
+  /**
+   * get a session instance by sessionID
+   *
+   * @param sessionID
+   *
+   * @returns session instance
+   */
+  async getSession(sessionID: string): Promise<Session> {
     let count_down = 10;
 
     let session: Session;
@@ -548,7 +587,7 @@ export class SDK {
    * @param amount OPTIONAL transfer token amount, default: '0'
    * @param token  OPTIONAL transfer token address, default: '0x0000000000000000000000000000000000000000'
    */
-  async SendMessage(
+  async sendMessage(
     sessionID: string,
     to: string,
     type: number,
@@ -576,7 +615,7 @@ export class SDK {
         { t: "uint8", v: type },
         { t: "bytes", v: content }
       );
-      let signature = Common.SignatureToHex(messageHash);
+      let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
       let transferData = await this.buildTransferData(
         to,
@@ -601,9 +640,12 @@ export class SDK {
     }
   }
 
-  async CloseSession(sessionID: string) {
+  async closeSession(sessionID: string) {
+    console.log("start CloseSession, params: sessionID: [%s]", sessionID);
     if (await Session.isExists(sessionID)) {
-      await Session.CloseSession(sessionID);
+      return await Session.CloseSession(sessionID);
+    } else {
+      throw new Error("session is not exist now");
     }
   }
 
@@ -625,7 +667,7 @@ export class SDK {
    *
    * @return json 支付通道信息
    */
-  async GetPaymentNetwork(token: string = ADDRESS_ZERO) {
+  async getPaymentNetwork(token: string = ADDRESS_ZERO) {
     // 获取通道 可用金额
     let [
       {
@@ -650,22 +692,31 @@ export class SDK {
     };
   }
 
-  async GetChannelInfo(userAddress: string, token: string = ADDRESS_ZERO) {
+  async getTokeFeeRate(token: string = ADDRESS_ZERO) {
+
+    let feeRate = await appPN.methods.feeRateMap(token).call();
+    return Number(feeRate)/10000;
+
+  }
+
+  async getChannelInfo(userAddress: string, token: string = ADDRESS_ZERO) {
     // 从 ETH 获取通道信息
     let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
 
     // 通道未开通检测
     if (!channelID) {
       return {
-        channel: {}
+        channel: { channelID }
       };
     }
 
     // 获取通道信息
-    return await appPN.methods.channelMap(channelID).call();
+    let channel = await appPN.methods.channelMap(channelID).call();
+    channel.channelID = channelID;
+    return channel;
   }
 
-  async GetAllTXs(token: string = ADDRESS_ZERO): Promise<any> {
+  async getAllTXs(token: string = ADDRESS_ZERO): Promise<any> {
     let [inTXs, outTXs] = await Promise.all([
       appPN.getPastEvents("Transfer", { filter: { to: cpProvider.address } }),
       appPN.getPastEvents("Transfer", { filter: { from: cpProvider.address } })
@@ -704,8 +755,8 @@ export class SDK {
    *
    * @return
    */
-  async GetMessagesBySessionID(sessionID: string) {
-    return await sessionPN.methods.messages(sessionID).call();
+  async getMessagesBySessionID(sessionID: string) {
+    return await sessionPN.methods.exportSession(sessionID).call();
   }
 
   /**
@@ -715,9 +766,24 @@ export class SDK {
    *
    * @return
    */
-  async GetPlayersBySessionID(sessionID: string) {
+  async getPlayersBySessionID(sessionID: string) {
     return await sessionPN.methods.exportPlayer(sessionID).call();
   }
+
+
+
+  /**
+   * export session message as bytes
+   * 
+   * @param sessionID 
+   * 
+   */
+  async exportSessionBytes(sessionID: string){
+    return await sessionPN.methods.exportSessionBytes(sessionID).call();
+  }
+
+
+
 
   private async initListeners() {
     //before start new watcher, stop the old watcher
@@ -800,7 +866,10 @@ export class SDK {
         nonce: nonce,
         additionalHash: additionalHash
       });
-      paymentSignature = Common.SignatureToHex(messageHash2);
+      paymentSignature = Common.SignatureToHex(
+        messageHash2,
+        cpProvider.privateKey
+      );
     }
 
     let transferPB = protobuf.Root.fromJSON(require("../conf/transfer.json"));
