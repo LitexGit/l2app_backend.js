@@ -115,7 +115,7 @@ export class SDK {
 
     // 私钥错误, 不进行监听
     if (cpProvider.address) {
-      await this.initListeners();
+      this.initListeners();
     }
   }
 
@@ -780,31 +780,39 @@ export class SDK {
 
   private async initListeners() {
     //before start new watcher, stop the old watcher
-    this.ethWatcher && this.ethWatcher.stop();
+    try {
+      this.ethWatcher && this.ethWatcher.stop();
 
-    let ethWatchList = [{ contract: ethPN, listener: ETH_EVENTS }];
-    this.ethWatcher = new HttpWatcher(
-      web3.eth,
-      this.ethRpcUrl,
-      5000,
-      ethWatchList
-    );
-    this.ethWatcher.start();
+      let ethWatchList = [{ contract: ethPN, listener: ETH_EVENTS }];
+      this.ethWatcher = new HttpWatcher(
+        web3.eth,
+        this.ethRpcUrl,
+        5000,
+        ethWatchList
+      );
+      this.ethWatcher.start();
+    } catch (err) {
+      console.log("ethWatcher err: ", err);
+    }
 
     //before start new watcher, stop the old watcher
-    this.appWatcher && this.appWatcher.stop();
+    try {
+      this.appWatcher && this.appWatcher.stop();
 
-    let appWatchList = [
-      { contract: appPN, listener: CITA_EVENTS },
-      { contract: sessionPN, listener: SESSION_EVENTS }
-    ];
-    this.appWatcher = new HttpWatcher(
-      CITA.base,
-      this.appRpcUrl,
-      1000,
-      appWatchList
-    );
-    this.appWatcher.start();
+      let appWatchList = [
+        { contract: appPN, listener: CITA_EVENTS },
+        { contract: sessionPN, listener: SESSION_EVENTS }
+      ];
+      this.appWatcher = new HttpWatcher(
+        CITA.base,
+        this.appRpcUrl,
+        1000,
+        appWatchList
+      );
+      this.appWatcher.start();
+    } catch (err) {
+      console.log("appWatcher err: ", err);
+    }
   }
 
   private async buildTransferData(

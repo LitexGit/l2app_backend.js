@@ -1,6 +1,6 @@
 import { PN } from "./contract";
 import mylog from "../lib/mylog";
-mylog();
+// mylog();
 export const cpPrivateKey =
   "6A22D7D5D87EFC4A1375203B7E54FBCF35FAA84975891C5E3D12BE86C579A6E5";
 

@@ -67,7 +67,7 @@ export default class HttpWatcher {
     watchItem: any
   ) {
     let events = await watchItem.contract.getPastEvents("allEvents", {
-      filter: {},
+      // filter: {},
       fromBlock: fromBlockNumber,
       toBlock: toBlockNumber
     });
@@ -77,6 +77,7 @@ export default class HttpWatcher {
 
       if (watchItem.listener[eventName]) {
         let filter = watchItem.listener[eventName].filter();
+        // console.log('filter is filter');
         let filterResult = true;
         for (let k in filter) {
           if (
