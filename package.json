@@ -35,7 +35,14 @@
     "@types/jest": "^24.0.11",
     "express": "^4.16.4",
     "jest": "^24.5.0",
+    "lodash.camelcase": "^4.3.0",
     "nodemon": "^1.18.4",
+    "rollup-plugin-commonjs": "^9.2.2",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^4.0.1",
+    "rollup-plugin-serve": "^1.0.1",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-typescript2": "^0.20.1",
     "ts-jest": "^24.0.1",
     "ts-node": "^7.0.1",
     "typescript": "^3.4.1"
@@ -54,12 +61,7 @@
     "prod": "npm run build && node ./dist/index.js",
     "server": "nodemon ./src/index.ts",
     "start": "npm run dev",
-    "test": "jest",
-    "test:deposit": "mocha --require ts-node/register ./tests/deposit.test.ts",
-    "test:withdraw": "mocha --require ts-node/register ./tests/withdraw.test.ts",
-    "test:rebalance": "mocha --require ts-node/register ./tests/re_balance.test.ts",
-    "test:close": "mocha --require ts-node/register ./tests/close_channel.test.ts",
-    "test:transfer": "mocha --require ts-node/register ./tests/transfer.test.ts"
+    "test": "jest"
   },
   "version": "0.0.1",
   "dependencies": {

@@ -70,107 +70,116 @@ var HttpWatcher = (function () {
             });
         });
     };
+    HttpWatcher.prototype.processAllEvent = function (fromBlockNumber, toBlockNumber, watchItem) {
+        return __awaiter(this, void 0, void 0, function () {
+            var events, _i, events_2, event_2, eventName, returnValues, filter, filterResult, k;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4, watchItem.contract.getPastEvents("allEvents", {
+                            filter: {},
+                            fromBlock: fromBlockNumber,
+                            toBlock: toBlockNumber
+                        })];
+                    case 1:
+                        events = _a.sent();
+                        for (_i = 0, events_2 = events; _i < events_2.length; _i++) {
+                            event_2 = events_2[_i];
+                            eventName = event_2.event, returnValues = event_2.returnValues;
+                            if (watchItem.listener[eventName]) {
+                                filter = watchItem.listener[eventName].filter();
+                                filterResult = true;
+                                for (k in filter) {
+                                    if (!returnValues[k] ||
+                                        returnValues[k].toLowerCase() !== filter[k].toLowerCase()) {
+                                        filterResult = false;
+                                        break;
+                                    }
+                                }
+                                if (filterResult) {
+                                    watchItem.listener[eventName].handler(event_2);
+                                }
+                            }
+                        }
+                        return [2];
+                }
+            });
+        });
+    };
     HttpWatcher.prototype.start = function (lastBlockNumber) {
         if (lastBlockNumber === void 0) { lastBlockNumber = 0; }
         return __awaiter(this, void 0, void 0, function () {
-            var currentBlockNumber, _i, _a, watchItem, _b, _c, _d, eventName, _e, _f, watchItem, _g, _h, _j, eventName, err_1;
-            return __generator(this, function (_k) {
-                switch (_k.label) {
+            var currentBlockNumber, _i, _a, watchItem, _b, _c, watchItem, err_1;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0: return [4, this.base.getBlockNumber()];
                     case 1:
-                        currentBlockNumber = _k.sent();
+                        currentBlockNumber = _d.sent();
                         lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
                         console.log("start syncing process", lastBlockNumber, currentBlockNumber);
-                        _k.label = 2;
+                        _d.label = 2;
                     case 2:
-                        if (!(lastBlockNumber <= currentBlockNumber)) return [3, 11];
+                        if (!(lastBlockNumber <= currentBlockNumber)) return [3, 8];
                         _i = 0, _a = this.watchList;
-                        _k.label = 3;
+                        _d.label = 3;
                     case 3:
-                        if (!(_i < _a.length)) return [3, 9];
+                        if (!(_i < _a.length)) return [3, 6];
                         watchItem = _a[_i];
-                        _b = [];
-                        for (_c in watchItem.listener)
-                            _b.push(_c);
-                        _d = 0;
-                        _k.label = 4;
+                        return [4, this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem)];
                     case 4:
-                        if (!(_d < _b.length)) return [3, 7];
-                        eventName = _b[_d];
-                        return [4, this.processEvent(lastBlockNumber, currentBlockNumber, watchItem.contract, eventName, watchItem.listener[eventName])];
-                    case 5:
-                        _k.sent();
-                        _k.label = 6;
-                    case 6:
-                        _d++;
-                        return [3, 4];
-                    case 7:
+                        _d.sent();
                         if (this.enabled == false) {
                             return [2];
                         }
-                        _k.label = 8;
-                    case 8:
+                        _d.label = 5;
+                    case 5:
                         _i++;
                         return [3, 3];
-                    case 9:
+                    case 6:
                         lastBlockNumber = currentBlockNumber + 1;
                         return [4, this.base.getBlockNumber()];
-                    case 10:
-                        currentBlockNumber = _k.sent();
+                    case 7:
+                        currentBlockNumber = _d.sent();
                         return [3, 2];
-                    case 11:
+                    case 8:
                         console.log("finish syncing process", currentBlockNumber);
-                        _k.label = 12;
-                    case 12:
-                        if (!true) return [3, 25];
+                        _d.label = 9;
+                    case 9:
+                        if (!true) return [3, 19];
                         return [4, common_1.Common.Sleep(this.blockInterval)];
-                    case 13:
-                        _k.sent();
-                        _k.label = 14;
-                    case 14:
-                        _k.trys.push([14, 23, , 24]);
+                    case 10:
+                        _d.sent();
+                        _d.label = 11;
+                    case 11:
+                        _d.trys.push([11, 17, , 18]);
                         lastBlockNumber = currentBlockNumber + 1;
                         return [4, this.base.getBlockNumber()];
-                    case 15:
-                        currentBlockNumber = _k.sent();
+                    case 12:
+                        currentBlockNumber = _d.sent();
                         if (lastBlockNumber > currentBlockNumber) {
-                            return [3, 12];
+                            return [3, 9];
                         }
-                        _e = 0, _f = this.watchList;
-                        _k.label = 16;
-                    case 16:
-                        if (!(_e < _f.length)) return [3, 22];
-                        watchItem = _f[_e];
-                        _g = [];
-                        for (_h in watchItem.listener)
-                            _g.push(_h);
-                        _j = 0;
-                        _k.label = 17;
-                    case 17:
-                        if (!(_j < _g.length)) return [3, 20];
-                        eventName = _g[_j];
-                        return [4, this.processEvent(lastBlockNumber, currentBlockNumber, watchItem.contract, eventName, watchItem.listener[eventName])];
-                    case 18:
-                        _k.sent();
-                        _k.label = 19;
-                    case 19:
-                        _j++;
-                        return [3, 17];
-                    case 20:
+                        _b = 0, _c = this.watchList;
+                        _d.label = 13;
+                    case 13:
+                        if (!(_b < _c.length)) return [3, 16];
+                        watchItem = _c[_b];
+                        return [4, this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem)];
+                    case 14:
+                        _d.sent();
                         if (this.enabled == false) {
                             return [2];
                         }
-                        _k.label = 21;
-                    case 21:
-                        _e++;
-                        return [3, 16];
-                    case 22: return [3, 24];
-                    case 23:
-                        err_1 = _k.sent();
+                        _d.label = 15;
+                    case 15:
+                        _b++;
+                        return [3, 13];
+                    case 16: return [3, 18];
+                    case 17:
+                        err_1 = _d.sent();
                         console.error("watching error: ", err_1);
-                        return [3, 24];
-                    case 24: return [3, 12];
-                    case 25: return [2];
+                        return [3, 18];
+                    case 18: return [3, 9];
+                    case 19: return [2];
                 }
             });
         });

@@ -693,10 +693,8 @@ export class SDK {
   }
 
   async getTokeFeeRate(token: string = ADDRESS_ZERO) {
-
     let feeRate = await appPN.methods.feeRateMap(token).call();
-    return Number(feeRate)/10000;
-
+    return Number(feeRate) / 10000;
   }
 
   async getChannelInfo(userAddress: string, token: string = ADDRESS_ZERO) {
@@ -770,20 +768,15 @@ export class SDK {
     return await sessionPN.methods.exportPlayer(sessionID).call();
   }
 
-
-
   /**
    * export session message as bytes
-   * 
-   * @param sessionID 
-   * 
+   *
+   * @param sessionID
+   *
    */
-  async exportSessionBytes(sessionID: string){
+  async exportSessionBytes(sessionID: string) {
     return await sessionPN.methods.exportSessionBytes(sessionID).call();
   }
-
-
-
 
   private async initListeners() {
     //before start new watcher, stop the old watcher
