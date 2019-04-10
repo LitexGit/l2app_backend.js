@@ -2,6 +2,7 @@ import { Session } from "../lib/session";
 import { ADDRESS_ZERO, SESSION_MESSAGE_EVENT } from "../conf/contract";
 import { cpProvider, callbacks, CITA, web3, appPN } from "../lib/server";
 import { Contract } from "web3/node_modules/web3-eth-contract";
+import { logger } from "../lib/mylog";
 
 export const SESSION_EVENTS = {
   InitSession: {
@@ -9,7 +10,7 @@ export const SESSION_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA InitSession--------------------"
       );
     }
@@ -20,7 +21,7 @@ export const SESSION_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA JoinSession--------------------"
       );
     }
@@ -31,7 +32,7 @@ export const SESSION_EVENTS = {
       return { to: cpProvider.address };
     },
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA SendMessage--------------------"
       );
       let {
@@ -49,7 +50,7 @@ export const SESSION_EVENTS = {
         transactionHash
       } = event;
 
-      console.log(
+      logger.debug(
         " from: [%s], to: [%s], sessionID: [%s], type: [%s], content: [%s], balance: [%s], nonce: [%s], amount: [%s], channelID: [%s] ",
         from,
         to,
@@ -81,7 +82,7 @@ export const SESSION_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA CloseSession--------------------"
       );
       // TODO

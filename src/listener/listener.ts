@@ -1,5 +1,6 @@
 import { Contract } from "web3/node_modules/web3-eth-contract";
 import { Common } from "../lib/common";
+import { logger } from "../lib/mylog";
 
 export default class HttpWatcher {
   private enabled: boolean;
@@ -32,9 +33,8 @@ export default class HttpWatcher {
     eventName: string,
     eventSetting: any
   ) {
-    // console.log(this.contract);
 
-    //   console.log('eventName is ', eventName, eventSetting.filter());
+    // logger.info('eventName is ', eventName, eventSetting.filter());
 
     let events = await contract.getPastEvents(eventName, {
       filter: eventSetting.filter(),
@@ -46,12 +46,12 @@ export default class HttpWatcher {
       try {
         eventSetting.handler(event);
       } catch (err) {
-        console.log("process event: ", eventName, err);
+        // logger.error("process event: ", eventName, err);
       }
       // process event
-      // console.log('eventName is ', eventName, event.transactionHash);
+      // logger.info('eventName is ', eventName, event.transactionHash);
     }
-    //   console.log("get events ", events.length);
+      // logger.info("get events ", events.length);
   }
 
   /**
@@ -77,7 +77,6 @@ export default class HttpWatcher {
 
       if (watchItem.listener[eventName]) {
         let filter = watchItem.listener[eventName].filter();
-        // console.log('filter is filter');
         let filterResult = true;
         for (let k in filter) {
           if (
@@ -90,7 +89,7 @@ export default class HttpWatcher {
         }
 
         if (filterResult) {
-          watchItem.listener[eventName].handler(event);
+          await watchItem.listener[eventName].handler(event);
         }
       }
     }
@@ -100,11 +99,10 @@ export default class HttpWatcher {
     let currentBlockNumber = await this.base.getBlockNumber();
     lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
 
-    console.log("start syncing process", lastBlockNumber, currentBlockNumber);
+    logger.debug("start syncing process", lastBlockNumber, currentBlockNumber);
     while (lastBlockNumber <= currentBlockNumber) {
-      // console.log('watchList', this.watchList);
       for (let watchItem of this.watchList) {
-        await this.processAllEvent(
+        this.processAllEvent(
           lastBlockNumber,
           currentBlockNumber,
           watchItem
@@ -120,7 +118,7 @@ export default class HttpWatcher {
     }
 
     // finish sync process;
-    console.log("finish syncing process", currentBlockNumber);
+    logger.debug("finish syncing process", currentBlockNumber);
 
     while (true) {
       await Common.Sleep(this.blockInterval);
@@ -128,13 +126,13 @@ export default class HttpWatcher {
       try {
         lastBlockNumber = currentBlockNumber + 1;
         currentBlockNumber = await this.base.getBlockNumber();
-        // console.log("watching event", lastBlockNumber, currentBlockNumber);
+        // logger.info("watching event", lastBlockNumber, currentBlockNumber);
         if (lastBlockNumber > currentBlockNumber) {
           continue;
         }
 
         for (let watchItem of this.watchList) {
-          await this.processAllEvent(
+          this.processAllEvent(
             lastBlockNumber,
             currentBlockNumber,
             watchItem
@@ -145,7 +143,7 @@ export default class HttpWatcher {
           }
         }
       } catch (err) {
-        console.error("watching error: ", err);
+        logger.error("watching error: ", err);
         // this.base.setProvider(this.provider);
       }
     }

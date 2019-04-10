@@ -11,6 +11,7 @@ import { ethPN, cpProvider, web3, appPN, ERC20, CITA } from "../src/lib/server";
 import { ADDRESS_ZERO } from "../src/conf/contract";
 import { signHash } from "../src/lib/sign";
 import { Common } from "../src/lib/common";
+import { logger } from "../src/lib/mylog";
 const TX = require("ethereumjs-tx");
 
 export async function initL2(): Promise<L2> {
@@ -129,7 +130,7 @@ export async function userTransfer(from, to, amount, token, privateKey) {
 
   let signature = Common.SignatureToHex(messageHash, privateKey);
 
-  console.log("start Submit Transfer");
+  logger.info("start Submit Transfer");
   return await Common.SendAppChainTX(
     appPN.methods.transfer(
       to,

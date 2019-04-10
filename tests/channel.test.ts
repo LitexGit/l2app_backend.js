@@ -41,6 +41,8 @@ describe("channel test", () => {
       );
     }
 
+    // await l2.kickUser(userAddress);
+
     channel = await l2.getChannelInfo(user, token);
     console.log("step2 channel is ", channel);
 
@@ -66,39 +68,39 @@ describe("channel test", () => {
     await Common.Sleep(sleepInterval);
   });
 
-  it("ReBalance", async () => {
-    let beforeChannelInfo = await l2.getChannelInfo(user, token);
-    console.log("before channel info is ", beforeChannelInfo);
+  // it("ReBalance", async () => {
+  //   let beforeChannelInfo = await l2.getChannelInfo(user, token);
+  //   console.log("before channel info is ", beforeChannelInfo);
 
-    let res = await l2.rebalance(user, depositAmount, token);
-    await Common.Sleep(sleepInterval);
-    let afterChannelInfo = await l2.getChannelInfo(user, token);
-    console.log("after channel info is ", afterChannelInfo);
+  //   let res = await l2.rebalance(user, depositAmount, token);
+  //   await Common.Sleep(sleepInterval);
+  //   let afterChannelInfo = await l2.getChannelInfo(user, token);
+  //   console.log("after channel info is ", afterChannelInfo);
 
-    expect(Number(afterChannelInfo.providerBalance)).toBe(
-      Number(beforeChannelInfo.providerBalance) + depositAmount
-    );
-  });
+  //   expect(Number(afterChannelInfo.providerBalance)).toBe(
+  //     Number(beforeChannelInfo.providerBalance) + depositAmount
+  //   );
+  // });
 
-  it("Transfer", async () => {
-    let beforeChannelInfo = await l2.getChannelInfo(user, token);
-    console.log("before channel info is ", beforeChannelInfo);
+  // it("Transfer", async () => {
+  //   let beforeChannelInfo = await l2.getChannelInfo(user, token);
+  //   console.log("before channel info is ", beforeChannelInfo);
 
-    let providerBalance = beforeChannelInfo.providerBalance;
+  //   let providerBalance = beforeChannelInfo.providerBalance;
 
-    let res = await l2.transfer(user, providerBalance, token);
+  //   let res = await l2.transfer(user, providerBalance, token);
 
-    await Common.Sleep(sleepInterval);
-    let afterChannelInfo = await l2.getChannelInfo(user, token);
-    console.log("after channel info is ", afterChannelInfo);
+  //   await Common.Sleep(sleepInterval);
+  //   let afterChannelInfo = await l2.getChannelInfo(user, token);
+  //   console.log("after channel info is ", afterChannelInfo);
 
-    expect(Number(afterChannelInfo.providerBalance)).toBe(
-      Number(beforeChannelInfo.providerBalance) - depositAmount
-    );
+  //   expect(Number(afterChannelInfo.providerBalance)).toBe(
+  //     Number(beforeChannelInfo.providerBalance) - depositAmount
+  //   );
 
-    // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
+  //   // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
 
-  });
+  // });
 
   it("kickUser", async () => {
     await Common.Sleep(sleepInterval);

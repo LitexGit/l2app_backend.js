@@ -59,6 +59,7 @@ function getEthNonce(address) {
 }
 var contract_1 = require("../conf/contract");
 var server_1 = require("./server");
+var mylog_1 = require("./mylog");
 var Common = (function () {
     function Common() {
     }
@@ -136,20 +137,22 @@ var Common = (function () {
                         }
                         serializedTx = tx.serialize();
                         txData = "0x" + serializedTx.toString("hex");
-                        console.log("SEND TX", rawTx);
+                        mylog_1.logger.debug("SEND ETH TX", rawTx);
                         return [2, new Promise(function (resolve, reject) {
                                 try {
                                     server_1.web3.eth
                                         .sendSignedTransaction(txData)
                                         .on("transactionHash", function (value) {
-                                        console.log("transactionHash: ", value);
+                                        mylog_1.logger.debug("transactionHash: ", value);
                                         resolve(value);
                                     })
                                         .on("error", function (error) {
+                                        mylog_1.logger.error("transaction error", error);
                                         reject(error);
                                     });
                                 }
                                 catch (e) {
+                                    mylog_1.logger.error("transaction exception", e);
                                     reject(e);
                                 }
                             })];
@@ -179,7 +182,9 @@ var Common = (function () {
             var tx, rs, receipt;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, this.BuildAppChainTX(from, privateKey)];
+                    case 0:
+                        mylog_1.logger.debug('start send CITA tx', action.arguments);
+                        return [4, this.BuildAppChainTX(from, privateKey)];
                     case 1:
                         tx = _a.sent();
                         return [4, action.send(tx)];
@@ -190,14 +195,17 @@ var Common = (function () {
                     case 3:
                         receipt = _a.sent();
                         if (!receipt.errorMessage) {
-                            console.log("send CITA tx success");
+                            mylog_1.logger.debug("send CITA tx success");
                             return [2, rs.hash];
                         }
                         else {
+                            mylog_1.logger.error("confirm fail " + receipt.errorMessage);
                             throw new Error("confirm fail " + receipt.errorMessage);
                         }
                         return [3, 5];
-                    case 4: throw new Error("send CITA tx fail");
+                    case 4:
+                        mylog_1.logger.error("send CITA tx fail");
+                        throw new Error("send CITA tx fail");
                     case 5: return [2];
                 }
             });

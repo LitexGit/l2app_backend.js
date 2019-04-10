@@ -19,6 +19,7 @@ import { Common } from "./common";
 import { signHash } from "./sign";
 import { Session } from "./session";
 import * as protobuf from "protobufjs";
+import { logger } from "./mylog";
 protobuf.common("google/protobuf/descriptor.proto", {});
 
 export let CITA: any;
@@ -70,7 +71,7 @@ export class SDK {
     appPaymentNetwork: PN,
     sessionPayNetwork: PN
   ) {
-    console.log(
+    logger.debug(
       "L2 server sdk init start with params: ethRpcUrl: [%s], ethPaymentNetwork: [%o], appRpcUrl: [%s], appPaymentNetwork: [%o]",
       ethRpcUrl,
       ethPaymentNetwork.address,
@@ -133,7 +134,7 @@ export class SDK {
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
-    console.log(
+    logger.debug(
       "start deposit with params: amount: [%s], token: [%s]",
       amount,
       token
@@ -192,7 +193,7 @@ export class SDK {
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
-    console.log(
+    logger.debug(
       "start withdraw with params: amount: [%s], token: [%s]",
       amount,
       token
@@ -208,7 +209,7 @@ export class SDK {
       ethPN.methods.providerBalance(token).call()
     ]);
 
-    console.log(
+    logger.debug(
       "providerOnchainBalance:[%s], providerBalance:[%s], ethProviderBalance:[%s]",
       providerOnchainBalance,
       providerBalance,
@@ -274,7 +275,7 @@ export class SDK {
       throw new Error(`token [${token}] is not a valid address`);
     }
 
-    console.log(
+    logger.debug(
       "start reblance with params: userAddress: [%s], amount: [%s], token: [%s]",
       userAddress,
       amount,
@@ -358,7 +359,7 @@ export class SDK {
       throw new Error(`token [${token}] is not a valid address`);
     }
 
-    console.log(
+    logger.debug(
       "start kickuser with params: userAddress: [%s], token: [%s]",
       userAddress,
       token
@@ -390,7 +391,7 @@ export class SDK {
     regulatorSignature = regulatorSignature || "0x0";
     providerSignature = providerSignature || "0x0";
 
-    console.log(
+    logger.debug(
       "closeChannel params:  channelID:[%s], balance:[%s], nonce:[%s], additionalHash:[%s], partnerSignature:[%s], inAmount:[%s], inNonce:[%s], regulatorSignature:[%s], inProviderSignature:[%s]",
       channelID,
       balance,
@@ -449,7 +450,7 @@ export class SDK {
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
-    console.log(
+    logger.debug(
       "Transfer start execute with params: to: [%s], amount: [%s], token: [%s]",
       to,
       amount,
@@ -515,7 +516,7 @@ export class SDK {
     userList: string[],
     customData: any
   ) {
-    console.log(
+    logger.debug(
       "start session with params: sessionID: [%s], game: [%s], userList: [%o], customData: [%s]",
       sessionID,
       game,
@@ -595,7 +596,7 @@ export class SDK {
     amount: string = "0",
     token: string = ADDRESS_ZERO
   ): Promise<string> {
-    console.log(
+    logger.debug(
       "start sendmessage with params: sessionID: [%s], to: [%s], type: [%s], content: [%s], amount: [%s], token: [%s]",
       sessionID,
       to,
@@ -641,7 +642,7 @@ export class SDK {
   }
 
   async closeSession(sessionID: string) {
-    console.log("start CloseSession, params: sessionID: [%s]", sessionID);
+    logger.debug("start CloseSession, params: sessionID: [%s]", sessionID);
     if (await Session.isExists(sessionID)) {
       return await Session.CloseSession(sessionID);
     } else {
@@ -792,7 +793,7 @@ export class SDK {
       );
       this.ethWatcher.start();
     } catch (err) {
-      console.log("ethWatcher err: ", err);
+      logger.error("ethWatcher err: ", err);
     }
 
     //before start new watcher, stop the old watcher
@@ -811,7 +812,7 @@ export class SDK {
       );
       this.appWatcher.start();
     } catch (err) {
-      console.log("appWatcher err: ", err);
+      logger.error("appWatcher err: ", err);
     }
   }
 
@@ -856,8 +857,8 @@ export class SDK {
         .add(toBN(1))
         .toString();
       additionalHash = soliditySha3(
+        { t: "bytes32", v: messageHash },
         { t: "uint256", v: amount },
-        { t: "bytes32", v: messageHash }
       );
 
       // sign data with typed data v3
@@ -881,9 +882,9 @@ export class SDK {
     // Exemplary payload
     let payload = {
       channelID: hexToBytes(channelID),
-      balance: hexToBytes(numberToHex(balance)),
-      nonce: hexToBytes(numberToHex(nonce)),
-      amount: hexToBytes(numberToHex(amount)),
+      balance: Number(balance),
+      nonce: Number(nonce),
+      amount: Number(amount),
       // balance: [0],
       // nonce: [0],
       // amount: [0],

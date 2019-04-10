@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("../lib/common");
+var mylog_1 = require("../lib/mylog");
 var HttpWatcher = (function () {
     function HttpWatcher(base, provider, blockInterval, watchList) {
         this.base = base;
@@ -62,7 +63,6 @@ var HttpWatcher = (function () {
                                 eventSetting.handler(event_1);
                             }
                             catch (err) {
-                                console.log("process event: ", eventName, err);
                             }
                         }
                         return [2];
@@ -76,31 +76,36 @@ var HttpWatcher = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4, watchItem.contract.getPastEvents("allEvents", {
-                            filter: {},
                             fromBlock: fromBlockNumber,
                             toBlock: toBlockNumber
                         })];
                     case 1:
                         events = _a.sent();
-                        for (_i = 0, events_2 = events; _i < events_2.length; _i++) {
-                            event_2 = events_2[_i];
-                            eventName = event_2.event, returnValues = event_2.returnValues;
-                            if (watchItem.listener[eventName]) {
-                                filter = watchItem.listener[eventName].filter();
-                                filterResult = true;
-                                for (k in filter) {
-                                    if (!returnValues[k] ||
-                                        returnValues[k].toLowerCase() !== filter[k].toLowerCase()) {
-                                        filterResult = false;
-                                        break;
-                                    }
-                                }
-                                if (filterResult) {
-                                    watchItem.listener[eventName].handler(event_2);
-                                }
+                        _i = 0, events_2 = events;
+                        _a.label = 2;
+                    case 2:
+                        if (!(_i < events_2.length)) return [3, 5];
+                        event_2 = events_2[_i];
+                        eventName = event_2.event, returnValues = event_2.returnValues;
+                        if (!watchItem.listener[eventName]) return [3, 4];
+                        filter = watchItem.listener[eventName].filter();
+                        filterResult = true;
+                        for (k in filter) {
+                            if (!returnValues[k] ||
+                                returnValues[k].toLowerCase() !== filter[k].toLowerCase()) {
+                                filterResult = false;
+                                break;
                             }
                         }
-                        return [2];
+                        if (!filterResult) return [3, 4];
+                        return [4, watchItem.listener[eventName].handler(event_2)];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4:
+                        _i++;
+                        return [3, 2];
+                    case 5: return [2];
                 }
             });
         });
@@ -115,71 +120,54 @@ var HttpWatcher = (function () {
                     case 1:
                         currentBlockNumber = _d.sent();
                         lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
-                        console.log("start syncing process", lastBlockNumber, currentBlockNumber);
+                        mylog_1.logger.debug("start syncing process", lastBlockNumber, currentBlockNumber);
                         _d.label = 2;
                     case 2:
-                        if (!(lastBlockNumber <= currentBlockNumber)) return [3, 8];
-                        _i = 0, _a = this.watchList;
-                        _d.label = 3;
-                    case 3:
-                        if (!(_i < _a.length)) return [3, 6];
-                        watchItem = _a[_i];
-                        return [4, this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem)];
-                    case 4:
-                        _d.sent();
-                        if (this.enabled == false) {
-                            return [2];
+                        if (!(lastBlockNumber <= currentBlockNumber)) return [3, 4];
+                        for (_i = 0, _a = this.watchList; _i < _a.length; _i++) {
+                            watchItem = _a[_i];
+                            this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem);
+                            if (this.enabled == false) {
+                                return [2];
+                            }
                         }
-                        _d.label = 5;
-                    case 5:
-                        _i++;
-                        return [3, 3];
-                    case 6:
                         lastBlockNumber = currentBlockNumber + 1;
                         return [4, this.base.getBlockNumber()];
-                    case 7:
+                    case 3:
                         currentBlockNumber = _d.sent();
                         return [3, 2];
-                    case 8:
-                        console.log("finish syncing process", currentBlockNumber);
-                        _d.label = 9;
-                    case 9:
-                        if (!true) return [3, 19];
+                    case 4:
+                        mylog_1.logger.debug("finish syncing process", currentBlockNumber);
+                        _d.label = 5;
+                    case 5:
+                        if (!true) return [3, 11];
                         return [4, common_1.Common.Sleep(this.blockInterval)];
-                    case 10:
+                    case 6:
                         _d.sent();
-                        _d.label = 11;
-                    case 11:
-                        _d.trys.push([11, 17, , 18]);
+                        _d.label = 7;
+                    case 7:
+                        _d.trys.push([7, 9, , 10]);
                         lastBlockNumber = currentBlockNumber + 1;
                         return [4, this.base.getBlockNumber()];
-                    case 12:
+                    case 8:
                         currentBlockNumber = _d.sent();
                         if (lastBlockNumber > currentBlockNumber) {
-                            return [3, 9];
+                            return [3, 5];
                         }
-                        _b = 0, _c = this.watchList;
-                        _d.label = 13;
-                    case 13:
-                        if (!(_b < _c.length)) return [3, 16];
-                        watchItem = _c[_b];
-                        return [4, this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem)];
-                    case 14:
-                        _d.sent();
-                        if (this.enabled == false) {
-                            return [2];
+                        for (_b = 0, _c = this.watchList; _b < _c.length; _b++) {
+                            watchItem = _c[_b];
+                            this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem);
+                            if (this.enabled == false) {
+                                return [2];
+                            }
                         }
-                        _d.label = 15;
-                    case 15:
-                        _b++;
-                        return [3, 13];
-                    case 16: return [3, 18];
-                    case 17:
+                        return [3, 10];
+                    case 9:
                         err_1 = _d.sent();
-                        console.error("watching error: ", err_1);
-                        return [3, 18];
-                    case 18: return [3, 9];
-                    case 19: return [2];
+                        mylog_1.logger.error("watching error: ", err_1);
+                        return [3, 10];
+                    case 10: return [3, 5];
+                    case 11: return [2];
                 }
             });
         });

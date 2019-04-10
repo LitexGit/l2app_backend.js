@@ -149,22 +149,22 @@ describe("session test", () => {
     );
   });
 
-  it("exportSessionBytes", async () => {
-    // for (let i = 0; i < 10; i++) {
-    //   let messageContent = web3.utils.toHex(
-    //     "hello world" + i + new Date().toISOString()
-    //   );
-    //   await l2.SendMessage(sessionID, userAddress, 2, messageContent);
-    // }
-    // await Common.Sleep(sleepInterval * 2);
+  // it("exportSessionBytes", async () => {
+  //   // for (let i = 0; i < 10; i++) {
+  //   //   let messageContent = web3.utils.toHex(
+  //   //     "hello world" + i + new Date().toISOString()
+  //   //   );
+  //   //   await l2.SendMessage(sessionID, userAddress, 2, messageContent);
+  //   // }
+  //   // await Common.Sleep(sleepInterval * 2);
 
-    let messages = await l2.getMessagesBySessionID(sessionID);
-    console.log("messages length", messages.length);
-    console.log("messages: ", messages);
+  //   let messages = await l2.getMessagesBySessionID(sessionID);
+  //   console.log("messages length", messages.length);
+  //   console.log("messages: ", messages);
 
-    let bytes = await l2.exportSessionBytes(sessionID);
-    console.log("export session bytes", bytes);
-  });
+  //   let bytes = await l2.exportSessionBytes(sessionID);
+  //   console.log("export session bytes", bytes);
+  // });
 
   it("CloseSession", async () => {
     let res = await l2.closeSession(sessionID);

@@ -38,6 +38,7 @@ var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var server_1 = require("../lib/server");
 var common_1 = require("../lib/common");
+var mylog_1 = require("../lib/mylog");
 exports.CITA_EVENTS = {
     Transfer: {
         filter: function () { return ({ to: server_1.cpProvider.address }); },
@@ -47,13 +48,13 @@ exports.CITA_EVENTS = {
                 switch (_c.label) {
                     case 0:
                         _a = event.returnValues, from = _a.from, to = _a.to, channelID = _a.channelID, balance = _a.balance, transferAmount = _a.transferAmount, additionalHash = _a.additionalHash;
-                        console.log("--------------------Handle CITA Transfer--------------------");
-                        console.log("from :[%s], to :[%s], channelID :[%s], balance :[%s], transferAmount :[%s], additionalHash :[%s]", from, to, channelID, balance, transferAmount, additionalHash);
+                        mylog_1.logger.debug("--------------------Handle CITA Transfer--------------------");
+                        mylog_1.logger.debug("from :[%s], to :[%s], channelID :[%s], balance :[%s], transferAmount :[%s], additionalHash :[%s]", from, to, channelID, balance, transferAmount, additionalHash);
                         return [4, server_1.appPN.methods.channelMap(channelID).call()];
                     case 1:
                         channel = _c.sent();
                         token = channel.token;
-                        console.log("channel", channel);
+                        mylog_1.logger.debug("channel", channel);
                         assetEvent = {
                             from: from,
                             to: to,
@@ -74,10 +75,10 @@ exports.CITA_EVENTS = {
                     case 3:
                         feeRate = _c.sent();
                         if (Number(feeRate) === 0) {
-                            console.log("feeRate is 0, will do nothing");
+                            mylog_1.logger.debug("feeRate is 0, will do nothing");
                             return [2];
                         }
-                        console.log("start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]", feeProofAmount, feeRate);
+                        mylog_1.logger.debug("start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]", feeProofAmount, feeRate);
                         return [4, Promise.all([
                                 server_1.appPN.methods.balanceProofMap(channelID, server_1.cpProvider.address).call()
                             ])];
@@ -89,11 +90,11 @@ exports.CITA_EVENTS = {
                             .mul(bn(balance).sub(bn(amount)))
                             .div(bn(10000)))
                             .toString();
-                        console.log("provider balance :[%s], provider nonce :[%s], event Balance :[%s], feeAmount :[%s]", amount, road, balance, feeAmount);
+                        mylog_1.logger.debug("provider balance :[%s], provider nonce :[%s], event Balance :[%s], feeAmount :[%s]", amount, road, balance, feeAmount);
                         feeNonce = Number(road) + 1;
                         messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: token, t: "address" }, { v: feeAmount, t: "uint256" }, { v: feeNonce, t: "uint256" });
                         signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
-                        console.log("infos:  channelID :[%s], token :[%s], feeAmount :[%s], feeNonce :[%s], signature :[%s]", channelID, token, feeAmount, feeNonce, signature);
+                        mylog_1.logger.debug("infos:  channelID :[%s], token :[%s], feeAmount :[%s], feeNonce :[%s], signature :[%s]", channelID, token, feeAmount, feeNonce, signature);
                         common_1.Common.SendAppChainTX(server_1.appPN.methods.submitFee(channelID, token, feeAmount, feeNonce, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
                         return [2];
                 }
@@ -105,9 +106,9 @@ exports.CITA_EVENTS = {
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             var _a, token, amount, nonce;
             return __generator(this, function (_b) {
-                console.log("--------------------Handle CITA SubmitFee--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA SubmitFee--------------------");
                 _a = event.returnValues, token = _a.token, amount = _a.amount, nonce = _a.nonce;
-                console.log("token:[%s], amount:[%s], nonce:[%s]", token, amount, nonce);
+                mylog_1.logger.debug("token:[%s], amount:[%s], nonce:[%s]", token, amount, nonce);
                 return [2];
             });
         }); }
@@ -118,8 +119,8 @@ exports.CITA_EVENTS = {
             var _a, user, channelID, amount, balance, receiver, lastCommitBlock, messageHash, signature;
             return __generator(this, function (_b) {
                 _a = event.returnValues, user = _a.user, channelID = _a.channelID, amount = _a.amount, balance = _a.balance, receiver = _a.receiver, lastCommitBlock = _a.lastCommitBlock;
-                console.log("--------------------Handle CITA UserProposeWithdraw--------------------");
-                console.log("user :[%s], channelID :[%s], amount :[%s], balance :[%s], receiver :[%s], lastCommitBlock :[%s] ", user, channelID, amount, balance, receiver, lastCommitBlock);
+                mylog_1.logger.debug("--------------------Handle CITA UserProposeWithdraw--------------------");
+                mylog_1.logger.debug("user :[%s], channelID :[%s], amount :[%s], balance :[%s], receiver :[%s], lastCommitBlock :[%s] ", user, channelID, amount, balance, receiver, lastCommitBlock);
                 messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: balance, t: "uint256" }, { v: lastCommitBlock, t: "uint256" });
                 signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
                 common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmUserWithdraw(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
@@ -133,8 +134,8 @@ exports.CITA_EVENTS = {
             var _a, channelID, balance, lastCommitBlock, messageHash, signature;
             return __generator(this, function (_b) {
                 _a = event.returnValues, channelID = _a.channelID, balance = _a.balance, lastCommitBlock = _a.lastCommitBlock;
-                console.log("--------------------Handle CITA ProposeCooperativeSettle--------------------");
-                console.log(" channelID: [%s], balance:[%s], lastCommitBlock:[%s] ", channelID, balance, lastCommitBlock);
+                mylog_1.logger.debug("--------------------Handle CITA ProposeCooperativeSettle--------------------");
+                mylog_1.logger.debug(" channelID: [%s], balance:[%s], lastCommitBlock:[%s] ", channelID, balance, lastCommitBlock);
                 messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: balance, t: "uint256" }, { v: lastCommitBlock, t: "uint256" });
                 signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
                 common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmCooperativeSettle(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
@@ -149,9 +150,9 @@ exports.CITA_EVENTS = {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        _a = event.returnValues, token = _a.token, balance = _a.balance, lastCommitBlock = _a.lastCommitBlock, signature = _a.signature;
-                        console.log("--------------------Handle CITA ConfirmProviderWithdraw--------------------");
-                        console.log(" token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]", token, balance, lastCommitBlock, signature);
+                        _a = event.returnValues, token = _a.token, balance = _a.amount, lastCommitBlock = _a.lastCommitBlock, signature = _a.signature;
+                        mylog_1.logger.debug("--------------------Handle CITA ConfirmProviderWithdraw--------------------");
+                        mylog_1.logger.debug(" token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]", token, balance, lastCommitBlock, signature);
                         return [4, server_1.ethPN.methods
                                 .providerWithdraw(token, balance, lastCommitBlock, signature)
                                 .encodeABI()];
@@ -168,10 +169,10 @@ exports.CITA_EVENTS = {
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             var returnValues, txhash, token, amount, balance, providerWithdrawEvent;
             return __generator(this, function (_a) {
-                console.log("--------------------Handle CITA OnchainProviderWithdraw--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA OnchainProviderWithdraw--------------------");
                 returnValues = event.returnValues, txhash = event.transactionHash;
                 token = returnValues.token, amount = returnValues.amount, balance = returnValues.balance;
-                console.log("token:[%s], amount:[%s], balance:[%s]", token, amount, balance);
+                mylog_1.logger.debug("token:[%s], amount:[%s], balance:[%s]", token, amount, balance);
                 providerWithdrawEvent = {
                     token: token,
                     amount: amount,
@@ -190,10 +191,10 @@ exports.CITA_EVENTS = {
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             var returnValues, txhash, token, amount, providerDepositEvent;
             return __generator(this, function (_a) {
-                console.log("--------------------Handle CITA OnchainProviderDeposit--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA OnchainProviderDeposit--------------------");
                 returnValues = event.returnValues, txhash = event.transactionHash;
                 token = returnValues.token, amount = returnValues.amount;
-                console.log("token:[%s], amount:[%s]", token, amount);
+                mylog_1.logger.debug("token:[%s], amount:[%s]", token, amount);
                 providerDepositEvent = {
                     token: token,
                     amount: amount,
@@ -214,9 +215,9 @@ exports.CITA_EVENTS = {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        console.log("--------------------Handle CITA OnchainUserDeposit--------------------");
+                        mylog_1.logger.debug("--------------------Handle CITA OnchainUserDeposit--------------------");
                         _a = event.returnValues, channelID = _a.channelID, user = _a.user, newDeposit = _a.deposit, totalDeposit = _a.totalDeposit, txhash = event.transactionHash;
-                        console.log(" channelID: [%s], user: [%s], newDeposit: [%s], totalDeposit: [%s] ", channelID, user, newDeposit, totalDeposit);
+                        mylog_1.logger.debug(" channelID: [%s], user: [%s], newDeposit: [%s], totalDeposit: [%s] ", channelID, user, newDeposit, totalDeposit);
                         return [4, server_1.appPN.methods.channelMap(channelID).call()];
                     case 1:
                         token = (_b.sent()).token;
@@ -244,9 +245,9 @@ exports.CITA_EVENTS = {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        console.log("--------------------Handle CITA OnchainUserWithdraw--------------------");
+                        mylog_1.logger.debug("--------------------Handle CITA OnchainUserWithdraw--------------------");
                         _a = event.returnValues, channelID = _a.channelID, user = _a.user, amount = _a.amount, totalWithdraw = _a.withdraw, txhash = event.transactionHash;
-                        console.log(" channelID: [%s], user: [%s], amount: [%s], totalWithdraw: [%s] ", channelID, user, amount, totalWithdraw);
+                        mylog_1.logger.debug(" channelID: [%s], user: [%s], amount: [%s], totalWithdraw: [%s] ", channelID, user, amount, totalWithdraw);
                         return [4, server_1.appPN.methods.channelMap(channelID).call()];
                     case 1:
                         token = (_b.sent()).token;
@@ -271,9 +272,9 @@ exports.CITA_EVENTS = {
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             var _a, user, token, amount, channelID, txhash, userJoinEvent;
             return __generator(this, function (_b) {
-                console.log("--------------------Handle CITA OnchainOpenChannel--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA OnchainOpenChannel--------------------");
                 _a = event.returnValues, user = _a.user, token = _a.token, amount = _a.amount, channelID = _a.channelID, txhash = event.transactionHash;
-                console.log(" sender: [%s], user: [%s], token: [%s], amount: [%s], channelID: [%s] ", user, user, token, amount, channelID);
+                mylog_1.logger.debug(" sender: [%s], user: [%s], token: [%s], amount: [%s], channelID: [%s] ", user, user, token, amount, channelID);
                 userJoinEvent = {
                     sender: user,
                     user: user,
@@ -295,9 +296,9 @@ exports.CITA_EVENTS = {
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             var _a, channelID, user, token, balance, txhash, userLeaveEvent;
             return __generator(this, function (_b) {
-                console.log("--------------------Handle CITA OnchainCooperativeSettleChannel--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA OnchainCooperativeSettleChannel--------------------");
                 _a = event.returnValues, channelID = _a.channelID, user = _a.user, token = _a.token, balance = _a.balance, txhash = event.transactionHash;
-                console.log(" channelID: [%s], user: [%s], token: [%s], balance: [%s] ", channelID, user, token, balance);
+                mylog_1.logger.debug(" channelID: [%s], user: [%s], token: [%s], balance: [%s] ", channelID, user, token, balance);
                 userLeaveEvent = {
                     user: user,
                     type: 2,
@@ -320,9 +321,9 @@ exports.CITA_EVENTS = {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        console.log("--------------------Handle CITA OnchainSettleChannel--------------------");
+                        mylog_1.logger.debug("--------------------Handle CITA OnchainSettleChannel--------------------");
                         _a = event.returnValues, channelID = _a.channelID, user = _a.user, token = _a.token, transferTouserAmount = _a.userSettleAmount, transferToProviderAmount = _a.providerSettleAmount, txhash = event.transactionHash;
-                        console.log(" channelID: [%s], user: [%s], token: [%s], transferTouserAmount: [%s], transferToProviderAmount: [%s] ", channelID, user, token, transferTouserAmount, transferToProviderAmount);
+                        mylog_1.logger.debug(" channelID: [%s], user: [%s], token: [%s], transferTouserAmount: [%s], transferToProviderAmount: [%s] ", channelID, user, token, transferTouserAmount, transferToProviderAmount);
                         return [4, server_1.appPN.methods.closingChannelMap(channelID).call()];
                     case 1:
                         closer = (_b.sent()).closer;

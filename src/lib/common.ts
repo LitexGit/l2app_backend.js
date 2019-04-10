@@ -14,6 +14,7 @@ function getEthNonce(address) {
 import { COMMIT_BLOCK_CONDITION, TX_BASE } from "../conf/contract";
 
 import { CITA, web3, ethPN } from "./server";
+import { logger } from "./mylog";
 
 export class Common {
   static Abi2JsonInterface(abi: string): AbiItem[] | AbiItem {
@@ -41,7 +42,6 @@ export class Common {
     data: string,
     privateKey: string
   ) {
-
     //TODO: fetch nonce from persist storage
     let nonce = await web3.eth.getTransactionCount(from);
     if (nonce > getEthNonce(from)) {
@@ -77,20 +77,22 @@ export class Common {
 
     let txData = "0x" + serializedTx.toString("hex");
 
-    console.log("SEND TX", rawTx);
+    logger.debug("SEND ETH TX", rawTx);
 
     return new Promise((resolve, reject) => {
       try {
         web3.eth
           .sendSignedTransaction(txData)
           .on("transactionHash", (value: {} | PromiseLike<{}>) => {
-            console.log("transactionHash: ", value);
+            logger.debug("transactionHash: ", value);
             resolve(value);
           })
           .on("error", (error: any) => {
+            logger.error("transaction error", error);
             reject(error);
           });
       } catch (e) {
+        logger.error("transaction exception", e);
         reject(e);
       }
     });
@@ -109,6 +111,7 @@ export class Common {
   }
 
   static async SendAppChainTX(action: any, from: string, privateKey: string) {
+    logger.debug('start send CITA tx', action.arguments);
     let tx = await this.BuildAppChainTX(from, privateKey);
     let rs = await action.send(tx);
 
@@ -117,14 +120,16 @@ export class Common {
 
       if (!receipt.errorMessage) {
         //确认成功
-        console.log("send CITA tx success");
+        logger.debug("send CITA tx success");
         return rs.hash;
       } else {
         //确认失败
+        logger.error(`confirm fail ${receipt.errorMessage}`);
         throw new Error(`confirm fail ${receipt.errorMessage}`);
       }
     } else {
       // 提交失败
+      logger.error("send CITA tx fail");
       throw new Error("send CITA tx fail");
     }
   }

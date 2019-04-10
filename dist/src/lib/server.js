@@ -67,6 +67,7 @@ var common_1 = require("./common");
 var sign_1 = require("./sign");
 var session_1 = require("./session");
 var protobuf = require("protobufjs");
+var mylog_1 = require("./mylog");
 protobuf.common("google/protobuf/descriptor.proto", {});
 var SDK = (function () {
     function SDK() {
@@ -80,29 +81,24 @@ var SDK = (function () {
     SDK.prototype.init = function (cpPrivateKey, ethRpcUrl, ethPaymentNetwork, appRpcUrl, appPaymentNetwork, sessionPayNetwork) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        console.log("L2 server sdk init start with params: ethRpcUrl: [%s], ethPaymentNetwork: [%o], appRpcUrl: [%s], appPaymentNetwork: [%o]", ethRpcUrl, ethPaymentNetwork.address, appRpcUrl, appPaymentNetwork.address);
-                        exports.web3 = new Web3(Web3.givenProvider || ethRpcUrl);
-                        this.appRpcUrl = appRpcUrl;
-                        this.ethRpcUrl = ethRpcUrl;
-                        exports.CITA = cita_sdk_1.default(appRpcUrl);
-                        exports.ethPN = new web3_eth_contract_1.Contract(exports.web3.currentProvider, common_1.Common.Abi2JsonInterface(ethPaymentNetwork.abi), ethPaymentNetwork.address);
-                        exports.appPN = new exports.CITA.base.Contract(common_1.Common.Abi2JsonInterface(appPaymentNetwork.abi), appPaymentNetwork.address);
-                        exports.ethPN.options.address = ethPaymentNetwork.address;
-                        exports.appPN.options.address = appPaymentNetwork.address;
-                        contract_1.TYPED_DATA.domain.verifyingContract = ethPaymentNetwork.address;
-                        exports.ERC20 = new web3_eth_contract_1.Contract(exports.web3.currentProvider, common_1.Common.Abi2JsonInterface(contract_1.ERC20ABI));
-                        exports.sessionPN = new exports.CITA.base.Contract(common_1.Common.Abi2JsonInterface(sessionPayNetwork.abi), sessionPayNetwork.address);
-                        exports.cpProvider = exports.CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
-                        exports.callbacks = new Map();
-                        if (!exports.cpProvider.address) return [3, 2];
-                        return [4, this.initListeners()];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2: return [2];
+                mylog_1.logger.debug("L2 server sdk init start with params: ethRpcUrl: [%s], ethPaymentNetwork: [%o], appRpcUrl: [%s], appPaymentNetwork: [%o]", ethRpcUrl, ethPaymentNetwork.address, appRpcUrl, appPaymentNetwork.address);
+                exports.web3 = new Web3(Web3.givenProvider || ethRpcUrl);
+                this.appRpcUrl = appRpcUrl;
+                this.ethRpcUrl = ethRpcUrl;
+                exports.CITA = cita_sdk_1.default(appRpcUrl);
+                exports.ethPN = new web3_eth_contract_1.Contract(exports.web3.currentProvider, common_1.Common.Abi2JsonInterface(ethPaymentNetwork.abi), ethPaymentNetwork.address);
+                exports.appPN = new exports.CITA.base.Contract(common_1.Common.Abi2JsonInterface(appPaymentNetwork.abi), appPaymentNetwork.address);
+                exports.ethPN.options.address = ethPaymentNetwork.address;
+                exports.appPN.options.address = appPaymentNetwork.address;
+                contract_1.TYPED_DATA.domain.verifyingContract = ethPaymentNetwork.address;
+                exports.ERC20 = new web3_eth_contract_1.Contract(exports.web3.currentProvider, common_1.Common.Abi2JsonInterface(contract_1.ERC20ABI));
+                exports.sessionPN = new exports.CITA.base.Contract(common_1.Common.Abi2JsonInterface(sessionPayNetwork.abi), sessionPayNetwork.address);
+                exports.cpProvider = exports.CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
+                exports.callbacks = new Map();
+                if (exports.cpProvider.address) {
+                    this.initListeners();
                 }
+                return [2];
             });
         });
     };
@@ -116,7 +112,7 @@ var SDK = (function () {
                         if (!exports.web3.utils.isAddress(token)) {
                             throw new Error("token [" + token + "] is not a valid address");
                         }
-                        console.log("start deposit with params: amount: [%s], token: [%s]", amount, token);
+                        mylog_1.logger.debug("start deposit with params: amount: [%s], token: [%s]", amount, token);
                         amountBN = exports.web3.utils.toBN(amount).toString();
                         data = exports.ethPN.methods.providerDeposit(token, amountBN).encodeABI();
                         if (!(token !== contract_1.ADDRESS_ZERO)) return [3, 3];
@@ -144,7 +140,7 @@ var SDK = (function () {
                         if (!exports.web3.utils.isAddress(token)) {
                             throw new Error("token [" + token + "] is not a valid address");
                         }
-                        console.log("start withdraw with params: amount: [%s], token: [%s]", amount, token);
+                        mylog_1.logger.debug("start withdraw with params: amount: [%s], token: [%s]", amount, token);
                         amountBN = exports.web3.utils.toBN(amount);
                         return [4, Promise.all([
                                 exports.appPN.methods.paymentNetworkMap(token).call(),
@@ -152,7 +148,7 @@ var SDK = (function () {
                             ])];
                     case 1:
                         _a = _c.sent(), _b = _a[0], providerOnchainBalance = _b.providerOnchainBalance, providerBalance = _b.providerBalance, ethProviderBalance = _a[1];
-                        console.log("providerOnchainBalance:[%s], providerBalance:[%s], ethProviderBalance:[%s]", providerOnchainBalance, providerBalance, ethProviderBalance);
+                        mylog_1.logger.debug("providerOnchainBalance:[%s], providerBalance:[%s], ethProviderBalance:[%s]", providerOnchainBalance, providerBalance, ethProviderBalance);
                         onChainBalanceBN = exports.web3.utils.toBN(providerOnchainBalance);
                         balanceBN = exports.web3.utils.toBN(providerBalance);
                         if (amountBN.gt(onChainBalanceBN)) {
@@ -183,7 +179,7 @@ var SDK = (function () {
                         if (!exports.web3.utils.isAddress(token)) {
                             throw new Error("token [" + token + "] is not a valid address");
                         }
-                        console.log("start reblance with params: userAddress: [%s], amount: [%s], token: [%s]", userAddress, amount, token);
+                        mylog_1.logger.debug("start reblance with params: userAddress: [%s], amount: [%s], token: [%s]", userAddress, amount, token);
                         return [4, exports.ethPN.methods.getChannelID(userAddress, token).call()];
                     case 1:
                         channelID = _b.sent();
@@ -235,7 +231,7 @@ var SDK = (function () {
                         if (!exports.web3.utils.isAddress(token)) {
                             throw new Error("token [" + token + "] is not a valid address");
                         }
-                        console.log("start kickuser with params: userAddress: [%s], token: [%s]", userAddress, token);
+                        mylog_1.logger.debug("start kickuser with params: userAddress: [%s], token: [%s]", userAddress, token);
                         return [4, exports.ethPN.methods.getChannelID(userAddress, token).call()];
                     case 1:
                         channelID = _d.sent();
@@ -254,7 +250,7 @@ var SDK = (function () {
                         partnerSignature = partnerSignature || "0x0";
                         regulatorSignature = regulatorSignature || "0x0";
                         providerSignature = providerSignature || "0x0";
-                        console.log("closeChannel params:  channelID:[%s], balance:[%s], nonce:[%s], additionalHash:[%s], partnerSignature:[%s], inAmount:[%s], inNonce:[%s], regulatorSignature:[%s], inProviderSignature:[%s]", channelID, balance, nonce, additionalHash, partnerSignature, inAmount, inNonce, regulatorSignature, providerSignature);
+                        mylog_1.logger.debug("closeChannel params:  channelID:[%s], balance:[%s], nonce:[%s], additionalHash:[%s], partnerSignature:[%s], inAmount:[%s], inNonce:[%s], regulatorSignature:[%s], inProviderSignature:[%s]", channelID, balance, nonce, additionalHash, partnerSignature, inAmount, inNonce, regulatorSignature, providerSignature);
                         return [4, exports.ethPN.methods
                                 .closeChannel(channelID, balance, nonce, additionalHash, partnerSignature, inAmount, inNonce, regulatorSignature, providerSignature)
                                 .encodeABI()];
@@ -279,7 +275,7 @@ var SDK = (function () {
                         if (!exports.web3.utils.isAddress(token)) {
                             throw new Error("token [" + token + "] is not a valid address");
                         }
-                        console.log("Transfer start execute with params: to: [%s], amount: [%s], token: [%s]", to, amount, token);
+                        mylog_1.logger.debug("Transfer start execute with params: to: [%s], amount: [%s], token: [%s]", to, amount, token);
                         toBN = exports.web3.utils.toBN;
                         return [4, exports.ethPN.methods.getChannelID(to, token).call()];
                     case 1:
@@ -320,7 +316,7 @@ var SDK = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        console.log("start session with params: sessionID: [%s], game: [%s], userList: [%o], customData: [%s]", sessionID, game, userList, customData);
+                        mylog_1.logger.debug("start session with params: sessionID: [%s], game: [%s], userList: [%o], customData: [%s]", sessionID, game, userList, customData);
                         return [4, session_1.Session.isExists(sessionID)];
                     case 1:
                         if (!_a.sent()) return [3, 2];
@@ -396,7 +392,7 @@ var SDK = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        console.log("start sendmessage with params: sessionID: [%s], to: [%s], type: [%s], content: [%s], amount: [%s], token: [%s]", sessionID, to, type, content, amount, token);
+                        mylog_1.logger.debug("start sendmessage with params: sessionID: [%s], to: [%s], type: [%s], content: [%s], amount: [%s], token: [%s]", sessionID, to, type, content, amount, token);
                         return [4, session_1.Session.isExists(sessionID)];
                     case 1:
                         if (!_a.sent()) return [3, 3];
@@ -422,7 +418,7 @@ var SDK = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        console.log("start CloseSession, params: sessionID: [%s]", sessionID);
+                        mylog_1.logger.debug("start CloseSession, params: sessionID: [%s]", sessionID);
                         return [4, session_1.Session.isExists(sessionID)];
                     case 1:
                         if (!_a.sent()) return [3, 3];
@@ -561,17 +557,27 @@ var SDK = (function () {
         return __awaiter(this, void 0, void 0, function () {
             var ethWatchList, appWatchList;
             return __generator(this, function (_a) {
-                this.ethWatcher && this.ethWatcher.stop();
-                ethWatchList = [{ contract: exports.ethPN, listener: eth_events_1.ETH_EVENTS }];
-                this.ethWatcher = new listener_1.default(exports.web3.eth, this.ethRpcUrl, 5000, ethWatchList);
-                this.ethWatcher.start();
-                this.appWatcher && this.appWatcher.stop();
-                appWatchList = [
-                    { contract: exports.appPN, listener: cita_events_1.CITA_EVENTS },
-                    { contract: exports.sessionPN, listener: session_events_1.SESSION_EVENTS }
-                ];
-                this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList);
-                this.appWatcher.start();
+                try {
+                    this.ethWatcher && this.ethWatcher.stop();
+                    ethWatchList = [{ contract: exports.ethPN, listener: eth_events_1.ETH_EVENTS }];
+                    this.ethWatcher = new listener_1.default(exports.web3.eth, this.ethRpcUrl, 5000, ethWatchList);
+                    this.ethWatcher.start();
+                }
+                catch (err) {
+                    mylog_1.logger.error("ethWatcher err: ", err);
+                }
+                try {
+                    this.appWatcher && this.appWatcher.stop();
+                    appWatchList = [
+                        { contract: exports.appPN, listener: cita_events_1.CITA_EVENTS },
+                        { contract: exports.sessionPN, listener: session_events_1.SESSION_EVENTS }
+                    ];
+                    this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList);
+                    this.appWatcher.start();
+                }
+                catch (err) {
+                    mylog_1.logger.error("appWatcher err: ", err);
+                }
                 return [2];
             });
         });
@@ -612,7 +618,7 @@ var SDK = (function () {
                         nonce = toBN(balanceProof.nonce)
                             .add(toBN(1))
                             .toString();
-                        additionalHash = soliditySha3({ t: "uint256", v: amount }, { t: "bytes32", v: messageHash });
+                        additionalHash = soliditySha3({ t: "bytes32", v: messageHash }, { t: "uint256", v: amount });
                         messageHash2 = sign_1.signHash({
                             channelID: channelID,
                             balance: balance,
@@ -626,9 +632,9 @@ var SDK = (function () {
                         Transfer = transferPB.lookupType("TransferData.Transfer");
                         payload = {
                             channelID: hexToBytes(channelID),
-                            balance: hexToBytes(numberToHex(balance)),
-                            nonce: hexToBytes(numberToHex(nonce)),
-                            amount: hexToBytes(numberToHex(amount)),
+                            balance: Number(balance),
+                            nonce: Number(nonce),
+                            amount: Number(amount),
                             additionalHash: hexToBytes(additionalHash)
                         };
                         errMsg = Transfer.verify(payload);

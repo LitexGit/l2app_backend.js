@@ -2,6 +2,7 @@ import { initL2 } from "./test_util";
 import { L2 } from "../src/sdk/sdk";
 import { Common } from "../src/lib/common";
 import { config as testConfig } from "./config_test";
+import { ethPN, appPN } from "../src/lib/server";
 let {
   userAddress,
   userPrivateKey,
@@ -36,6 +37,19 @@ describe("单元测试", () => {
     });
 
     let beforePN = await l2.getPaymentNetwork(token);
+    console.log('beforePN', beforePN);
+
+    let regulator = await ethPN.methods.regulator().call();
+    let provider = await ethPN.methods.provider().call();
+
+
+    let regulatorApp = await appPN.methods.regulator().call();
+    let providerApp = await appPN.methods.provider().call();
+    let operatorApp = await appPN.methods.operator().call();
+
+    console.log(regulator, regulatorApp, provider, providerApp, operatorApp)
+
+
     Promise.all([await l2.deposit(depositAmount, token), await watchDepsoit]);
     await Common.Sleep(sleepInterval);
     let afterPN = await l2.getPaymentNetwork(token);

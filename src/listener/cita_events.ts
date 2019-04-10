@@ -8,6 +8,7 @@ import {
   USER_FORCEWITHDRAW_EVENT,
   PROVIDER_DEPOSIT_EVENT
 } from "../conf/contract";
+import { logger } from "../lib/mylog";
 
 export const CITA_EVENTS = {
   Transfer: {
@@ -25,10 +26,10 @@ export const CITA_EVENTS = {
         }
       } = event;
 
-      console.log(
+      logger.debug(
         "--------------------Handle CITA Transfer--------------------"
       );
-      console.log(
+      logger.debug(
         "from :[%s], to :[%s], channelID :[%s], balance :[%s], transferAmount :[%s], additionalHash :[%s]",
         from,
         to,
@@ -42,7 +43,7 @@ export const CITA_EVENTS = {
       let channel = await appPN.methods.channelMap(channelID).call();
       let token = channel.token;
 
-      console.log("channel", channel);
+      logger.debug("channel", channel);
       let assetEvent: TRANSFER_EVENT = {
         from: from,
         to: to,
@@ -71,11 +72,11 @@ export const CITA_EVENTS = {
       //
       let feeRate = await appPN.methods.feeRateMap(token).call();
       if (Number(feeRate) === 0) {
-        console.log("feeRate is 0, will do nothing");
+        logger.debug("feeRate is 0, will do nothing");
         return;
       }
 
-      console.log(
+      logger.debug(
         "start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]",
         feeProofAmount,
         feeRate
@@ -86,7 +87,7 @@ export const CITA_EVENTS = {
       ]);
 
       // let { balance: arrearBalance } = await appPN.methods.arrearBalanceProofMap(channelID).call();
-      // console.log("arrearBalance", arrearBalance);
+      // logger.debug("arrearBalance", arrearBalance);
 
       let bn = web3.utils.toBN;
       let feeAmount = bn(feeProofAmount)
@@ -97,7 +98,7 @@ export const CITA_EVENTS = {
         )
         .toString();
 
-      console.log(
+      logger.debug(
         "provider balance :[%s], provider nonce :[%s], event Balance :[%s], feeAmount :[%s]",
         amount,
         road,
@@ -118,7 +119,7 @@ export const CITA_EVENTS = {
       // 进行签名
       let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
-      console.log(
+      logger.debug(
         "infos:  channelID :[%s], token :[%s], feeAmount :[%s], feeNonce :[%s], signature :[%s]",
         channelID,
         token,
@@ -143,11 +144,11 @@ export const CITA_EVENTS = {
   SubmitFee: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA SubmitFee--------------------"
       );
       let { token, amount, nonce } = event.returnValues;
-      console.log("token:[%s], amount:[%s], nonce:[%s]", token, amount, nonce);
+      logger.debug("token:[%s], amount:[%s], nonce:[%s]", token, amount, nonce);
     }
   },
   UserProposeWithdraw: {
@@ -165,10 +166,10 @@ export const CITA_EVENTS = {
         }
       } = event;
 
-      console.log(
+      logger.debug(
         "--------------------Handle CITA UserProposeWithdraw--------------------"
       );
-      console.log(
+      logger.debug(
         "user :[%s], channelID :[%s], amount :[%s], balance :[%s], receiver :[%s], lastCommitBlock :[%s] ",
         user,
         channelID,
@@ -206,10 +207,10 @@ export const CITA_EVENTS = {
         returnValues: { channelID, balance, lastCommitBlock }
       } = event;
 
-      console.log(
+      logger.debug(
         "--------------------Handle CITA ProposeCooperativeSettle--------------------"
       );
-      console.log(
+      logger.debug(
         " channelID: [%s], balance:[%s], lastCommitBlock:[%s] ",
         channelID,
         balance,
@@ -240,13 +241,13 @@ export const CITA_EVENTS = {
     handler: async (event: any) => {
       // 获取event事件内容
       let {
-        returnValues: { token, balance, lastCommitBlock, signature }
+        returnValues: { token, amount: balance, lastCommitBlock, signature }
       } = event;
 
-      console.log(
+      logger.debug(
         "--------------------Handle CITA ConfirmProviderWithdraw--------------------"
       );
-      console.log(
+      logger.debug(
         " token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]",
         token,
         balance,
@@ -274,13 +275,13 @@ export const CITA_EVENTS = {
   OnchainProviderWithdraw: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA OnchainProviderWithdraw--------------------"
       );
       let { returnValues, transactionHash: txhash } = event;
       let { token, amount, balance } = returnValues;
 
-      console.log(
+      logger.debug(
         "token:[%s], amount:[%s], balance:[%s]",
         token,
         amount,
@@ -302,12 +303,12 @@ export const CITA_EVENTS = {
   OnchainProviderDeposit: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA OnchainProviderDeposit--------------------"
       );
       let { returnValues, transactionHash: txhash } = event;
       let { token, amount } = returnValues;
-      console.log("token:[%s], amount:[%s]", token, amount);
+      logger.debug("token:[%s], amount:[%s]", token, amount);
       let providerDepositEvent: PROVIDER_DEPOSIT_EVENT = {
         token,
         amount,
@@ -322,7 +323,7 @@ export const CITA_EVENTS = {
   OnchainUserDeposit: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA OnchainUserDeposit--------------------"
       );
       // 获取事件内容
@@ -331,7 +332,7 @@ export const CITA_EVENTS = {
         transactionHash: txhash
       } = event;
 
-      console.log(
+      logger.debug(
         " channelID: [%s], user: [%s], newDeposit: [%s], totalDeposit: [%s] ",
         channelID,
         user,
@@ -359,7 +360,7 @@ export const CITA_EVENTS = {
   OnchainUserWithdraw: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA OnchainUserWithdraw--------------------"
       );
       // 获取event事件内容
@@ -367,7 +368,7 @@ export const CITA_EVENTS = {
         returnValues: { channelID, user, amount, withdraw: totalWithdraw },
         transactionHash: txhash
       } = event;
-      console.log(
+      logger.debug(
         " channelID: [%s], user: [%s], amount: [%s], totalWithdraw: [%s] ",
         channelID,
         user,
@@ -393,7 +394,7 @@ export const CITA_EVENTS = {
   OnchainOpenChannel: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA OnchainOpenChannel--------------------"
       );
       // 获取事件内容
@@ -402,7 +403,7 @@ export const CITA_EVENTS = {
         transactionHash: txhash
       } = event;
 
-      console.log(
+      logger.debug(
         " sender: [%s], user: [%s], token: [%s], amount: [%s], channelID: [%s] ",
         user,
         user,
@@ -428,7 +429,7 @@ export const CITA_EVENTS = {
   OnchainCooperativeSettleChannel: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA OnchainCooperativeSettleChannel--------------------"
       );
       // 获取event事件内容
@@ -437,7 +438,7 @@ export const CITA_EVENTS = {
         transactionHash: txhash
       } = event;
 
-      console.log(
+      logger.debug(
         " channelID: [%s], user: [%s], token: [%s], balance: [%s] ",
         channelID,
         user,
@@ -461,7 +462,7 @@ export const CITA_EVENTS = {
   OnchainSettleChannel: {
     filter: () => ({}),
     handler: async (event: any) => {
-      console.log(
+      logger.debug(
         "--------------------Handle CITA OnchainSettleChannel--------------------"
       );
       // 获取event事件内容
@@ -476,7 +477,7 @@ export const CITA_EVENTS = {
         transactionHash: txhash
       } = event;
 
-      console.log(
+      logger.debug(
         " channelID: [%s], user: [%s], token: [%s], transferTouserAmount: [%s], transferToProviderAmount: [%s] ",
         channelID,
         user,

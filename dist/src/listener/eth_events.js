@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var server_1 = require("../lib/server");
 var contract_1 = require("../conf/contract");
 var common_1 = require("../lib/common");
+var mylog_1 = require("../lib/mylog");
 exports.ETH_EVENTS = {
     ProviderNewDeposit: {
         filter: function () {
@@ -54,7 +55,7 @@ exports.ETH_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle ETH ProviderWithdraw--------------------");
+                mylog_1.logger.debug("--------------------Handle ETH ProviderWithdraw--------------------");
                 return [2];
             });
         }); }
@@ -65,7 +66,7 @@ exports.ETH_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle ETH UserNewDeposit--------------------");
+                mylog_1.logger.debug("--------------------Handle ETH UserNewDeposit--------------------");
                 return [2];
             });
         }); }
@@ -76,7 +77,7 @@ exports.ETH_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle ETH UserWithdraw--------------------");
+                mylog_1.logger.debug("--------------------Handle ETH UserWithdraw--------------------");
                 return [2];
             });
         }); }
@@ -87,7 +88,7 @@ exports.ETH_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle ETH ChannelOpened--------------------");
+                mylog_1.logger.debug("--------------------Handle ETH ChannelOpened--------------------");
                 return [2];
             });
         }); }
@@ -101,9 +102,9 @@ exports.ETH_EVENTS = {
             return __generator(this, function (_d) {
                 switch (_d.label) {
                     case 0:
-                        console.log("--------------------Handle ETH ChannelClosed--------------------");
+                        mylog_1.logger.debug("--------------------Handle ETH ChannelClosed--------------------");
                         _a = event.returnValues, channelID = _a.channelID, balance = _a.balance, nonce = _a.nonce, inAmount = _a.inAmount, inNonce = _a.inNonce;
-                        console.log("channelID: [%s], balance: [%s], nonce: [%s], inAmount: [%s], inNonce: [%s]", channelID, balance, nonce, inAmount, inNonce);
+                        mylog_1.logger.debug("channelID: [%s], balance: [%s], nonce: [%s], inAmount: [%s], inNonce: [%s]", channelID, balance, nonce, inAmount, inNonce);
                         return [4, server_1.ethPN.methods.channels(channelID).call()];
                     case 1:
                         channel = _d.sent();
@@ -121,13 +122,13 @@ exports.ETH_EVENTS = {
                     case 3:
                         _b = (_d.sent())[0], balance_1 = _b.balance, nonce_1 = _b.nonce, additionalHash = _b.additionalHash, partnerSignature = _b.signature;
                         if (!(Number(nonce_1) === 0)) return [3, 4];
-                        console.log("no transfer data, will not submit proof");
+                        mylog_1.logger.debug("no transfer data, will not submit proof");
                         return [3, 6];
                     case 4:
                         messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: balance_1, t: "uint256" }, { v: nonce_1, t: "uint256" }, { v: additionalHash, t: "bytes32" }, { v: partnerSignature, t: "bytes" });
                         consignorSignature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
-                        console.log("user close the channel, provider will submit proof");
-                        console.log("proof data: channelID: [%s], balance: [%s], nonce: [%s], additionalHash: [%s], partnerSignature: [%s], consignorSignature: [%s]", channelID, balance_1, nonce_1, additionalHash, partnerSignature, consignorSignature);
+                        mylog_1.logger.debug("user close the channel, provider will submit proof");
+                        mylog_1.logger.debug("proof data: channelID: [%s], balance: [%s], nonce: [%s], additionalHash: [%s], partnerSignature: [%s], consignorSignature: [%s]", channelID, balance_1, nonce_1, additionalHash, partnerSignature, consignorSignature);
                         data = server_1.ethPN.methods
                             .partnerUpdateProof(channelID, balance_1, nonce_1, additionalHash, partnerSignature, consignorSignature)
                             .encodeABI();
@@ -142,13 +143,13 @@ exports.ETH_EVENTS = {
                     case 8:
                         _c = (_d.sent())[0], balance_2 = _c.balance, nonce_2 = _c.nonce, additionalHash = _c.additionalHash, partnerSignature = _c.signature, consignorSignature = _c.consignorSignature;
                         if (!(Number(nonce_2) === 0)) return [3, 9];
-                        console.log("no transfer data, will not submit proof");
+                        mylog_1.logger.debug("no transfer data, will not submit proof");
                         return [3, 12];
                     case 9:
-                        console.log("provider close the channel, will submit user's proof");
-                        console.log("proof data: channelID: [%s], balance: [%s], nonce: [%s], additionalHash: [%s], partnerSignature: [%s], consignorSignature: [%s]", channelID, balance_2, nonce_2, additionalHash, partnerSignature, consignorSignature);
+                        mylog_1.logger.debug("provider close the channel, will submit user's proof");
+                        mylog_1.logger.debug("proof data: channelID: [%s], balance: [%s], nonce: [%s], additionalHash: [%s], partnerSignature: [%s], consignorSignature: [%s]", channelID, balance_2, nonce_2, additionalHash, partnerSignature, consignorSignature);
                         if (!(consignorSignature == null || consignorSignature == "")) return [3, 10];
-                        console.log("no user proof signature, will not submit proof");
+                        mylog_1.logger.debug("no user proof signature, will not submit proof");
                         return [3, 12];
                     case 10:
                         data = server_1.ethPN.methods
@@ -167,17 +168,17 @@ exports.ETH_EVENTS = {
                     case 14:
                         current_1 = _d.sent();
                         if (!(current_1 >= settle)) return [3, 16];
-                        console.log("settle time is up, channelID: ", channelID);
+                        mylog_1.logger.debug("settle time is up, channelID: ", channelID);
                         settleData = server_1.ethPN.methods.settleChannel(channelID).encodeABI();
                         return [4, common_1.Common.SendEthTransaction(server_1.cpProvider.address, server_1.ethPN.options.address, 0, settleData, server_1.cpProvider.privateKey)];
                     case 15:
                         hash = _d.sent();
-                        console.log("Settle Channel HASH:", hash);
+                        mylog_1.logger.debug("Settle Channel HASH:", hash);
                         return [3, 18];
                     case 16: return [4, common_1.Common.Sleep(15000)];
                     case 17:
                         _d.sent();
-                        console.log("settle count down. current:", current_1, "target:", settle);
+                        mylog_1.logger.debug("settle count down. current:", current_1, "target:", settle);
                         return [3, 13];
                     case 18: return [2];
                 }
@@ -190,7 +191,7 @@ exports.ETH_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle ETH CooperativeSettled--------------------");
+                mylog_1.logger.debug("--------------------Handle ETH CooperativeSettled--------------------");
                 return [2];
             });
         }); }
@@ -201,7 +202,7 @@ exports.ETH_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle ETH ChannelSettled--------------------");
+                mylog_1.logger.debug("--------------------Handle ETH ChannelSettled--------------------");
                 return [2];
             });
         }); }

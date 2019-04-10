@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var server_1 = require("../lib/server");
+var mylog_1 = require("../lib/mylog");
 exports.SESSION_EVENTS = {
     InitSession: {
         filter: function () {
@@ -44,7 +45,7 @@ exports.SESSION_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle CITA InitSession--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA InitSession--------------------");
                 return [2];
             });
         }); }
@@ -55,7 +56,7 @@ exports.SESSION_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle CITA JoinSession--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA JoinSession--------------------");
                 return [2];
             });
         }); }
@@ -69,9 +70,9 @@ exports.SESSION_EVENTS = {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        console.log("--------------------Handle CITA SendMessage--------------------");
+                        mylog_1.logger.debug("--------------------Handle CITA SendMessage--------------------");
                         _a = event.returnValues, from = _a.from, to = _a.to, sessionID = _a.sessionID, type = _a.mType, content = _a.content, balance = _a.balance, nonce = _a.nonce, amount = _a.amount, channelID = _a.channelID, transactionHash = event.transactionHash;
-                        console.log(" from: [%s], to: [%s], sessionID: [%s], type: [%s], content: [%s], balance: [%s], nonce: [%s], amount: [%s], channelID: [%s] ", from, to, sessionID, type, content, balance, nonce, amount, channelID);
+                        mylog_1.logger.debug(" from: [%s], to: [%s], sessionID: [%s], type: [%s], content: [%s], balance: [%s], nonce: [%s], amount: [%s], channelID: [%s] ", from, to, sessionID, type, content, balance, nonce, amount, channelID);
                         return [4, server_1.appPN.methods.channelMap(channelID).call()];
                     case 1:
                         token = (_b.sent()).token;
@@ -95,7 +96,7 @@ exports.SESSION_EVENTS = {
         },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                console.log("--------------------Handle CITA CloseSession--------------------");
+                mylog_1.logger.debug("--------------------Handle CITA CloseSession--------------------");
                 return [2];
             });
         }); }

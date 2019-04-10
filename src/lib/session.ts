@@ -1,6 +1,7 @@
 import { Common } from "./common";
 import { CITA, appPN, sessionPN, cpProvider, web3 } from "./server";
 import { SESSION_STATUS, SessionData, PaymentData } from "../conf/contract";
+import { logger } from "./mylog";
 
 export class Session {
   public id: string;
@@ -71,7 +72,7 @@ export class Session {
     sessionData: SessionData,
     paymentData: PaymentData
   ) {
-    console.log(
+    logger.debug(
       "sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData.transferData: [%o], paymentData.paymentSignature:[%s] ",
       from,
       to,

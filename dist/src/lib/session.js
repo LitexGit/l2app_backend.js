@@ -38,6 +38,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var common_1 = require("./common");
 var server_1 = require("./server");
 var contract_1 = require("../conf/contract");
+var mylog_1 = require("./mylog");
 var Session = (function () {
     function Session(sessionID) {
         this.id = sessionID;
@@ -67,7 +68,7 @@ var Session = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        console.log("sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData.transferData: [%o], paymentData.paymentSignature:[%s] ", from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData.transferData, paymentData.paymentSignature);
+                        mylog_1.logger.debug("sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData.transferData: [%o], paymentData.paymentSignature:[%s] ", from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData.transferData, paymentData.paymentSignature);
                         return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.sendMessage(from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData.transferData, paymentData.paymentSignature), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
                     case 1: return [2, _a.sent()];
                 }

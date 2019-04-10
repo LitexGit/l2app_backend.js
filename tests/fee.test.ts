@@ -7,13 +7,15 @@ import {
   regulatorWithdraw
 } from "./test_util";
 import { L2 } from "../src/sdk/sdk";
-import { config as testConfig } from "./config_test";
+import { config as testConfig, config } from "./config_test";
 import { Common } from "../src/lib/common";
 import { cpProvider, appPN } from "../src/lib/server";
+import { config as devConfig } from "../src/conf/config.dev";
+
+let operatorContractAddress = devConfig.appOperatorAddress;
 let {
   userAddress,
   userPrivateKey,
-  operatorContractAddress,
   operatorPrivateKey,
   regulatorPrivateKey,
   token,
