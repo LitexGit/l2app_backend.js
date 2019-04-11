@@ -42,8 +42,17 @@ describe("channel test", () => {
     }
 
     // await l2.kickUser(userAddress);
+  });
 
-    channel = await l2.getChannelInfo(user, token);
+  beforeEach(async () => {
+    console.log(
+      "/************************NEXT IT***********************************/"
+    );
+    await Common.Sleep(sleepInterval);
+  });
+
+  it("openChannelForUser", async () => {
+    let channel = await l2.getChannelInfo(user, token);
     console.log("step2 channel is ", channel);
 
     if (Number(channel.status) === 0) {
@@ -56,16 +65,10 @@ describe("channel test", () => {
       });
       await Promise.all([
         watchDeposit,
-        userOpenChannel(user, userPrivateKey, depositAmount, token)
+        // userOpenChannel(user, userPrivateKey, depositAmount, token)
+        l2.openChannelForUser(user, token)
       ]);
     }
-  });
-
-  beforeEach(async () => {
-    console.log(
-      "/************************NEXT IT***********************************/"
-    );
-    await Common.Sleep(sleepInterval);
   });
 
   it("TransferWithAutoRebalance", async () => {

@@ -10,7 +10,8 @@ import {
   L2_CB,
   L2_EVENT,
   PN,
-  SESSION_STATUS
+  SESSION_STATUS,
+  CHANNEL_SETTLE_WINDOW
 } from "../conf/contract";
 import HttpWatcher from "../listener/listener";
 import { ETH_EVENTS } from "../listener/eth_events";
@@ -249,6 +250,45 @@ export class SDK {
     );
 
     // 等待 ProviderProposeWithdraw 事件回调
+  }
+
+  /**
+   * open a channel for user if there is no channel
+   *
+   * @param userAddress
+   * @param token
+   */
+  async openChannelForUser(userAddress: string, token: string = ADDRESS_ZERO) {
+    if (!web3.utils.isAddress(token)) {
+      throw new Error(`token [${token}] is not a valid address`);
+    }
+    if (!web3.utils.isAddress(userAddress)) {
+      throw new Error(`token [${userAddress}] is not a valid address`);
+    }
+    logger.debug(
+      "start openChannelForUser with params: user: [%s], token: [%s]",
+      userAddress,
+      token
+    );
+
+    let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
+    let channel = await ethPN.methods.channels(channelID).call();
+
+    if (Number(channel.status) !== CHANNEL_STATUS.CHANNEL_STATUS_INIT) {
+      throw new Error("channel exist, can not be open.");
+    }
+
+    let data = ethPN.methods
+      .openChannel(userAddress, userAddress, CHANNEL_SETTLE_WINDOW, token, "0")
+      .encodeABI();
+
+    return await Common.SendEthTransaction(
+      cpProvider.address,
+      ethPN.options.address,
+      "0",
+      data,
+      cpProvider.privateKey
+    );
   }
 
   /**
@@ -853,7 +893,10 @@ export class SDK {
       );
     }
 
-    return await this.rebalance(to, amountBN.sub(balanceBN).toString(), token);
+    await this.rebalance(to, amountBN.sub(balanceBN).toString(), token);
+    await Common.Sleep(1000);
+    // TODO watch event to make sure rebalance is confirmed by regulator
+    return true;
   }
 
   private async buildTransferData(

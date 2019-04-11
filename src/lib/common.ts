@@ -111,7 +111,7 @@ export class Common {
   }
 
   static async SendAppChainTX(action: any, from: string, privateKey: string) {
-    logger.debug('start send CITA tx', action.arguments);
+    logger.debug("start send CITA tx", action.arguments);
     let tx = await this.BuildAppChainTX(from, privateKey);
     let rs = await action.send(tx);
 

@@ -165,6 +165,38 @@ var SDK = (function () {
             });
         });
     };
+    SDK.prototype.openChannelForUser = function (userAddress, token) {
+        if (token === void 0) { token = contract_1.ADDRESS_ZERO; }
+        return __awaiter(this, void 0, void 0, function () {
+            var channelID, channel, data;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!exports.web3.utils.isAddress(token)) {
+                            throw new Error("token [" + token + "] is not a valid address");
+                        }
+                        if (!exports.web3.utils.isAddress(userAddress)) {
+                            throw new Error("token [" + userAddress + "] is not a valid address");
+                        }
+                        mylog_1.logger.debug("start openChannelForUser with params: user: [%s], token: [%s]", userAddress, token);
+                        return [4, exports.ethPN.methods.getChannelID(userAddress, token).call()];
+                    case 1:
+                        channelID = _a.sent();
+                        return [4, exports.ethPN.methods.channels(channelID).call()];
+                    case 2:
+                        channel = _a.sent();
+                        if (Number(channel.status) !== contract_1.CHANNEL_STATUS.CHANNEL_STATUS_INIT) {
+                            throw new Error("channel exist, can not be open.");
+                        }
+                        data = exports.ethPN.methods
+                            .openChannel(userAddress, userAddress, contract_1.CHANNEL_SETTLE_WINDOW, token, "0")
+                            .encodeABI();
+                        return [4, common_1.Common.SendEthTransaction(exports.cpProvider.address, exports.ethPN.options.address, "0", data, exports.cpProvider.privateKey)];
+                    case 3: return [2, _a.sent()];
+                }
+            });
+        });
+    };
     SDK.prototype.rebalance = function (userAddress, amount, token) {
         if (token === void 0) { token = contract_1.ADDRESS_ZERO; }
         return __awaiter(this, void 0, void 0, function () {
@@ -603,7 +635,12 @@ var SDK = (function () {
                             throw new Error("providerBalance[" + channel.providerBalance + "] is less than sendAmount[" + amount + "]");
                         }
                         return [4, this.rebalance(to, amountBN.sub(balanceBN).toString(), token)];
-                    case 3: return [2, _a.sent()];
+                    case 3:
+                        _a.sent();
+                        return [4, common_1.Common.Sleep(1000)];
+                    case 4:
+                        _a.sent();
+                        return [2, true];
                 }
             });
         });

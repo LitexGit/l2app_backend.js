@@ -183,7 +183,7 @@ var Common = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        mylog_1.logger.debug('start send CITA tx', action.arguments);
+                        mylog_1.logger.debug("start send CITA tx", action.arguments);
                         return [4, this.BuildAppChainTX(from, privateKey)];
                     case 1:
                         tx = _a.sent();

@@ -20,6 +20,7 @@ export declare class SDK {
     init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN): Promise<void>;
     deposit(amount: number | string, token?: string): Promise<{}>;
     withdraw(amount: number | string, token?: string): Promise<any>;
+    openChannelForUser(userAddress: string, token?: string): Promise<{}>;
     rebalance(userAddress: string, amount: number | string, token?: string): Promise<any>;
     kickUser(userAddress: string, token?: string): Promise<{}>;
     transfer(to: string, amount: number | string, token?: string): Promise<any>;
