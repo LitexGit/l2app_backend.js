@@ -18,9 +18,8 @@ import { CITA_EVENTS } from "../listener/cita_events";
 import { Common } from "./common";
 import { signHash } from "./sign";
 import { Session } from "./session";
-import * as protobuf from "protobufjs";
 import { logger } from "./mylog";
-protobuf.common("google/protobuf/descriptor.proto", {});
+import * as rlp from "rlp";
 
 export let CITA: any;
 export let cpProvider: any;
@@ -822,7 +821,7 @@ export class SDK {
     token: string,
     messageHash: string
   ): Promise<any> {
-    let { hexToBytes, numberToHex, soliditySha3, toBN } = web3.utils;
+    let { hexToBytes, toHex, soliditySha3, toBN } = web3.utils;
     let channelID =
       "0x0000000000000000000000000000000000000000000000000000000000000000";
     let balance = "0";
@@ -858,7 +857,7 @@ export class SDK {
         .toString();
       additionalHash = soliditySha3(
         { t: "bytes32", v: messageHash },
-        { t: "uint256", v: amount },
+        { t: "uint256", v: amount }
       );
 
       // sign data with typed data v3
@@ -874,36 +873,20 @@ export class SDK {
       );
     }
 
-    let transferPB = protobuf.Root.fromJSON(require("../conf/transfer.json"));
+    let paymentData = [
+      channelID,
+      toHex(balance),
+      toHex(nonce),
+      toHex(amount),
+      additionalHash,
+      paymentSignature
+    ];
+    console.log("paymentData: ", paymentData);
+    // rlpencode is encoded data
+    let rlpencode = "0x" + rlp.encode(paymentData).toString("hex");
 
-    // Obtain a message type
-    let Transfer = transferPB.lookupType("TransferData.Transfer");
+    console.log("rlpencode is", rlpencode);
 
-    // Exemplary payload
-    let payload = {
-      channelID: hexToBytes(channelID),
-      balance: Number(balance),
-      nonce: Number(nonce),
-      amount: Number(amount),
-      // balance: [0],
-      // nonce: [0],
-      // amount: [0],
-      additionalHash: hexToBytes(additionalHash)
-    };
-
-    // console.log("payload", payload);
-    // Verify the payload if necessary (i.e. when possibly incomplete or invalid)
-    let errMsg = Transfer.verify(payload);
-    if (errMsg) throw Error(errMsg);
-    // Create a new message
-    let message = Transfer.create(payload); // or use .fromObject if conversion is necessary
-    // Encode a message to an Uint8Array (browser) or Buffer (node)
-    let buffer = Transfer.encode(message).finish();
-    // console.log("buildTransferData", {
-    //   transferData: buffer,
-    //   paymentSignature
-    // });
-
-    return { transferData: buffer, paymentSignature };
+    return rlpencode;
   }
 }

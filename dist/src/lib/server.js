@@ -66,9 +66,8 @@ var cita_events_1 = require("../listener/cita_events");
 var common_1 = require("./common");
 var sign_1 = require("./sign");
 var session_1 = require("./session");
-var protobuf = require("protobufjs");
 var mylog_1 = require("./mylog");
-protobuf.common("google/protobuf/descriptor.proto", {});
+var rlp = require("rlp");
 var SDK = (function () {
     function SDK() {
     }
@@ -584,11 +583,11 @@ var SDK = (function () {
     };
     SDK.prototype.buildTransferData = function (user, amount, token, messageHash) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, hexToBytes, numberToHex, soliditySha3, toBN, channelID, balance, nonce, additionalHash, paymentSignature, channel, balanceProof, messageHash2, transferPB, Transfer, payload, errMsg, message, buffer;
+            var _a, hexToBytes, toHex, soliditySha3, toBN, channelID, balance, nonce, additionalHash, paymentSignature, channel, balanceProof, messageHash2, paymentData, rlpencode;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        _a = exports.web3.utils, hexToBytes = _a.hexToBytes, numberToHex = _a.numberToHex, soliditySha3 = _a.soliditySha3, toBN = _a.toBN;
+                        _a = exports.web3.utils, hexToBytes = _a.hexToBytes, toHex = _a.toHex, soliditySha3 = _a.soliditySha3, toBN = _a.toBN;
                         channelID = "0x0000000000000000000000000000000000000000000000000000000000000000";
                         balance = "0";
                         nonce = "0";
@@ -628,21 +627,18 @@ var SDK = (function () {
                         paymentSignature = common_1.Common.SignatureToHex(messageHash2, exports.cpProvider.privateKey);
                         _b.label = 4;
                     case 4:
-                        transferPB = protobuf.Root.fromJSON(require("../conf/transfer.json"));
-                        Transfer = transferPB.lookupType("TransferData.Transfer");
-                        payload = {
-                            channelID: hexToBytes(channelID),
-                            balance: Number(balance),
-                            nonce: Number(nonce),
-                            amount: Number(amount),
-                            additionalHash: hexToBytes(additionalHash)
-                        };
-                        errMsg = Transfer.verify(payload);
-                        if (errMsg)
-                            throw Error(errMsg);
-                        message = Transfer.create(payload);
-                        buffer = Transfer.encode(message).finish();
-                        return [2, { transferData: buffer, paymentSignature: paymentSignature }];
+                        paymentData = [
+                            channelID,
+                            toHex(balance),
+                            toHex(nonce),
+                            toHex(amount),
+                            additionalHash,
+                            paymentSignature
+                        ];
+                        console.log("paymentData: ", paymentData);
+                        rlpencode = "0x" + rlp.encode(paymentData).toString("hex");
+                        console.log("rlpencode is", rlpencode);
+                        return [2, rlpencode];
                 }
             });
         });

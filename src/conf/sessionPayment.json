@@ -368,11 +368,7 @@
         "type": "bytes"
       },
       {
-        "name": "protoData",
-        "type": "bytes"
-      },
-      {
-        "name": "paymentSig",
+        "name": "paymentData",
         "type": "bytes"
       }
     ],

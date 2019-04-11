@@ -70,18 +70,17 @@ export class Session {
     from: string,
     to: string,
     sessionData: SessionData,
-    paymentData: PaymentData
+    paymentData: string
   ) {
     logger.debug(
-      "sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData.transferData: [%o], paymentData.paymentSignature:[%s] ",
+      "sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData: [%o]",
       from,
       to,
       sessionData.sessionID,
       sessionData.mType,
       sessionData.content,
       sessionData.signature,
-      paymentData.transferData,
-      paymentData.paymentSignature
+      paymentData
     );
 
     // 发送交易 到 AppChain
@@ -93,8 +92,7 @@ export class Session {
         sessionData.mType,
         sessionData.content,
         sessionData.signature,
-        paymentData.transferData,
-        paymentData.paymentSignature
+        paymentData
       ),
       cpProvider.address,
       cpProvider.privateKey
