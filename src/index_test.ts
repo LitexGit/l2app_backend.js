@@ -62,7 +62,7 @@ l2.on("Message", async (err: any, res: any) => {
 
   //   let session = await l2.GetSession(sessionID);
 
-  //   await l2.SendMessage(sessionID, user, Number(type)+ 1, content, amount, token);
+    await l2.sendMessage(sessionID, user, Number(type)+ 1, content, amount, token);
 });
 
 const port: number = 9527;

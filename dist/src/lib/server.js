@@ -264,7 +264,7 @@ var SDK = (function () {
     SDK.prototype.transfer = function (to, amount, token) {
         if (token === void 0) { token = contract_1.ADDRESS_ZERO; }
         return __awaiter(this, void 0, void 0, function () {
-            var toBN, channelID, channel, amountBN, _a, balance, nonce, additionalHash, balanceBN, assetAmountBN, messageHash, signature;
+            var toBN, channelID, amountBN, _a, balance, nonce, additionalHash, balanceBN, assetAmountBN, messageHash, signature;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -279,13 +279,10 @@ var SDK = (function () {
                         return [4, exports.ethPN.methods.getChannelID(to, token).call()];
                     case 1:
                         channelID = _b.sent();
-                        return [4, exports.appPN.methods.channelMap(channelID).call()];
-                    case 2:
-                        channel = _b.sent();
-                        if (Number(channel.status) != contract_1.CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
-                            throw new Error("channel status is not open");
-                        }
                         amountBN = toBN(amount);
+                        return [4, this.checkBalance(to, amountBN.toString(), token, true)];
+                    case 2:
+                        _b.sent();
                         return [4, Promise.all([
                                 exports.appPN.methods.balanceProofMap(channelID, to).call()
                             ])];
@@ -581,9 +578,39 @@ var SDK = (function () {
             });
         });
     };
+    SDK.prototype.checkBalance = function (to, amount, token, needRebalance) {
+        return __awaiter(this, void 0, void 0, function () {
+            var toBN, channelID, channel, balanceBN, amountBN;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        toBN = exports.web3.utils.toBN;
+                        return [4, exports.ethPN.methods.getChannelID(to, token).call()];
+                    case 1:
+                        channelID = _a.sent();
+                        return [4, exports.appPN.methods.channelMap(channelID).call()];
+                    case 2:
+                        channel = _a.sent();
+                        if (Number(channel.status) != contract_1.CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
+                            throw new Error("channel status is not open");
+                        }
+                        balanceBN = toBN(channel.providerBalance);
+                        amountBN = toBN(amount);
+                        if (balanceBN.gte(amountBN)) {
+                            return [2];
+                        }
+                        if (!needRebalance) {
+                            throw new Error("providerBalance[" + channel.providerBalance + "] is less than sendAmount[" + amount + "]");
+                        }
+                        return [4, this.rebalance(to, amountBN.sub(balanceBN).toString(), token)];
+                    case 3: return [2, _a.sent()];
+                }
+            });
+        });
+    };
     SDK.prototype.buildTransferData = function (user, amount, token, messageHash) {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, hexToBytes, toHex, soliditySha3, toBN, channelID, balance, nonce, additionalHash, paymentSignature, channel, balanceProof, messageHash2, paymentData, rlpencode;
+            var _a, hexToBytes, toHex, soliditySha3, toBN, channelID, balance, nonce, additionalHash, paymentSignature, balanceProof, messageHash2, paymentData, rlpencode;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -597,15 +624,9 @@ var SDK = (function () {
                         return [4, exports.ethPN.methods.getChannelID(user, token).call()];
                     case 1:
                         channelID = _b.sent();
-                        return [4, exports.appPN.methods.channelMap(channelID).call()];
+                        return [4, this.checkBalance(user, amount, token, true)];
                     case 2:
-                        channel = _b.sent();
-                        if (Number(channel.status) !== contract_1.CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
-                            throw new Error("app channel status is not open, can not transfer now");
-                        }
-                        if (toBN(channel.providerBalance).lt(toBN(amount))) {
-                            throw new Error("provider's balance is less than transfer amount");
-                        }
+                        _b.sent();
                         return [4, exports.appPN.methods
                                 .balanceProofMap(channelID, user)
                                 .call()];

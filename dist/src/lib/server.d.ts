@@ -45,5 +45,6 @@ export declare class SDK {
     getPlayersBySessionID(sessionID: string): Promise<any>;
     exportSessionBytes(sessionID: string): Promise<any>;
     private initListeners;
+    private checkBalance;
     private buildTransferData;
 }

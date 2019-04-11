@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = {
-    ethPNAddress: "0xb661DB91C0EB7ff242871BB2787690BF51959DDA",
-    appPNAddress: "0xa097122AcdC2dEc8532985dAeEE5020F25086ED7",
-    appSessionAddress: "0xd1DDD0232BA1E8B23Bd1531FfF35e30f3cC6fAcA",
-    appOperatorAddress: "0x637CC5997eF214Ed34603a09846a3849CaA9B090",
-    appRpcUrl: "ws://18.179.21.124:4337",
+    ethPNAddress: "0xdfb90231f2355E756993dE371C05f3e92395790c",
+    appPNAddress: "0x7085d3C32c48385Ee2386440645Ec0bf7d49550F",
+    appSessionAddress: "0x07591D8e1f0f5466124C09cBB2Eca1292C2c0673",
+    appOperatorAddress: "0x8804Fc15cbeA212289BA216dD56b93cBbe33b930",
+    appRpcUrl: "http://18.179.21.124:1337",
     ethRpcUrl: "http://39.96.8.192:8545",
     token: "0x0000000000000000000000000000000000000000"
 };

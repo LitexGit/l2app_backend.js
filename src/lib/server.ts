@@ -459,15 +459,16 @@ export class SDK {
     let { toBN } = web3.utils;
     // 获取通道id
     let channelID = await ethPN.methods.getChannelID(to, token).call();
-    let channel = await appPN.methods.channelMap(channelID).call();
+    // let channel = await appPN.methods.channelMap(channelID).call();
 
-    // 通道状态异常
-    if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
-      throw new Error("channel status is not open");
-    }
+    // // 通道状态异常
+    // if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
+    //   throw new Error("channel status is not open");
+    // }
+    let amountBN = toBN(amount);
+    await this.checkBalance(to, amountBN.toString(), token, true);
 
     // 金额转成BN
-    let amountBN = toBN(amount);
     let [{ balance, nonce, additionalHash }] = await Promise.all([
       appPN.methods.balanceProofMap(channelID, to).call()
     ]);
@@ -815,6 +816,46 @@ export class SDK {
     }
   }
 
+  /**
+   * check balance is great than transfer amount. If need Rebalance, rebalance in the enough assets
+   *
+   * @param to
+   * @param amount
+   * @param token
+   * @param needRebalance
+   */
+  private async checkBalance(
+    to: any,
+    amount: string,
+    token: string,
+    needRebalance: boolean
+  ) {
+    let { toBN } = web3.utils;
+    // 获取通道id
+    let channelID = await ethPN.methods.getChannelID(to, token).call();
+    let channel = await appPN.methods.channelMap(channelID).call();
+
+    // 通道状态异常
+    if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
+      throw new Error("channel status is not open");
+    }
+
+    let balanceBN = toBN(channel.providerBalance);
+    let amountBN = toBN(amount);
+    if (balanceBN.gte(amountBN)) {
+      return;
+    }
+    if (!needRebalance) {
+      throw new Error(
+        `providerBalance[${
+          channel.providerBalance
+        }] is less than sendAmount[${amount}]`
+      );
+    }
+
+    return await this.rebalance(to, amountBN.sub(balanceBN).toString(), token);
+  }
+
   private async buildTransferData(
     user: string,
     amount: string,
@@ -832,16 +873,8 @@ export class SDK {
 
     if (Number(amount) > 0) {
       channelID = await ethPN.methods.getChannelID(user, token).call();
-      let channel = await appPN.methods.channelMap(channelID).call();
 
-      // check channel status
-      if (Number(channel.status) !== CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
-        throw new Error("app channel status is not open, can not transfer now");
-      }
-      // check provider's balance is enough
-      if (toBN(channel.providerBalance).lt(toBN(amount))) {
-        throw new Error("provider's balance is less than transfer amount");
-      }
+      await this.checkBalance(user, amount, token, true);
 
       // build transfer message
       // get balance proof from eth contract

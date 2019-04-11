@@ -68,6 +68,26 @@ describe("channel test", () => {
     await Common.Sleep(sleepInterval);
   });
 
+  it("TransferWithAutoRebalance", async () => {
+    let beforeChannelInfo = await l2.getChannelInfo(user, token);
+    console.log("before channel info is ", beforeChannelInfo);
+
+    let providerBalance = beforeChannelInfo.providerBalance;
+
+    let res = await l2.transfer(user, depositAmount, token);
+
+    await Common.Sleep(sleepInterval);
+    let afterChannelInfo = await l2.getChannelInfo(user, token);
+    console.log("after channel info is ", afterChannelInfo);
+
+    expect(Number(afterChannelInfo.providerBalance)).toBe(0);
+    expect(Number(afterChannelInfo.userBalance)).toBe(
+      Number(beforeChannelInfo.userBalance) + depositAmount
+    );
+
+    // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
+  });
+
   // it("ReBalance", async () => {
   //   let beforeChannelInfo = await l2.getChannelInfo(user, token);
   //   console.log("before channel info is ", beforeChannelInfo);
@@ -88,7 +108,11 @@ describe("channel test", () => {
 
   //   let providerBalance = beforeChannelInfo.providerBalance;
 
-  //   let res = await l2.transfer(user, providerBalance, token);
+  //   let res = await l2.transfer(
+  //     user,
+  //     depositAmount,
+  //     token
+  //   );
 
   //   await Common.Sleep(sleepInterval);
   //   let afterChannelInfo = await l2.getChannelInfo(user, token);
@@ -99,7 +123,6 @@ describe("channel test", () => {
   //   );
 
   //   // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
-
   // });
 
   it("kickUser", async () => {

@@ -20,10 +20,10 @@ describe("session test", () => {
   let l2: L2;
 
   let sessionID: string;
+  let depositAmount = 1e14;
 
   beforeAll(async () => {
     l2 = await initL2();
-    let depositAmount = 1e14;
     let watchDeposit = new Promise((resolve, reject) => {
       l2.on("UserDeposit", (err, res) => {
         console.log("Receive UserDeposit", res);
@@ -54,25 +54,6 @@ describe("session test", () => {
       "/************************NEXT IT***********************************/"
     );
     await Common.Sleep(sleepInterval);
-  });
-
-  it("ReBalance", async () => {
-    let pnInfo = await l2.getPaymentNetwork(token);
-    console.log("pnInfo: ", pnInfo);
-
-    let depositAmount = Number(pnInfo.providerBalance) / 10;
-
-    let beforeChannelInfo = await l2.getChannelInfo(userAddress, token);
-    console.log("before channel info is ", beforeChannelInfo);
-
-    let res = await l2.rebalance(userAddress, depositAmount, token);
-    await Common.Sleep(sleepInterval);
-    let afterChannelInfo = await l2.getChannelInfo(userAddress, token);
-    console.log("after channel info is ", afterChannelInfo);
-
-    expect(Number(afterChannelInfo.providerBalance)).toBe(
-      Number(beforeChannelInfo.providerBalance) + depositAmount
-    );
   });
 
   it("CreateSession", async () => {
@@ -123,7 +104,7 @@ describe("session test", () => {
 
   it("SendMessageWithAsset", async () => {
     let channelInfo = await l2.getChannelInfo(userAddress, token);
-    let sendAmount = Number(channelInfo.providerBalance) / 10 + "";
+    let sendAmount = depositAmount + "";
     // let session = await l2.GetSession(sessionID)
     let messageContent = web3.utils.toHex("hello world with money");
     await l2.sendMessage(
@@ -144,8 +125,9 @@ describe("session test", () => {
     expect(lastMessage.amount).toBe(sendAmount);
 
     let afterChannelInfo = await l2.getChannelInfo(userAddress, token);
-    expect(afterChannelInfo.providerBalance).toBe(
-      Number((channelInfo.providerBalance * 9) / 10) + ""
+    expect(afterChannelInfo.providerBalance).toBe("0");
+    expect(Number(afterChannelInfo.userBalance)).toBe(
+      Number(channelInfo.userBalance) + depositAmount
     );
   });
 

@@ -71,6 +71,9 @@ l2.on("Message", function (err, res) { return __awaiter(_this, void 0, void 0, f
             case 1:
                 players = _a.sent();
                 console.log("session players", players);
+                return [4, l2.sendMessage(sessionID, user, Number(type) + 1, content, amount, token)];
+            case 2:
+                _a.sent();
                 return [2];
         }
     });

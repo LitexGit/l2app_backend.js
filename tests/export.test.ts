@@ -13,10 +13,15 @@ let addressList = [
   "0x85699FB928fE4dB4271B26119536bcA9E8006f7C"
 ];
 
-let fromAddress = "0x4Aa670bCe722B9698A670afc968b1dE5f1553df9";
-let privateKey =
-  "DDC1738AC05989633A43A49FB8B9FBE77970CCA9F85921768C2BD8FABBFB2E55";
+// let fromAddress = "0x4Aa670bCe722B9698A670afc968b1dE5f1553df9";
+// let privateKey =
+//   "DDC1738AC05989633A43A49FB8B9FBE77970CCA9F85921768C2BD8FABBFB2E55";
 
+let fromAddress = "0xa08105d7650Fe007978a291CcFECbB321fC21ffe";
+let privateKey =
+  "6A22D7D5D87EFC4A1375203B7E54FBCF35FAA84975891C5E3D12BE86C579A6E5";
+// let token = "0x3052c3104c32e666666fBEf3A5EAd4603747eA83";
+let token = "0x9ac78c85A0d3a86a8BE1e08Bea6Ef2EE1687bE18";
 describe("test export", () => {
   it("export", async () => {
     let l2 = await initL2();
@@ -36,12 +41,14 @@ describe("test export", () => {
 
   it("transfer", async () => {
     for (let address of addressList) {
-      let data = ERC20.methods.transfer(address, 1e20 + "").encodeABI();
+      let data = ERC20.methods
+        .transfer(address, "1000000000000000000000")
+        .encodeABI();
 
       await Common.SendEthTransaction(
         fromAddress,
-        address,
-        2e18 + "",
+        token,
+        0,
         data,
         privateKey
       );
