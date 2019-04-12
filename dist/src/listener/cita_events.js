@@ -43,7 +43,7 @@ exports.CITA_EVENTS = {
     Transfer: {
         filter: function () { return ({ to: server_1.cpProvider.address }); },
         handler: function (event) { return __awaiter(_this, void 0, void 0, function () {
-            var _a, from, to, channelID, balance, transferAmount, additionalHash, channel, token, assetEvent, _b, feeProofAmount, road, feeRate, amount, bn, feeAmount, feeNonce, messageHash, signature;
+            var _a, from, to, channelID, balance, transferAmount, additionalHash, channel, token, assetEvent, toBN, time, channelInfo, _b, feeProofAmount, road, feeRate, amount, bn, feeAmount, feeNonce, messageHash, signature;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -63,16 +63,35 @@ exports.CITA_EVENTS = {
                             additionalHash: additionalHash,
                             totalTransferredAmount: balance
                         };
-                        if (server_1.callbacks.get("Transfer") &&
+                        if (!(server_1.callbacks.get("Transfer") &&
                             additionalHash ===
-                                "0x0000000000000000000000000000000000000000000000000000000000000000") {
-                            server_1.callbacks.get("Transfer")(null, assetEvent);
-                        }
-                        return [4, server_1.appPN.methods.feeProofMap(token).call()];
+                                "0x0000000000000000000000000000000000000000000000000000000000000000")) return [3, 6];
+                        toBN = server_1.web3.utils.toBN;
+                        time = 0;
+                        _c.label = 2;
                     case 2:
+                        if (!(time < 15)) return [3, 5];
+                        return [4, server_1.appPN.methods
+                                .balanceProofMap(channelID, to)
+                                .call()];
+                    case 3:
+                        channelInfo = _c.sent();
+                        if (toBN(channelInfo.balance).gte(toBN(balance))) {
+                            return [3, 5];
+                        }
+                        return [4, common_1.Common.Sleep(1000)];
+                    case 4:
+                        _c.sent();
+                        time++;
+                        return [3, 2];
+                    case 5:
+                        server_1.callbacks.get("Transfer")(null, assetEvent);
+                        _c.label = 6;
+                    case 6: return [4, server_1.appPN.methods.feeProofMap(token).call()];
+                    case 7:
                         _b = _c.sent(), feeProofAmount = _b.amount, road = _b.nonce;
                         return [4, server_1.appPN.methods.feeRateMap(token).call()];
-                    case 3:
+                    case 8:
                         feeRate = _c.sent();
                         if (Number(feeRate) === 0) {
                             mylog_1.logger.debug("feeRate is 0, will do nothing");
@@ -82,7 +101,7 @@ exports.CITA_EVENTS = {
                         return [4, Promise.all([
                                 server_1.appPN.methods.balanceProofMap(channelID, server_1.cpProvider.address).call()
                             ])];
-                    case 4:
+                    case 9:
                         amount = (_c.sent())[0].balance;
                         bn = server_1.web3.utils.toBN;
                         feeAmount = bn(feeProofAmount)
