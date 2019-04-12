@@ -63,9 +63,7 @@ exports.CITA_EVENTS = {
                             additionalHash: additionalHash,
                             totalTransferredAmount: balance
                         };
-                        if (!(server_1.callbacks.get("Transfer") &&
-                            additionalHash ===
-                                "0x0000000000000000000000000000000000000000000000000000000000000000")) return [3, 6];
+                        if (!server_1.callbacks.get("Transfer")) return [3, 6];
                         toBN = server_1.web3.utils.toBN;
                         time = 0;
                         _c.label = 2;

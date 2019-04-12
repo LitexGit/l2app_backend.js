@@ -380,12 +380,13 @@ export class SDK {
       cpProvider.privateKey
     );
 
-    let repeatTime = 10;
+    let repeatTime = 0;
     while (repeatTime < 10) {
       let newRebalanceProof = await appPN.methods
         .rebalanceProofMap(channelID)
         .call();
       if (newRebalanceProof.nonce === nonce) {
+        logger.info("break loop ", repeatTime);
         break;
       }
       await Common.Sleep(1000);

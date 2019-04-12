@@ -246,7 +246,7 @@ var SDK = (function () {
                         return [4, common_1.Common.SendAppChainTX(exports.appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature), exports.cpProvider.address, exports.cpProvider.privateKey)];
                     case 5:
                         res = _b.sent();
-                        repeatTime = 10;
+                        repeatTime = 0;
                         _b.label = 6;
                     case 6:
                         if (!(repeatTime < 10)) return [3, 9];
@@ -256,6 +256,7 @@ var SDK = (function () {
                     case 7:
                         newRebalanceProof = _b.sent();
                         if (newRebalanceProof.nonce === nonce) {
+                            mylog_1.logger.info("break loop ", repeatTime);
                             return [3, 9];
                         }
                         return [4, common_1.Common.Sleep(1000)];

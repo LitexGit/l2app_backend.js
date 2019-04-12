@@ -55,9 +55,10 @@ export const CITA_EVENTS = {
 
       // will not emit Asset event when transfer is attached with sessionMessage
       if (
-        callbacks.get("Transfer") &&
-        additionalHash ===
-          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        callbacks.get("Transfer")
+        // &&
+        // additionalHash ===
+        //   "0x0000000000000000000000000000000000000000000000000000000000000000"
       ) {
         let { toBN } = web3.utils;
         let time = 0;
