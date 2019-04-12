@@ -45,10 +45,27 @@ var Session = (function () {
     }
     Session.InitSession = function (sessionID, game, userList, customData) {
         return __awaiter(this, void 0, void 0, function () {
+            var res, repeatTime;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.initSession(sessionID, server_1.cpProvider.address, game, userList, server_1.appPN.options.address, server_1.web3.utils.toHex(customData)), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
-                    case 1: return [2, _a.sent()];
+                    case 1:
+                        res = _a.sent();
+                        repeatTime = 0;
+                        _a.label = 2;
+                    case 2:
+                        if (!(repeatTime < 60)) return [3, 5];
+                        return [4, this.isExists(sessionID)];
+                    case 3:
+                        if (_a.sent()) {
+                            return [3, 5];
+                        }
+                        return [4, common_1.Common.Sleep(1000)];
+                    case 4:
+                        _a.sent();
+                        repeatTime++;
+                        return [3, 2];
+                    case 5: return [2, res];
                 }
             });
         });

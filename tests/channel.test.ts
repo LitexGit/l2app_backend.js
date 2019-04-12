@@ -3,15 +3,17 @@ import { L2 } from "../src/sdk/sdk";
 import { Common } from "../src/lib/common";
 import { ethPN, cpProvider } from "../src/lib/server";
 import { config as testConfig } from "./config_test";
+import { config } from "../src/conf/config.dev";
 let {
   userAddress,
   userPrivateKey,
   operatorPrivateKey,
-  token,
   feeRate,
   jestTimeout,
   sleepInterval
 } = testConfig;
+
+let token = config.token;
 
 jest.setTimeout(jestTimeout);
 

@@ -369,7 +369,7 @@ export class SDK {
     let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
     // 向 appChain 提交 ReBalance 数据
-    return await Common.SendAppChainTX(
+    let res = await Common.SendAppChainTX(
       appPN.methods.proposeRebalance(
         channelID,
         reBalanceAmountBN,
@@ -379,6 +379,20 @@ export class SDK {
       cpProvider.address,
       cpProvider.privateKey
     );
+
+    let repeatTime = 10;
+    while (repeatTime < 10) {
+      let newRebalanceProof = await appPN.methods
+        .rebalanceProofMap(channelID)
+        .call();
+      if (newRebalanceProof.nonce === nonce) {
+        break;
+      }
+      await Common.Sleep(1000);
+      repeatTime++;
+    }
+
+    return res;
 
     // 等待 ConfirmRebalance 事件回调
   }
@@ -894,7 +908,6 @@ export class SDK {
     }
 
     await this.rebalance(to, amountBN.sub(balanceBN).toString(), token);
-    await Common.Sleep(1000);
     // TODO watch event to make sure rebalance is confirmed by regulator
     return true;
   }

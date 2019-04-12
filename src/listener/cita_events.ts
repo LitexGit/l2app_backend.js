@@ -59,6 +59,18 @@ export const CITA_EVENTS = {
         additionalHash ===
           "0x0000000000000000000000000000000000000000000000000000000000000000"
       ) {
+        let { toBN } = web3.utils;
+        let time = 0;
+        while (time < 15) {
+          let channelInfo = await appPN.methods
+            .balanceProofMap(channelID, to)
+            .call();
+          if (toBN(channelInfo.balance).gte(toBN(balance))) {
+            break;
+          }
+          await Common.Sleep(1000);
+          time++;
+        }
         // @ts-ignore
         callbacks.get("Transfer")(null, assetEvent);
       }

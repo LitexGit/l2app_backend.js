@@ -124,7 +124,7 @@ export class Common {
         return rs.hash;
       } else {
         //确认失败
-        logger.error(`confirm fail ${receipt.errorMessage}`);
+        logger.error(`confirm fail ${receipt.errorMessage}`, action.arguments);
         throw new Error(`confirm fail ${receipt.errorMessage}`);
       }
     } else {

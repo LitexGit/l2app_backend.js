@@ -7,7 +7,7 @@ exports.config = {
     appOperatorAddress: "0x8804Fc15cbeA212289BA216dD56b93cBbe33b930",
     appRpcUrl: "http://18.179.21.124:1337",
     ethRpcUrl: "http://39.96.8.192:8545",
-    token: "0x0000000000000000000000000000000000000000"
+    token: "0x3052c3104c32e666666fBEf3A5EAd4603747eA83"
 };
 exports.cpPrivateKey = "6A22D7D5D87EFC4A1375203B7E54FBCF35FAA84975891C5E3D12BE86C579A6E5";
 exports.ethPaymentNetwork = {

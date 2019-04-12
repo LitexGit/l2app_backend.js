@@ -4,15 +4,16 @@ import { config as testConfig } from "./config_test";
 import { Common } from "../src/lib/common";
 import { web3, cpProvider } from "../src/lib/server";
 import { SESSION_STATUS } from "../src/conf/contract";
+import { config } from "../src/conf/config.dev";
 let {
   userAddress,
   userPrivateKey,
   operatorPrivateKey,
-  token,
   feeRate,
   jestTimeout,
   sleepInterval
 } = testConfig;
+let token = config.token;
 
 jest.setTimeout(jestTimeout);
 

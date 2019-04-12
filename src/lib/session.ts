@@ -30,7 +30,7 @@ export class Session {
     customData: any
   ) {
     // 发送交易 到 AppChain
-    return await Common.SendAppChainTX(
+    let res = await Common.SendAppChainTX(
       sessionPN.methods.initSession(
         sessionID,
         cpProvider.address,
@@ -42,6 +42,17 @@ export class Session {
       cpProvider.address,
       cpProvider.privateKey
     );
+
+    let repeatTime = 0;
+    while (repeatTime < 60) {
+      if (await this.isExists(sessionID)) {
+        break;
+      }
+      await Common.Sleep(1000);
+      repeatTime++;
+    }
+
+    return res;
   }
 
   /**

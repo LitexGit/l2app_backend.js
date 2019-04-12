@@ -200,7 +200,7 @@ var SDK = (function () {
     SDK.prototype.rebalance = function (userAddress, amount, token) {
         if (token === void 0) { token = contract_1.ADDRESS_ZERO; }
         return __awaiter(this, void 0, void 0, function () {
-            var channelID, channel, amountBN, providerBalance, providerBalanceBN, _a, balance, nonce, balanceBN, reBalanceAmountBN, messageHash, signature;
+            var channelID, channel, amountBN, providerBalance, providerBalanceBN, _a, balance, nonce, balanceBN, reBalanceAmountBN, messageHash, signature, res, repeatTime, newRebalanceProof;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -244,7 +244,26 @@ var SDK = (function () {
                         messageHash = exports.web3.utils.soliditySha3({ v: exports.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: reBalanceAmountBN, t: "uint256" }, { v: nonce, t: "uint256" });
                         signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
                         return [4, common_1.Common.SendAppChainTX(exports.appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature), exports.cpProvider.address, exports.cpProvider.privateKey)];
-                    case 5: return [2, _b.sent()];
+                    case 5:
+                        res = _b.sent();
+                        repeatTime = 10;
+                        _b.label = 6;
+                    case 6:
+                        if (!(repeatTime < 10)) return [3, 9];
+                        return [4, exports.appPN.methods
+                                .rebalanceProofMap(channelID)
+                                .call()];
+                    case 7:
+                        newRebalanceProof = _b.sent();
+                        if (newRebalanceProof.nonce === nonce) {
+                            return [3, 9];
+                        }
+                        return [4, common_1.Common.Sleep(1000)];
+                    case 8:
+                        _b.sent();
+                        repeatTime++;
+                        return [3, 6];
+                    case 9: return [2, res];
                 }
             });
         });
@@ -636,9 +655,6 @@ var SDK = (function () {
                         }
                         return [4, this.rebalance(to, amountBN.sub(balanceBN).toString(), token)];
                     case 3:
-                        _a.sent();
-                        return [4, common_1.Common.Sleep(1000)];
-                    case 4:
                         _a.sent();
                         return [2, true];
                 }

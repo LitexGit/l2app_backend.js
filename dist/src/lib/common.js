@@ -183,7 +183,7 @@ var Common = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        mylog_1.logger.debug("start send CITA tx", action.arguments);
+                        mylog_1.logger.debug("start send CITA tx", action._method.name, action.arguments);
                         return [4, this.BuildAppChainTX(from, privateKey)];
                     case 1:
                         tx = _a.sent();
@@ -199,7 +199,7 @@ var Common = (function () {
                             return [2, rs.hash];
                         }
                         else {
-                            mylog_1.logger.error("confirm fail " + receipt.errorMessage);
+                            mylog_1.logger.error("confirm fail " + receipt.errorMessage, action._method.name, action.arguments);
                             throw new Error("confirm fail " + receipt.errorMessage);
                         }
                         return [3, 5];

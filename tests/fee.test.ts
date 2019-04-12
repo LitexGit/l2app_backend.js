@@ -18,12 +18,12 @@ let {
   userPrivateKey,
   operatorPrivateKey,
   regulatorPrivateKey,
-  token,
   feeRate,
   jestTimeout,
   sleepInterval
 } = testConfig;
 
+let token = devConfig.token;
 jest.setTimeout(jestTimeout);
 
 describe("session test", () => {
