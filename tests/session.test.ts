@@ -59,16 +59,13 @@ describe("session test", () => {
 
   it("CreateSession", async () => {
     sessionID = web3.utils.sha3("hello world" + new Date().toISOString());
-    await l2.startSession(
-      sessionID,
-      userAddress,
-      [userAddress],
-      web3.utils.toHex("hello world")
-    );
+    let customData = "hello world xxxx";
+    await l2.startSession(sessionID, userAddress, [userAddress], customData);
     await Common.Sleep(sleepInterval);
 
     let session = await l2.getSession(sessionID);
     console.log("session: ", session);
+    expect(session.customData).toBe(customData);
     expect(session.game).toBe(userAddress);
     expect(session.status).toBe(SESSION_STATUS.SESSION_STATUS_OPEN);
 

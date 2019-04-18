@@ -37,7 +37,7 @@ export class Session {
         game,
         userList,
         appPN.options.address,
-        web3.utils.toHex(customData)
+        web3.utils.utf8ToHex(customData)
       ),
       cpProvider.address,
       cpProvider.privateKey
@@ -174,7 +174,7 @@ export class Session {
       .call();
     this.status = Number(status);
     this.game = game;
-    this.customData = data;
+    this.customData = web3.utils.hexToUtf8(data);
 
     // this.callbacks = this.callbacks || new Map<string, () => void>();
   }

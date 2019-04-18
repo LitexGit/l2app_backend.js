@@ -48,7 +48,7 @@ var Session = (function () {
             var res, repeatTime;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.initSession(sessionID, server_1.cpProvider.address, game, userList, server_1.appPN.options.address, server_1.web3.utils.toHex(customData)), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
+                    case 0: return [4, common_1.Common.SendAppChainTX(server_1.sessionPN.methods.initSession(sessionID, server_1.cpProvider.address, game, userList, server_1.appPN.options.address, server_1.web3.utils.utf8ToHex(customData)), server_1.cpProvider.address, server_1.cpProvider.privateKey)];
                     case 1:
                         res = _a.sent();
                         repeatTime = 0;
@@ -160,7 +160,7 @@ var Session = (function () {
                         _a = _b.sent(), status = _a.status, game = _a.game, data = _a.data;
                         this.status = Number(status);
                         this.game = game;
-                        this.customData = data;
+                        this.customData = server_1.web3.utils.hexToUtf8(data);
                         return [2];
                 }
             });

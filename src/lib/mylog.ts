@@ -14,16 +14,19 @@
 import { configure, getLogger } from "log4js";
 // configure("./filename");
 
-export declare let logger;
+// export const logger = getLogger();
+// logger.level = "debug";
+// logger.debug("Some debug messages");
 
-logger = getLogger();
-logger.level = "debug";
-logger.debug("Some debug messages");
-
-configure({
-  appenders: {
-    cheese: { type: "file", filename: "cheese.log" },
-    console: { type: "console" }
-  },
-  categories: { default: { appenders: ["cheese", "console"], level: "debug" } }
-});
+// configure({
+//   appenders: {
+//     cheese: { type: "file", filename: "cheese.log" },
+//     console: { type: "console" }
+//   },
+//   categories: { default: { appenders: ["cheese", "console"], level: "debug" } }
+// });
+export const logger = {
+  info: console.error,
+  debug: console.info,
+  error: console.error
+};
