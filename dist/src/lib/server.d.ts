@@ -1,6 +1,7 @@
 import { Contract } from "web3/node_modules/web3-eth-contract";
 import { L2_CB, L2_EVENT, PN } from "../conf/contract";
 import { Session } from "./session";
+export declare let debug: boolean;
 export declare let CITA: any;
 export declare let cpProvider: any;
 export declare let web3: any;
@@ -18,6 +19,8 @@ export declare class SDK {
     private appRpcUrl;
     private ethRpcUrl;
     init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN): Promise<void>;
+    setDebug(debugFlag: boolean): void;
+    setLogger(logger: any): void;
     deposit(amount: number | string, token?: string): Promise<{}>;
     withdraw(amount: number | string, token?: string): Promise<any>;
     openChannelForUser(userAddress: string, token?: string): Promise<{}>;

@@ -1,14 +1,2 @@
-export declare const logger: {
-    info: {
-        (message?: any, ...optionalParams: any[]): void;
-        (message?: any, ...optionalParams: any[]): void;
-    };
-    debug: {
-        (message?: any, ...optionalParams: any[]): void;
-        (message?: any, ...optionalParams: any[]): void;
-    };
-    error: {
-        (message?: any, ...optionalParams: any[]): void;
-        (message?: any, ...optionalParams: any[]): void;
-    };
-};
+export declare let logger: any;
+export declare function setLogger(newlogger?: any): Promise<void>;

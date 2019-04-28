@@ -1,32 +1,24 @@
-// export default () => {
-//   let originalLog = console.log;
-//   // Overwriting
-//   console.log = function() {
-//     var args = [].slice.call(arguments);
-//     originalLog.apply(console.log, [getCurrentDateString()].concat(args));
-//   };
-//   // Returns current timestamp
-//   function getCurrentDateString() {
-//     return new Date().toISOString() + " ------";
-//   }
-// };
+import { debug } from "./server";
 
-import { configure, getLogger } from "log4js";
-// configure("./filename");
+export declare let logger;
 
-// export const logger = getLogger();
-// logger.level = "debug";
-// logger.debug("Some debug messages");
-
-// configure({
-//   appenders: {
-//     cheese: { type: "file", filename: "cheese.log" },
-//     console: { type: "console" }
-//   },
-//   categories: { default: { appenders: ["cheese", "console"], level: "debug" } }
-// });
-export const logger = {
-  info: console.error,
-  debug: console.info,
-  error: console.error
+logger = {
+  info: debug ? console.log : () => {},
+  error: debug ? console.error : () => {},
+  debug: debug ? console.debug : () => {}
 };
+
+export async function setLogger(newlogger?) {
+  if (!newlogger) {
+    logger = {
+      info: debug ? console.info : () => {},
+      error: debug ? console.error : () => {},
+      debug: debug ? console.log : () => {}
+    };
+  } else {
+    logger = newlogger;
+    newlogger.error('server error');
+    // newlogger.info('server info');
+    newlogger.debug('server debug');
+  }
+}

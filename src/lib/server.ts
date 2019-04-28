@@ -19,9 +19,10 @@ import { CITA_EVENTS } from "../listener/cita_events";
 import { Common } from "./common";
 import { signHash } from "./sign";
 import { Session } from "./session";
-import { logger } from "./mylog";
+import { logger, setLogger } from "./mylog";
 import * as rlp from "rlp";
 
+export let debug: boolean;
 export let CITA: any;
 export let cpProvider: any;
 export let web3: any;
@@ -35,7 +36,10 @@ export class SDK {
   public static instance: SDK;
 
   // 私有函数，不允许外部使用 new函数 创建
-  private constructor() {}
+  private constructor() {
+    debug = true;
+    setLogger();
+  }
 
   // 单例模式 返回SDK对象
   public static GetInstance(): SDK {
@@ -118,6 +122,25 @@ export class SDK {
     if (cpProvider.address) {
       this.initListeners();
     }
+  }
+
+  /**
+   * set log switch
+   *
+   * @param debugFlag  if set true, will set log on.
+   */
+  setDebug(debugFlag: boolean) {
+    debug = debugFlag;
+    setLogger();
+  }
+
+  /**
+   * set logger for server sdk
+   *
+   * @param logger logger
+   */
+  setLogger(logger: any) {
+    setLogger(logger);
   }
 
   /**
@@ -598,10 +621,10 @@ export class SDK {
       throw new Error(`user[${user}] is not valid address`);
     }
 
-    let session = await Session.GetSession(sessionID);
-    if (Number(session.status) !== SESSION_STATUS.SESSION_STATUS_OPEN) {
-      throw new Error(`session is not open now. status = [${session.status}]`);
-    }
+    // let session = await Session.GetSession(sessionID);
+    // if (Number(session.status) !== SESSION_STATUS.SESSION_STATUS_OPEN) {
+    //   throw new Error(`session is not open now. status = [${session.status}]`);
+    // }
 
     return await Session.JoinSession(sessionID, user);
   }

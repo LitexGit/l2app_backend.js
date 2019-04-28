@@ -28,8 +28,8 @@ describe("单元测试", () => {
   });
 
   it("CP deposit", async () => {
-    // let depositAmount = "5000000000000000000000";
-    let depositAmount = "5000000000000000000";
+    let depositAmount = "5000000000000000000000";
+    // let depositAmount = "5000000000000000000";
     let watchDepsoit = new Promise((resolve, reject) => {
       l2.on("ProviderDeposit", (err, res) => {
         console.log("Receive ProviderDeposit", res);

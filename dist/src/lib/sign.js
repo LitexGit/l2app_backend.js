@@ -1,11 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ethereumjs_util_1 = require("ethereumjs-util");
-var contract_1 = require("../conf/contract");
-var abi = require("ethereumjs-abi");
-var types = contract_1.TYPED_DATA.types;
-function dependencies(primaryType, found) {
-    if (found === void 0) { found = []; }
+const ethereumjs_util_1 = require("ethereumjs-util");
+const contract_1 = require("../conf/contract");
+const abi = require("ethereumjs-abi");
+const types = contract_1.TYPED_DATA.types;
+function dependencies(primaryType, found = []) {
     if (found.includes(primaryType)) {
         return found;
     }
@@ -13,10 +12,8 @@ function dependencies(primaryType, found) {
         return found;
     }
     found.push(primaryType);
-    for (var _i = 0, _a = types[primaryType]; _i < _a.length; _i++) {
-        var field = _a[_i];
-        for (var _b = 0, _c = dependencies(field.type, found); _b < _c.length; _b++) {
-            var dep = _c[_b];
+    for (let field of types[primaryType]) {
+        for (let dep of dependencies(field.type, found)) {
             if (!found.includes(dep)) {
                 found.push(dep);
             }
@@ -25,18 +22,14 @@ function dependencies(primaryType, found) {
     return found;
 }
 function encodeType(primaryType) {
-    var deps = dependencies(primaryType);
-    deps = deps.filter(function (t) { return t != primaryType; });
+    let deps = dependencies(primaryType);
+    deps = deps.filter((t) => t != primaryType);
     deps = [primaryType].concat(deps.sort());
-    var result = "";
-    for (var _i = 0, deps_1 = deps; _i < deps_1.length; _i++) {
-        var type = deps_1[_i];
-        result += type + "(" + types[type]
-            .map(function (_a) {
-            var name = _a.name, type = _a.type;
-            return type + " " + name;
-        })
-            .join(",") + ")";
+    let result = "";
+    for (let type of deps) {
+        result += `${type}(${types[type]
+            .map(({ name, type }) => `${type} ${name}`)
+            .join(",")})`;
     }
     return result;
 }
@@ -44,13 +37,12 @@ function typeHash(primaryType) {
     return ethereumjs_util_1.keccak256(encodeType(primaryType));
 }
 function encodeData(primaryType, data) {
-    var encTypes = [];
-    var encValues = [];
+    let encTypes = [];
+    let encValues = [];
     encTypes.push("bytes32");
     encValues.push(typeHash(primaryType));
-    for (var _i = 0, _a = types[primaryType]; _i < _a.length; _i++) {
-        var field = _a[_i];
-        var value = data[field.name];
+    for (let field of types[primaryType]) {
+        let value = data[field.name];
         if (field.type == "string" || field.type == "bytes") {
             encTypes.push("bytes32");
             value = ethereumjs_util_1.keccak256(value);
