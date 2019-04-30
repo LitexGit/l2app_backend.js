@@ -13,7 +13,7 @@ export declare class Common {
         validUntilBlock: number;
         value: string;
     }>;
-    static SendAppChainTX(action: any, from: string, privateKey: string): Promise<any>;
+    static SendAppChainTX(action: any, from: string, privateKey: string, name: string): Promise<any>;
     static CheckSignature(messageHash: string, signature: string, address: string): boolean;
     static SignatureToHex(messageHash: string, privateKey: string): any;
     static RandomWord(randomFlag: boolean, min: number, max?: number): string;

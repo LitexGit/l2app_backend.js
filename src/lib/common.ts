@@ -110,7 +110,12 @@ export class Common {
     return tx;
   }
 
-  static async SendAppChainTX(action: any, from: string, privateKey: string) {
+  static async SendAppChainTX(
+    action: any,
+    from: string,
+    privateKey: string,
+    name: string
+  ) {
     logger.debug("start send CITA tx", action.arguments);
     let tx = await this.BuildAppChainTX(from, privateKey);
     let rs = await action.send(tx);
@@ -120,16 +125,21 @@ export class Common {
 
       if (!receipt.errorMessage) {
         //确认成功
-        logger.debug("send CITA tx success");
+        logger.info(`CITATX ${name} success`, rs.hash);
         return rs.hash;
       } else {
         //确认失败
-        logger.error(`confirm fail ${receipt.errorMessage}`, action.arguments);
-        throw new Error(`confirm fail ${receipt.errorMessage}`);
+        logger.error(
+          `CITATX ${name} error ${receipt.errorMessage}`,
+          rs.hash,
+          action.arguments,
+          tx
+        );
+        throw new Error(`CITATX ${name} fail ${receipt.errorMessage}`);
       }
     } else {
       // 提交失败
-      logger.error("send CITA tx fail");
+      logger.error(`CITATX ${name} fail`, rs.hash, action.arguments, tx);
       throw new Error("send CITA tx fail");
     }
   }

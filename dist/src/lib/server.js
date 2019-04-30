@@ -88,7 +88,7 @@ class SDK {
             .toBN(providerOnchainBalance)
             .sub(exports.web3.utils.toBN(amount));
         let lastCommitBlock = await common_1.Common.GetLastCommitBlock();
-        return await common_1.Common.SendAppChainTX(exports.appPN.methods.providerProposeWithdraw(token, balance.toString(), lastCommitBlock), exports.cpProvider.address, exports.cpProvider.privateKey);
+        return await common_1.Common.SendAppChainTX(exports.appPN.methods.providerProposeWithdraw(token, balance.toString(), lastCommitBlock), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.providerProposeWithdraw");
     }
     async openChannelForUser(userAddress, token = contract_1.ADDRESS_ZERO) {
         if (!exports.web3.utils.isAddress(token)) {
@@ -140,7 +140,7 @@ class SDK {
             .toString();
         let messageHash = exports.web3.utils.soliditySha3({ v: exports.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: reBalanceAmountBN, t: "uint256" }, { v: nonce, t: "uint256" });
         let signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
-        let res = await common_1.Common.SendAppChainTX(exports.appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature), exports.cpProvider.address, exports.cpProvider.privateKey);
+        let res = await common_1.Common.SendAppChainTX(exports.appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.proposeRebalance");
         let repeatTime = 0;
         while (repeatTime < 10) {
             let newRebalanceProof = await exports.appPN.methods
@@ -209,7 +209,7 @@ class SDK {
             additionalHash: additionalHash
         });
         let signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
-        return await common_1.Common.SendAppChainTX(exports.appPN.methods.transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature), exports.cpProvider.address, exports.cpProvider.privateKey);
+        return await common_1.Common.SendAppChainTX(exports.appPN.methods.transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.transfer");
     }
     async startSession(sessionID, game, userList, customData) {
         mylog_1.logger.debug("start session with params: sessionID: [%s], game: [%s], userList: [%o], customData: [%s]", sessionID, game, userList, customData);

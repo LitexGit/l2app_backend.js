@@ -57,7 +57,7 @@ exports.CITA_EVENTS = {
             let messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: token, t: "address" }, { v: feeAmount, t: "uint256" }, { v: feeNonce, t: "uint256" });
             let signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
             mylog_1.logger.debug("infos:  channelID :[%s], token :[%s], feeAmount :[%s], feeNonce :[%s], signature :[%s]", channelID, token, feeAmount, feeNonce, signature);
-            common_1.Common.SendAppChainTX(server_1.appPN.methods.submitFee(channelID, token, feeAmount, feeNonce, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+            common_1.Common.SendAppChainTX(server_1.appPN.methods.submitFee(channelID, token, feeAmount, feeNonce, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey, "appPN.methods.submitFee");
         }
     },
     SubmitFee: {
@@ -76,7 +76,7 @@ exports.CITA_EVENTS = {
             mylog_1.logger.debug("user :[%s], channelID :[%s], amount :[%s], balance :[%s], receiver :[%s], lastCommitBlock :[%s] ", user, channelID, amount, balance, receiver, lastCommitBlock);
             let messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: balance, t: "uint256" }, { v: lastCommitBlock, t: "uint256" });
             let signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
-            common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmUserWithdraw(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+            common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmUserWithdraw(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey, "appPN.methods.confirmUserWithdraw");
         }
     },
     ProposeCooperativeSettle: {
@@ -87,7 +87,7 @@ exports.CITA_EVENTS = {
             mylog_1.logger.debug(" channelID: [%s], balance:[%s], lastCommitBlock:[%s] ", channelID, balance, lastCommitBlock);
             let messageHash = server_1.web3.utils.soliditySha3({ v: server_1.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: balance, t: "uint256" }, { v: lastCommitBlock, t: "uint256" });
             let signature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
-            common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmCooperativeSettle(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+            common_1.Common.SendAppChainTX(server_1.appPN.methods.confirmCooperativeSettle(channelID, signature), server_1.cpProvider.address, server_1.cpProvider.privateKey, "appPN.methods.confirmCooperativeSettle");
         }
     },
     ConfirmProviderWithdraw: {

@@ -90,23 +90,23 @@ class Common {
         tx.validUntilBlock = await Common.GetLastCommitBlock("cita");
         return tx;
     }
-    static async SendAppChainTX(action, from, privateKey) {
+    static async SendAppChainTX(action, from, privateKey, name) {
         mylog_1.logger.debug("start send CITA tx", action.arguments);
         let tx = await this.BuildAppChainTX(from, privateKey);
         let rs = await action.send(tx);
         if (rs.hash) {
             let receipt = await server_1.CITA.listeners.listenToTransactionReceipt(rs.hash);
             if (!receipt.errorMessage) {
-                mylog_1.logger.debug("send CITA tx success");
+                mylog_1.logger.info(`CITATX ${name} success`, rs.hash);
                 return rs.hash;
             }
             else {
-                mylog_1.logger.error(`confirm fail ${receipt.errorMessage}`, action.arguments);
-                throw new Error(`confirm fail ${receipt.errorMessage}`);
+                mylog_1.logger.error(`CITATX ${name} error ${receipt.errorMessage}`, rs.hash, action.arguments, tx);
+                throw new Error(`CITATX ${name} fail ${receipt.errorMessage}`);
             }
         }
         else {
-            mylog_1.logger.error("send CITA tx fail");
+            mylog_1.logger.error(`CITATX ${name} fail`, rs.hash, action.arguments, tx);
             throw new Error("send CITA tx fail");
         }
     }

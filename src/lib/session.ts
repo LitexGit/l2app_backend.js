@@ -40,7 +40,8 @@ export class Session {
         web3.utils.utf8ToHex(customData)
       ),
       cpProvider.address,
-      cpProvider.privateKey
+      cpProvider.privateKey,
+      "sessionPN.methods.initSession"
     );
 
     let repeatTime = 0;
@@ -68,7 +69,8 @@ export class Session {
     return await Common.SendAppChainTX(
       sessionPN.methods.joinSession(sessionID, user),
       cpProvider.address,
-      cpProvider.privateKey
+      cpProvider.privateKey,
+      "sessionPN.methods.joinSession"
     );
   }
 
@@ -106,7 +108,8 @@ export class Session {
         paymentData
       ),
       cpProvider.address,
-      cpProvider.privateKey
+      cpProvider.privateKey,
+      "sessionPN.methods.sendMessage"
     );
   }
 
@@ -119,7 +122,8 @@ export class Session {
     return await Common.SendAppChainTX(
       sessionPN.methods.closeSession(sessionID),
       cpProvider.address,
-      cpProvider.privateKey
+      cpProvider.privateKey,
+      "sessionPN.methods.closeSession"
     );
   }
 

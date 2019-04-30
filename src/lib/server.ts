@@ -269,7 +269,8 @@ export class SDK {
         lastCommitBlock
       ),
       cpProvider.address,
-      cpProvider.privateKey
+      cpProvider.privateKey,
+      "appPN.methods.providerProposeWithdraw"
     );
 
     // 等待 ProviderProposeWithdraw 事件回调
@@ -400,7 +401,8 @@ export class SDK {
         signature
       ),
       cpProvider.address,
-      cpProvider.privateKey
+      cpProvider.privateKey,
+      "appPN.methods.proposeRebalance"
     );
 
     let repeatTime = 0;
@@ -576,7 +578,8 @@ export class SDK {
         signature
       ),
       cpProvider.address,
-      cpProvider.privateKey
+      cpProvider.privateKey,
+      "appPN.methods.transfer"
     );
   }
 

@@ -9,7 +9,7 @@ class Session {
         this.id = sessionID;
     }
     static async InitSession(sessionID, game, userList, customData) {
-        let res = await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.initSession(sessionID, server_1.cpProvider.address, game, userList, server_1.appPN.options.address, server_1.web3.utils.utf8ToHex(customData)), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+        let res = await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.initSession(sessionID, server_1.cpProvider.address, game, userList, server_1.appPN.options.address, server_1.web3.utils.utf8ToHex(customData)), server_1.cpProvider.address, server_1.cpProvider.privateKey, "sessionPN.methods.initSession");
         let repeatTime = 0;
         while (repeatTime < 60) {
             if (await this.isExists(sessionID)) {
@@ -21,14 +21,14 @@ class Session {
         return res;
     }
     static async JoinSession(sessionID, user) {
-        return await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.joinSession(sessionID, user), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+        return await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.joinSession(sessionID, user), server_1.cpProvider.address, server_1.cpProvider.privateKey, "sessionPN.methods.joinSession");
     }
     static async SendSessionMessage(from, to, sessionData, paymentData) {
         mylog_1.logger.debug("sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData: [%o]", from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData);
-        return await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.sendMessage(from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+        return await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.sendMessage(from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData), server_1.cpProvider.address, server_1.cpProvider.privateKey, "sessionPN.methods.sendMessage");
     }
     static async CloseSession(sessionID) {
-        return await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.closeSession(sessionID), server_1.cpProvider.address, server_1.cpProvider.privateKey);
+        return await common_1.Common.SendAppChainTX(server_1.sessionPN.methods.closeSession(sessionID), server_1.cpProvider.address, server_1.cpProvider.privateKey, "sessionPN.methods.closeSession");
     }
     static async GetSession(sessionID, fromLine = false) {
         if (fromLine) {

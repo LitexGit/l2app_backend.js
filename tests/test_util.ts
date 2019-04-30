@@ -141,7 +141,8 @@ export async function userTransfer(from, to, amount, token, privateKey) {
       signature
     ),
     from,
-    privateKey
+    privateKey,
+    "appPN.methods.transfer"
   );
 }
 
@@ -159,22 +160,22 @@ export async function setTokenFee(
   let hash = web3.utils.soliditySha3("setFee", new Date().toISOString());
   let blockNumber = await web3.eth.getBlockNumber();
   let data = appPN.methods.setFeeRate(token, feeRate).encodeABI();
-  let action = operatorContract.methods.submitTransaction(
-    hash,
-    blockNumber,
-    appPaymentNetwork.address,
-    0,
-    data
-  );
 
   let operatorAccount = web3.eth.accounts.privateKeyToAccount(
     "0x" + operatorPrivateKey.replace("0x", "")
   );
 
   return await Common.SendAppChainTX(
-    action,
+    operatorContract.methods.submitTransaction(
+      hash,
+      blockNumber,
+      appPaymentNetwork.address,
+      0,
+      data
+    ),
     operatorAccount.address,
-    operatorPrivateKey
+    operatorPrivateKey,
+    "operatorContract.methods.submitTransaction"
   );
 }
 
@@ -197,5 +198,4 @@ export async function regulatorWithdraw(token, privateKey) {
     data,
     privateKey
   );
-
 }

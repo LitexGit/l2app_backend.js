@@ -150,7 +150,8 @@ export const CITA_EVENTS = {
           signature
         ),
         cpProvider.address,
-        cpProvider.privateKey
+        cpProvider.privateKey,
+        "appPN.methods.submitFee"
       );
     }
   },
@@ -207,7 +208,8 @@ export const CITA_EVENTS = {
       Common.SendAppChainTX(
         appPN.methods.confirmUserWithdraw(channelID, signature),
         cpProvider.address,
-        cpProvider.privateKey
+        cpProvider.privateKey,
+        "appPN.methods.confirmUserWithdraw"
       );
     }
   },
@@ -244,7 +246,8 @@ export const CITA_EVENTS = {
       Common.SendAppChainTX(
         appPN.methods.confirmCooperativeSettle(channelID, signature),
         cpProvider.address,
-        cpProvider.privateKey
+        cpProvider.privateKey,
+        "appPN.methods.confirmCooperativeSettle"
       );
     }
   },
