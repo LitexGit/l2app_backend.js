@@ -93,6 +93,16 @@ describe("channel test", () => {
     // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
   });
 
+  it("TransferWithLock", async () => {
+    await Promise.all([
+      l2.transfer(user, depositAmount, token),
+      l2.transfer(user, depositAmount, token)
+    ]);
+
+    let afterChannelInfo = await l2.getChannelInfo(user, token);
+    console.log("after channel info is ", afterChannelInfo);
+  });
+
   // it("ReBalance", async () => {
   //   let beforeChannelInfo = await l2.getChannelInfo(user, token);
   //   console.log("before channel info is ", beforeChannelInfo);

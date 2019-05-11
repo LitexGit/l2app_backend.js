@@ -18,6 +18,7 @@ export declare class SDK {
     private appWatcher;
     private appRpcUrl;
     private ethRpcUrl;
+    private channelTransferLock;
     init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN): Promise<void>;
     setDebug(debugFlag: boolean): void;
     setLogger(logger: any): void;
@@ -27,10 +28,12 @@ export declare class SDK {
     rebalance(userAddress: string, amount: number | string, token?: string): Promise<any>;
     kickUser(userAddress: string, token?: string): Promise<{}>;
     transfer(to: string, amount: number | string, token?: string): Promise<any>;
+    private doTransfer;
     startSession(sessionID: string, game: string, userList: string[], customData: any): Promise<void>;
     joinSession(sessionID: string, user: string): Promise<string>;
     getSession(sessionID: string): Promise<Session>;
     sendMessage(sessionID: string, to: string, type: number, content: string, amount?: string, token?: string): Promise<string>;
+    private doSendMessage;
     closeSession(sessionID: string): Promise<any>;
     on(event: L2_EVENT, callback: L2_CB): void;
     getPaymentNetwork(token?: string): Promise<{

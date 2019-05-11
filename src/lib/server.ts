@@ -21,6 +21,7 @@ import { signHash } from "./sign";
 import { Session } from "./session";
 import { logger, setLogger } from "./mylog";
 import * as rlp from "rlp";
+import * as AsyncLock from "async-lock";
 
 export let debug: boolean;
 export let CITA: any;
@@ -39,6 +40,8 @@ export class SDK {
   private constructor() {
     debug = true;
     setLogger();
+
+    this.channelTransferLock = new AsyncLock();
   }
 
   // 单例模式 返回SDK对象
@@ -55,6 +58,8 @@ export class SDK {
 
   private appRpcUrl: string;
   private ethRpcUrl: string;
+
+  private channelTransferLock: AsyncLock;
 
   /**
    * 初始化 SDK
@@ -535,11 +540,23 @@ export class SDK {
       amount,
       token
     );
+    let channelID = await ethPN.methods.getChannelID(to, token).call();
+    // return new Promise((resolve, reject) => {
+    return this.channelTransferLock.acquire(channelID, async done => {
+      let result = await this.doTransfer(channelID, to, amount, token);
+      done(result);
+    });
+    // });
+  }
 
+  private async doTransfer(
+    channelID: string,
+    to: string,
+    amount: number | string,
+    token: string = ADDRESS_ZERO
+  ) {
     let { toBN } = web3.utils;
     // 获取通道id
-    let channelID = await ethPN.methods.getChannelID(to, token).call();
-    // let channel = await appPN.methods.channelMap(channelID).call();
 
     // // 通道状态异常
     // if (Number(channel.status) != CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
@@ -688,40 +705,77 @@ export class SDK {
     );
 
     if (await Session.isExists(sessionID)) {
-      let from = cpProvider.address;
+      let channelID =
+        "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-      let messageHash = web3.utils.soliditySha3(
-        { t: "address", v: from },
-        { t: "address", v: to },
-        { t: "bytes32", v: sessionID },
-        { t: "uint8", v: type },
-        { t: "bytes", v: content }
-      );
-      let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
+      if (Number(amount) > 0) {
+        channelID = await ethPN.methods.getChannelID(to, token).call();
 
-      let transferData = await this.buildTransferData(
-        to,
-        amount,
-        token,
-        messageHash
-      );
-
-      return Session.SendSessionMessage(
-        cpProvider.address,
-        to,
-        {
+        return this.channelTransferLock.acquire(channelID, async done => {
+          let result = await this.doSendMessage(
+            channelID,
+            sessionID,
+            to,
+            type,
+            content,
+            amount,
+            token
+          );
+          done(result);
+        });
+      } else {
+        return await this.doSendMessage(
+          channelID,
           sessionID,
-          mType: type,
+          to,
+          type,
           content,
-          signature
-        },
-        transferData
-      );
+          amount,
+          token
+        );
+      }
     } else {
       throw new Error("Session is not open");
     }
   }
 
+  private async doSendMessage(
+    channelID: string,
+    sessionID: string,
+    to: string,
+    type: number,
+    content: string,
+    amount: string = "0",
+    token: string = ADDRESS_ZERO
+  ): Promise<string> {
+    let from = cpProvider.address;
+    let messageHash = web3.utils.soliditySha3(
+      { t: "address", v: from },
+      { t: "address", v: to },
+      { t: "bytes32", v: sessionID },
+      { t: "uint8", v: type },
+      { t: "bytes", v: content }
+    );
+    let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
+    let transferData = await this.buildTransferData(
+      channelID,
+      to,
+      amount,
+      token,
+      messageHash
+    );
+    return Session.SendSessionMessage(
+      cpProvider.address,
+      to,
+      {
+        sessionID,
+        mType: type,
+        content,
+        signature
+      },
+      transferData
+    );
+  }
   async closeSession(sessionID: string) {
     logger.debug("start CloseSession, params: sessionID: [%s]", sessionID);
     if (await Session.isExists(sessionID)) {
@@ -940,14 +994,13 @@ export class SDK {
   }
 
   private async buildTransferData(
+    channelID: string,
     user: string,
     amount: string,
     token: string,
     messageHash: string
   ): Promise<any> {
     let { hexToBytes, toHex, soliditySha3, toBN } = web3.utils;
-    let channelID =
-      "0x0000000000000000000000000000000000000000000000000000000000000000";
     let balance = "0";
     let nonce = "0";
     let additionalHash =

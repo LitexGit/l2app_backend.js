@@ -100,33 +100,69 @@ describe("session test", () => {
     expect(messages[messages.length - 1].content).toBe(messageContent);
   });
 
-  it("SendMessageWithAsset", async () => {
+  // it("SendMessageWithAsset", async () => {
+  //   let channelInfo = await l2.getChannelInfo(userAddress, token);
+  //   let sendAmount = depositAmount + "";
+  //   // let session = await l2.GetSession(sessionID)
+  //   let messageContent = web3.utils.toHex("hello world with money");
+  //   await Promise.all([
+  //     l2.sendMessage(
+  //       sessionID,
+  //       userAddress,
+  //       3,
+  //       messageContent,
+  //       sendAmount,
+  //       token
+  //     ),
+  //     l2.sendMessage(
+  //       sessionID,
+  //       userAddress,
+  //       3,
+  //       messageContent,
+  //       sendAmount,
+  //       token
+  //     )
+  //   ]);
+
+  //   await Common.Sleep(sleepInterval);
+  //   let messages = await l2.getMessagesBySessionID(sessionID);
+  //   console.log("messages: ", messages);
+  //   expect(messages.length).toBeGreaterThanOrEqual(1);
+  //   let lastMessage = messages[messages.length - 1];
+  //   expect(lastMessage.content).toBe(messageContent);
+  //   expect(lastMessage.amount).toBe(sendAmount);
+
+  //   let afterChannelInfo = await l2.getChannelInfo(userAddress, token);
+  //   expect(afterChannelInfo.providerBalance).toBe("0");
+  //   expect(Number(afterChannelInfo.userBalance)).toBe(
+  //     Number(channelInfo.userBalance) + depositAmount
+  //   );
+  // });
+
+  it("SendMessageWithAssetLock", async()=>{
+
     let channelInfo = await l2.getChannelInfo(userAddress, token);
     let sendAmount = depositAmount + "";
     // let session = await l2.GetSession(sessionID)
     let messageContent = web3.utils.toHex("hello world with money");
-    await l2.sendMessage(
-      sessionID,
-      userAddress,
-      3,
-      messageContent,
-      sendAmount,
-      token
-    );
-
-    await Common.Sleep(sleepInterval);
-    let messages = await l2.getMessagesBySessionID(sessionID);
-    console.log("messages: ", messages);
-    expect(messages.length).toBeGreaterThanOrEqual(1);
-    let lastMessage = messages[messages.length - 1];
-    expect(lastMessage.content).toBe(messageContent);
-    expect(lastMessage.amount).toBe(sendAmount);
-
-    let afterChannelInfo = await l2.getChannelInfo(userAddress, token);
-    expect(afterChannelInfo.providerBalance).toBe("0");
-    expect(Number(afterChannelInfo.userBalance)).toBe(
-      Number(channelInfo.userBalance) + depositAmount
-    );
+    await Promise.all([
+      l2.sendMessage(
+        sessionID,
+        userAddress,
+        3,
+        messageContent,
+        sendAmount,
+        token
+      ),
+      l2.sendMessage(
+        sessionID,
+        userAddress,
+        3,
+        messageContent,
+        sendAmount,
+        token
+      )
+    ]);
   });
 
   // it("exportSessionBytes", async () => {

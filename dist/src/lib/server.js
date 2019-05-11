@@ -13,10 +13,12 @@ const sign_1 = require("./sign");
 const session_1 = require("./session");
 const mylog_1 = require("./mylog");
 const rlp = require("rlp");
+const AsyncLock = require("async-lock");
 class SDK {
     constructor() {
         exports.debug = true;
         mylog_1.setLogger();
+        this.channelTransferLock = new AsyncLock();
     }
     static GetInstance() {
         if (this.instance === undefined) {
@@ -189,8 +191,14 @@ class SDK {
             throw new Error(`token [${token}] is not a valid address`);
         }
         mylog_1.logger.debug("Transfer start execute with params: to: [%s], amount: [%s], token: [%s]", to, amount, token);
-        let { toBN } = exports.web3.utils;
         let channelID = await exports.ethPN.methods.getChannelID(to, token).call();
+        return this.channelTransferLock.acquire(channelID, async (done) => {
+            let result = await this.doTransfer(channelID, to, amount, token);
+            done(result);
+        });
+    }
+    async doTransfer(channelID, to, amount, token = contract_1.ADDRESS_ZERO) {
+        let { toBN } = exports.web3.utils;
         let amountBN = toBN(amount);
         await this.checkBalance(to, amountBN.toString(), token, true);
         let [{ balance, nonce, additionalHash }] = await Promise.all([
@@ -244,20 +252,33 @@ class SDK {
     async sendMessage(sessionID, to, type, content, amount = "0", token = contract_1.ADDRESS_ZERO) {
         mylog_1.logger.debug("start sendmessage with params: sessionID: [%s], to: [%s], type: [%s], content: [%s], amount: [%s], token: [%s]", sessionID, to, type, content, amount, token);
         if (await session_1.Session.isExists(sessionID)) {
-            let from = exports.cpProvider.address;
-            let messageHash = exports.web3.utils.soliditySha3({ t: "address", v: from }, { t: "address", v: to }, { t: "bytes32", v: sessionID }, { t: "uint8", v: type }, { t: "bytes", v: content });
-            let signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
-            let transferData = await this.buildTransferData(to, amount, token, messageHash);
-            return session_1.Session.SendSessionMessage(exports.cpProvider.address, to, {
-                sessionID,
-                mType: type,
-                content,
-                signature
-            }, transferData);
+            let channelID = "0x0000000000000000000000000000000000000000000000000000000000000000";
+            if (Number(amount) > 0) {
+                channelID = await exports.ethPN.methods.getChannelID(to, token).call();
+                return this.channelTransferLock.acquire(channelID, async (done) => {
+                    let result = await this.doSendMessage(channelID, sessionID, to, type, content, amount, token);
+                    done(result);
+                });
+            }
+            else {
+                return await this.doSendMessage(channelID, sessionID, to, type, content, amount, token);
+            }
         }
         else {
             throw new Error("Session is not open");
         }
+    }
+    async doSendMessage(channelID, sessionID, to, type, content, amount = "0", token = contract_1.ADDRESS_ZERO) {
+        let from = exports.cpProvider.address;
+        let messageHash = exports.web3.utils.soliditySha3({ t: "address", v: from }, { t: "address", v: to }, { t: "bytes32", v: sessionID }, { t: "uint8", v: type }, { t: "bytes", v: content });
+        let signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
+        let transferData = await this.buildTransferData(channelID, to, amount, token, messageHash);
+        return session_1.Session.SendSessionMessage(exports.cpProvider.address, to, {
+            sessionID,
+            mType: type,
+            content,
+            signature
+        }, transferData);
     }
     async closeSession(sessionID) {
         mylog_1.logger.debug("start CloseSession, params: sessionID: [%s]", sessionID);
@@ -374,9 +395,8 @@ class SDK {
         await this.rebalance(to, amountBN.sub(balanceBN).toString(), token);
         return true;
     }
-    async buildTransferData(user, amount, token, messageHash) {
+    async buildTransferData(channelID, user, amount, token, messageHash) {
         let { hexToBytes, toHex, soliditySha3, toBN } = exports.web3.utils;
-        let channelID = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let balance = "0";
         let nonce = "0";
         let additionalHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
