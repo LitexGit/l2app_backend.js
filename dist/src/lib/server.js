@@ -193,8 +193,13 @@ class SDK {
         mylog_1.logger.debug("Transfer start execute with params: to: [%s], amount: [%s], token: [%s]", to, amount, token);
         let channelID = await exports.ethPN.methods.getChannelID(to, token).call();
         return this.channelTransferLock.acquire(channelID, async (done) => {
-            let result = await this.doTransfer(channelID, to, amount, token);
-            done(result);
+            try {
+                let result = await this.doTransfer(channelID, to, amount, token);
+                done(null, result);
+            }
+            catch (err) {
+                done(err, null);
+            }
         });
     }
     async doTransfer(channelID, to, amount, token = contract_1.ADDRESS_ZERO) {
@@ -256,8 +261,13 @@ class SDK {
             if (Number(amount) > 0) {
                 channelID = await exports.ethPN.methods.getChannelID(to, token).call();
                 return this.channelTransferLock.acquire(channelID, async (done) => {
-                    let result = await this.doSendMessage(channelID, sessionID, to, type, content, amount, token);
-                    done(result);
+                    try {
+                        let result = await this.doSendMessage(channelID, sessionID, to, type, content, amount, token);
+                        done(null, result);
+                    }
+                    catch (err) {
+                        done(err, null);
+                    }
                 });
             }
             else {
