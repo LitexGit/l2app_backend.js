@@ -503,7 +503,7 @@ export const CITA_EVENTS = {
       );
 
       // 获取通道信息
-      //   let channel = await ethPN.methods.channels(channelID).call();
+      //   let channel = await ethPN.methods.channelMap(channelID).call();
 
       let { closer } = await appPN.methods.closingChannelMap(channelID).call();
 

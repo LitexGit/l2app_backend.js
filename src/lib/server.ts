@@ -301,7 +301,7 @@ export class SDK {
     );
 
     let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
-    let channel = await ethPN.methods.channels(channelID).call();
+    let channel = await ethPN.methods.channelMap(channelID).call();
 
     if (Number(channel.status) !== CHANNEL_STATUS.CHANNEL_STATUS_INIT) {
       throw new Error("channel exist, can not be open.");

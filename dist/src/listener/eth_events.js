@@ -51,7 +51,7 @@ exports.ETH_EVENTS = {
             mylog_1.logger.debug("--------------------Handle ETH ChannelClosed--------------------");
             let { returnValues: { channelID, balance, nonce, inAmount, inNonce } } = event;
             mylog_1.logger.debug("channelID: [%s], balance: [%s], nonce: [%s], inAmount: [%s], inNonce: [%s]", channelID, balance, nonce, inAmount, inNonce);
-            let channel = await server_1.ethPN.methods.channels(channelID).call();
+            let channel = await server_1.ethPN.methods.channelMap(channelID).call();
             let data;
             if (Number(channel.status) !== contract_1.CHANNEL_STATUS.CHANNEL_STATUS_CLOSE) {
                 return;

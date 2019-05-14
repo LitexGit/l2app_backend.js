@@ -81,7 +81,7 @@ export const ETH_EVENTS = {
         inNonce
       );
       // 获取通道信息
-      let channel = await ethPN.methods.channels(channelID).call();
+      let channel = await ethPN.methods.channelMap(channelID).call();
 
       let data;
 

@@ -101,7 +101,7 @@ class SDK {
         }
         mylog_1.logger.debug("start openChannelForUser with params: user: [%s], token: [%s]", userAddress, token);
         let channelID = await exports.ethPN.methods.getChannelID(userAddress, token).call();
-        let channel = await exports.ethPN.methods.channels(channelID).call();
+        let channel = await exports.ethPN.methods.channelMap(channelID).call();
         if (Number(channel.status) !== contract_1.CHANNEL_STATUS.CHANNEL_STATUS_INIT) {
             throw new Error("channel exist, can not be open.");
         }
