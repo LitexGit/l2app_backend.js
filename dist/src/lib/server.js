@@ -106,7 +106,7 @@ class SDK {
             throw new Error("channel exist, can not be open.");
         }
         let data = exports.ethPN.methods
-            .openChannel(userAddress, userAddress, contract_1.CHANNEL_SETTLE_WINDOW, token, "0")
+            .openChannel(userAddress, contract_1.ADDRESS_ZERO, contract_1.CHANNEL_SETTLE_WINDOW, token, "0")
             .encodeABI();
         return await common_1.Common.SendEthTransaction(exports.cpProvider.address, exports.ethPN.options.address, "0", data, exports.cpProvider.privateKey);
     }
@@ -222,7 +222,20 @@ class SDK {
             additionalHash: additionalHash
         });
         let signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
-        return await common_1.Common.SendAppChainTX(exports.appPN.methods.transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.transfer");
+        let res = await common_1.Common.SendAppChainTX(exports.appPN.methods.transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.transfer");
+        let repeatTime = 0;
+        while (repeatTime < 10) {
+            let [{ nonce: newNonce }] = await Promise.all([
+                exports.appPN.methods.balanceProofMap(channelID, to).call()
+            ]);
+            if (newNonce === nonce) {
+                mylog_1.logger.info("break tranfer loop", repeatTime);
+                break;
+            }
+            repeatTime++;
+            await common_1.Common.Sleep(1000);
+        }
+        return res;
     }
     async startSession(sessionID, game, userList, customData) {
         mylog_1.logger.debug("start session with params: sessionID: [%s], game: [%s], userList: [%o], customData: [%s]", sessionID, game, userList, customData);
@@ -282,13 +295,29 @@ class SDK {
         let from = exports.cpProvider.address;
         let messageHash = exports.web3.utils.soliditySha3({ t: "address", v: from }, { t: "address", v: to }, { t: "bytes32", v: sessionID }, { t: "uint8", v: type }, { t: "bytes", v: content });
         let signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
-        let transferData = await this.buildTransferData(channelID, to, amount, token, messageHash);
-        return session_1.Session.SendSessionMessage(exports.cpProvider.address, to, {
+        let { rlpencode: transferData, paymentData } = await this.buildTransferData(channelID, to, amount, token, messageHash);
+        let res = await session_1.Session.SendSessionMessage(exports.cpProvider.address, to, {
             sessionID,
             mType: type,
             content,
             signature
         }, transferData);
+        if (Number(amount) === 0) {
+            return res;
+        }
+        let repeatTime = 0;
+        while (repeatTime < 10) {
+            let [{ nonce: newNonce }] = await Promise.all([
+                exports.appPN.methods.balanceProofMap(channelID, to).call()
+            ]);
+            if (newNonce === paymentData.nonce) {
+                mylog_1.logger.info("break sendMessage loop", repeatTime);
+                break;
+            }
+            repeatTime++;
+            await common_1.Common.Sleep(1000);
+        }
+        return res;
     }
     async closeSession(sessionID) {
         mylog_1.logger.debug("start CloseSession, params: sessionID: [%s]", sessionID);
@@ -443,7 +472,7 @@ class SDK {
         console.log("paymentData: ", paymentData);
         let rlpencode = "0x" + rlp.encode(paymentData).toString("hex");
         console.log("rlpencode is", rlpencode);
-        return rlpencode;
+        return { rlpencode, paymentData: { channelID, balance, nonce } };
     }
 }
 exports.SDK = SDK;

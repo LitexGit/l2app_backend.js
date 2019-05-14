@@ -53,47 +53,49 @@ describe("channel test", () => {
     await Common.Sleep(sleepInterval);
   });
 
-  it("openChannelForUser", async () => {
-    let channel = await l2.getChannelInfo(user, token);
-    console.log("step2 channel is ", channel);
+  // it("openChannelForUser", async () => {
+  //   let channel = await l2.getChannelInfo(user, token);
+  //   console.log("step2 channel is ", channel);
 
-    if (Number(channel.status) === 0) {
-      // open channel
-      let watchDeposit = new Promise((resolve, reject) => {
-        l2.on("UserDeposit", (err, res) => {
-          console.log("Receive UserDeposit", res);
-          resolve(res);
-        });
-      });
-      await Promise.all([
-        watchDeposit,
-        // userOpenChannel(user, userPrivateKey, depositAmount, token)
-        l2.openChannelForUser(user, token)
-      ]);
-    }
-  });
+  //   if (Number(channel.status) === 0) {
+  //     // open channel
+  //     let watchDeposit = new Promise((resolve, reject) => {
+  //       l2.on("UserDeposit", (err, res) => {
+  //         console.log("Receive UserDeposit", res);
+  //         resolve(res);
+  //       });
+  //     });
+  //     await Promise.all([
+  //       watchDeposit,
+  //       // userOpenChannel(user, userPrivateKey, depositAmount, token)
+  //       l2.openChannelForUser(user, token)
+  //     ]);
+  //   }
+  // });
 
-  it("TransferWithAutoRebalance", async () => {
-    let beforeChannelInfo = await l2.getChannelInfo(user, token);
-    console.log("before channel info is ", beforeChannelInfo);
+  // it("TransferWithAutoRebalance", async () => {
+  //   let beforeChannelInfo = await l2.getChannelInfo(user, token);
+  //   console.log("before channel info is ", beforeChannelInfo);
 
-    let providerBalance = beforeChannelInfo.providerBalance;
+  //   let providerBalance = beforeChannelInfo.providerBalance;
 
-    let res = await l2.transfer(user, depositAmount, token);
+  //   let res = await l2.transfer(user, depositAmount, token);
 
-    await Common.Sleep(sleepInterval);
-    let afterChannelInfo = await l2.getChannelInfo(user, token);
-    console.log("after channel info is ", afterChannelInfo);
+  //   await Common.Sleep(sleepInterval);
+  //   let afterChannelInfo = await l2.getChannelInfo(user, token);
+  //   console.log("after channel info is ", afterChannelInfo);
 
-    expect(Number(afterChannelInfo.providerBalance)).toBe(0);
-    expect(Number(afterChannelInfo.userBalance)).toBe(
-      Number(beforeChannelInfo.userBalance) + depositAmount
-    );
+  //   expect(Number(afterChannelInfo.providerBalance)).toBe(0);
+  //   expect(Number(afterChannelInfo.userBalance)).toBe(
+  //     Number(beforeChannelInfo.userBalance) + depositAmount
+  //   );
 
-    // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
-  });
+  //   // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
+  // });
 
   it("TransferWithLock", async () => {
+        let beforeChannelInfo = await l2.getChannelInfo(user, token);
+    console.log("before channel info is ", beforeChannelInfo);
     await Promise.all([
       l2.transfer(user, depositAmount, token),
       l2.transfer(user, depositAmount, token)
@@ -140,15 +142,15 @@ describe("channel test", () => {
   //   // expect(l2.Transfer(user, providerBalance)).rejects.toThrowError("Reverted");
   // });
 
-  it("kickUser", async () => {
-    await Common.Sleep(sleepInterval);
-    let watchForceWithdraw = new Promise((resolve, reject) => {
-      l2.on("UserForceWithdraw", (err, res) => {
-        console.log("Receive UserForceWithdraw", res);
-        resolve(res);
-      });
-    });
-    await Promise.all([l2.kickUser(user, token), watchForceWithdraw]);
-    expect(true).toBe(true);
-  });
+  // it("kickUser", async () => {
+  //   await Common.Sleep(sleepInterval);
+  //   let watchForceWithdraw = new Promise((resolve, reject) => {
+  //     l2.on("UserForceWithdraw", (err, res) => {
+  //       console.log("Receive UserForceWithdraw", res);
+  //       resolve(res);
+  //     });
+  //   });
+  //   await Promise.all([l2.kickUser(user, token), watchForceWithdraw]);
+  //   expect(true).toBe(true);
+  // });
 });

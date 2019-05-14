@@ -91,7 +91,7 @@ class Common {
         return tx;
     }
     static async SendAppChainTX(action, from, privateKey, name) {
-        mylog_1.logger.debug("start send CITA tx", action.arguments);
+        mylog_1.logger.debug("start send CITA tx", name, action.arguments);
         let tx = await this.BuildAppChainTX(from, privateKey);
         let rs = await action.send(tx);
         if (rs.hash) {

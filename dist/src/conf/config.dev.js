@@ -1,15 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = {
-    ethPNAddress: "0xcf3C676EE0B8817370eC40c653C75a9bB3296657",
-    appPNAddress: "0x2398Fd042176e343cC47eD34ebB0C2ECb154128b",
-    appSessionAddress: "0xf6486AB66Fa7e3af90098cBD9cd6342E422A1c3F",
-    appOperatorAddress: "0xf165B50c6c7335b406c7F24d29329009Ca7745f8	",
-    appRpcUrl: "http://54.64.76.19:1337",
+    ethPNAddress: "0x854b40910A47a2D07E8577601d1E4A038538985a",
+    appPNAddress: "0x4f8fc4084a0d59EB59390053E718D79aFc12295E",
+    appSessionAddress: "0x50Fc5569C9644FdFC22657E5E295fB5e131f7033",
+    appOperatorAddress: "0x7c4866861CC34946194b6FfD1196F9f9166Cdc5A",
+    appRpcUrl: "http://39.106.71.164:1337",
     ethRpcUrl: "http://39.96.8.192:8545",
     token: "0x0000000000000000000000000000000000000000"
 };
-exports.cpPrivateKey = "6A22D7D5D87EFC4A1375203B7E54FBCF35FAA84975891C5E3D12BE86C579A6E5";
+exports.cpPrivateKey = "9C273F1FC38BCBAC1C41242F9D606E67A7BB868BD474E0E3099012ECAA88B059";
 exports.ethPaymentNetwork = {
     address: exports.config.ethPNAddress,
     abi: JSON.stringify(require("./onchainPayment.json"))

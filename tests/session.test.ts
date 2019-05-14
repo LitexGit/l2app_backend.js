@@ -25,29 +25,29 @@ describe("session test", () => {
 
   beforeAll(async () => {
     l2 = await initL2();
-    let watchDeposit = new Promise((resolve, reject) => {
-      l2.on("UserDeposit", (err, res) => {
-        console.log("Receive UserDeposit", res);
-        resolve(res);
-      });
-    });
-    await Promise.all([
-      watchDeposit,
-      userOpenChannel(userAddress, userPrivateKey, depositAmount, token)
-    ]);
+    // let watchDeposit = new Promise((resolve, reject) => {
+    //   l2.on("UserDeposit", (err, res) => {
+    //     console.log("Receive UserDeposit", res);
+    //     resolve(res);
+    //   });
+    // });
+    // await Promise.all([
+    //   watchDeposit,
+    //   userOpenChannel(userAddress, userPrivateKey, depositAmount, token)
+    // ]);
   });
 
   afterAll(async () => {
-    let watchForceWithdraw = new Promise((resolve, reject) => {
-      l2.on("UserForceWithdraw", (err, res) => {
-        console.log("Receive UserForceWithdraw", res);
-        resolve(res);
-      });
-    });
-    await Promise.all([
-      userCloseChannel(userAddress, userPrivateKey, token),
-      watchForceWithdraw
-    ]);
+    // let watchForceWithdraw = new Promise((resolve, reject) => {
+    //   l2.on("UserForceWithdraw", (err, res) => {
+    //     console.log("Receive UserForceWithdraw", res);
+    //     resolve(res);
+    //   });
+    // });
+    // await Promise.all([
+    //   userCloseChannel(userAddress, userPrivateKey, token),
+    //   watchForceWithdraw
+    // ]);
   });
 
   beforeEach(async () => {
@@ -86,19 +86,19 @@ describe("session test", () => {
     expect(players[players.length - 1]).toBe(cpProvider.address);
   });
 
-  it("SendMessage", async () => {
-    // let session = await l2.GetSession(sessionID)
-    let messageContent = web3.utils.toHex(
-      "hello world" + new Date().toISOString()
-    );
-    await l2.sendMessage(sessionID, userAddress, 2, messageContent);
-    await Common.Sleep(sleepInterval);
+  // it("SendMessage", async () => {
+  //   // let session = await l2.GetSession(sessionID)
+  //   let messageContent = web3.utils.toHex(
+  //     "hello world" + new Date().toISOString()
+  //   );
+  //   await l2.sendMessage(sessionID, userAddress, 2, messageContent);
+  //   await Common.Sleep(sleepInterval);
 
-    let messages = await l2.getMessagesBySessionID(sessionID);
-    console.log("messages: ", messages);
-    expect(messages.length).toBeGreaterThanOrEqual(1);
-    expect(messages[messages.length - 1].content).toBe(messageContent);
-  });
+  //   let messages = await l2.getMessagesBySessionID(sessionID);
+  //   console.log("messages: ", messages);
+  //   expect(messages.length).toBeGreaterThanOrEqual(1);
+  //   expect(messages[messages.length - 1].content).toBe(messageContent);
+  // });
 
   // it("SendMessageWithAsset", async () => {
   //   let channelInfo = await l2.getChannelInfo(userAddress, token);

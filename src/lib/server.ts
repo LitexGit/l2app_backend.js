@@ -308,7 +308,7 @@ export class SDK {
     }
 
     let data = ethPN.methods
-      .openChannel(userAddress, userAddress, CHANNEL_SETTLE_WINDOW, token, "0")
+      .openChannel(userAddress, ADDRESS_ZERO, CHANNEL_SETTLE_WINDOW, token, "0")
       .encodeABI();
 
     return await Common.SendEthTransaction(
@@ -587,7 +587,7 @@ export class SDK {
     });
 
     let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
-    return await Common.SendAppChainTX(
+    let res = await Common.SendAppChainTX(
       appPN.methods.transfer(
         to,
         channelID,
@@ -600,6 +600,19 @@ export class SDK {
       cpProvider.privateKey,
       "appPN.methods.transfer"
     );
+    let repeatTime = 0;
+    while (repeatTime < 10) {
+      let [{ nonce: newNonce }] = await Promise.all([
+        appPN.methods.balanceProofMap(channelID, to).call()
+      ]);
+      if (newNonce === nonce) {
+        logger.info("break tranfer loop", repeatTime);
+        break;
+      }
+      repeatTime++;
+      await Common.Sleep(1000);
+    }
+    return res;
   }
 
   /**
@@ -763,14 +776,14 @@ export class SDK {
       { t: "bytes", v: content }
     );
     let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
-    let transferData = await this.buildTransferData(
+    let { rlpencode: transferData, paymentData } = await this.buildTransferData(
       channelID,
       to,
       amount,
       token,
       messageHash
     );
-    return Session.SendSessionMessage(
+    let res = await Session.SendSessionMessage(
       cpProvider.address,
       to,
       {
@@ -781,6 +794,23 @@ export class SDK {
       },
       transferData
     );
+    if (Number(amount) === 0) {
+      return res;
+    }
+
+    let repeatTime = 0;
+    while (repeatTime < 10) {
+      let [{ nonce: newNonce }] = await Promise.all([
+        appPN.methods.balanceProofMap(channelID, to).call()
+      ]);
+      if (newNonce === paymentData.nonce) {
+        logger.info("break sendMessage loop", repeatTime);
+        break;
+      }
+      repeatTime++;
+      await Common.Sleep(1000);
+    }
+    return res;
   }
   async closeSession(sessionID: string) {
     logger.debug("start CloseSession, params: sessionID: [%s]", sessionID);
@@ -1062,6 +1092,6 @@ export class SDK {
 
     console.log("rlpencode is", rlpencode);
 
-    return rlpencode;
+    return { rlpencode, paymentData: { channelID, balance, nonce } };
   }
 }

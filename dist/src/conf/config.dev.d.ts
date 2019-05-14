@@ -8,7 +8,7 @@ export declare const config: {
     ethRpcUrl: string;
     token: string;
 };
-export declare const cpPrivateKey = "6A22D7D5D87EFC4A1375203B7E54FBCF35FAA84975891C5E3D12BE86C579A6E5";
+export declare const cpPrivateKey = "9C273F1FC38BCBAC1C41242F9D606E67A7BB868BD474E0E3099012ECAA88B059";
 export declare const ethPaymentNetwork: PN;
 export declare const appPaymentNetwork: PN;
 export declare const sessionPayNetwork: PN;
