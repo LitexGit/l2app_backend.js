@@ -25,7 +25,7 @@ exports.SESSION_EVENTS = {
         },
         handler: async (event) => {
             mylog_1.logger.debug("--------------------Handle CITA SendMessage--------------------");
-            let { returnValues: { from, to, sessionID, mType: type, content, balance, nonce, amount, channelID }, transactionHash } = event;
+            let { returnValues: { from, to, sessionID, mType: type, content, balance, nonce, amount, channelID }, transactionHash: txhash } = event;
             mylog_1.logger.debug(" from: [%s], to: [%s], sessionID: [%s], type: [%s], content: [%s], balance: [%s], nonce: [%s], amount: [%s], channelID: [%s] ", from, to, sessionID, type, content, balance, nonce, amount, channelID);
             let { token } = await server_1.appPN.methods.channelMap(channelID).call();
             let message = {
@@ -34,7 +34,8 @@ exports.SESSION_EVENTS = {
                 type,
                 content,
                 amount,
-                token
+                token,
+                txhash
             };
             server_1.callbacks.get("Message") && server_1.callbacks.get("Message")(null, message);
         }

@@ -107,6 +107,7 @@ export type SESSION_MESSAGE_EVENT = {
   content: string;
   token: string;
   amount: string;
+  txhash: string;
 };
 
 export const TX_BASE = {

@@ -81,6 +81,7 @@ export declare type SESSION_MESSAGE_EVENT = {
     content: string;
     token: string;
     amount: string;
+    txhash: string;
 };
 export declare const TX_BASE: {
     nonce: number;

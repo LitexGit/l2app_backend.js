@@ -47,7 +47,7 @@ export const SESSION_EVENTS = {
           amount,
           channelID
         },
-        transactionHash
+        transactionHash: txhash
       } = event;
 
       logger.debug(
@@ -71,7 +71,8 @@ export const SESSION_EVENTS = {
         type,
         content,
         amount,
-        token
+        token,
+        txhash
       };
       callbacks.get("Message") && callbacks.get("Message")(null, message);
     }
