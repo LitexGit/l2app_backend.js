@@ -1,5 +1,6 @@
 import { keccak256 } from "ethereumjs-util";
 import { TYPED_DATA } from "../conf/contract";
+import { ethPN, ethChainId } from "./server";
 const abi = require("ethereumjs-abi");
 
 const types = TYPED_DATA.types;
@@ -79,6 +80,8 @@ function structHash(primaryType: any, data: any) {
 }
 
 export function signHash(message: any) {
+  TYPED_DATA.domain.verifyingContract = ethPN.options.address;
+  TYPED_DATA.domain.chainId = ethChainId;
   return keccak256(
     Buffer.concat([
       Buffer.from("1901", "hex"),

@@ -5,6 +5,7 @@ export declare let debug: boolean;
 export declare let CITA: any;
 export declare let cpProvider: any;
 export declare let web3: any;
+export declare let ethChainId: number;
 export declare let ethPN: Contract;
 export declare let appPN: Contract;
 export declare let ERC20: Contract;

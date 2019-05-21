@@ -55,7 +55,7 @@ class Common {
             to: to,
             data: data,
             value: server_1.web3.utils.toHex(value),
-            gasPrice: server_1.web3.utils.toHex(8 * 1e9),
+            gasPrice: server_1.web3.utils.toHex(gasPrice),
             gasLimit: server_1.web3.utils.toHex(300000)
         };
         let tx = new TX(rawTx);

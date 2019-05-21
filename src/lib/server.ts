@@ -27,6 +27,7 @@ export let debug: boolean;
 export let CITA: any;
 export let cpProvider: any;
 export let web3: any;
+export let ethChainId: number;
 export let ethPN: Contract;
 export let appPN: Contract;
 export let ERC20: Contract;
@@ -107,7 +108,9 @@ export class SDK {
     ethPN.options.address = ethPaymentNetwork.address;
     appPN.options.address = appPaymentNetwork.address;
 
-    TYPED_DATA.domain.verifyingContract = ethPaymentNetwork.address;
+    ethChainId = await web3.eth.net.getId();
+    TYPED_DATA.domain.verifyingContract = ethPN.options.address;
+    TYPED_DATA.domain.chainId = ethChainId;
 
     ERC20 = new Contract(
       web3.currentProvider,

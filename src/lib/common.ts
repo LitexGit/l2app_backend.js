@@ -77,7 +77,8 @@ export class Common {
       data: data,
       value: web3.utils.toHex(value),
 
-      gasPrice: web3.utils.toHex(8 * 1e9),
+      // gasPrice: web3.utils.toHex(8 * 1e9),
+      gasPrice: web3.utils.toHex(gasPrice),
       // gasPrice,
       gasLimit: web3.utils.toHex(300000)
     };

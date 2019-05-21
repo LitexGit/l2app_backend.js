@@ -36,7 +36,9 @@ class SDK {
         exports.appPN = new exports.CITA.base.Contract(common_1.Common.Abi2JsonInterface(appPaymentNetwork.abi), appPaymentNetwork.address);
         exports.ethPN.options.address = ethPaymentNetwork.address;
         exports.appPN.options.address = appPaymentNetwork.address;
-        contract_1.TYPED_DATA.domain.verifyingContract = ethPaymentNetwork.address;
+        exports.ethChainId = await exports.web3.eth.net.getId();
+        contract_1.TYPED_DATA.domain.verifyingContract = exports.ethPN.options.address;
+        contract_1.TYPED_DATA.domain.chainId = exports.ethChainId;
         exports.ERC20 = new web3_eth_contract_1.Contract(exports.web3.currentProvider, common_1.Common.Abi2JsonInterface(contract_1.ERC20ABI));
         exports.sessionPN = new exports.CITA.base.Contract(common_1.Common.Abi2JsonInterface(sessionPayNetwork.abi), sessionPayNetwork.address);
         exports.cpProvider = exports.CITA.base.accounts.privateKeyToAccount(cpPrivateKey);

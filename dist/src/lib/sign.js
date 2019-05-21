@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ethereumjs_util_1 = require("ethereumjs-util");
 const contract_1 = require("../conf/contract");
+const server_1 = require("./server");
 const abi = require("ethereumjs-abi");
 const types = contract_1.TYPED_DATA.types;
 function dependencies(primaryType, found = []) {
@@ -67,6 +68,8 @@ function structHash(primaryType, data) {
     return ethereumjs_util_1.keccak256(encodeData(primaryType, data));
 }
 function signHash(message) {
+    contract_1.TYPED_DATA.domain.verifyingContract = server_1.ethPN.options.address;
+    contract_1.TYPED_DATA.domain.chainId = server_1.ethChainId;
     return ethereumjs_util_1.keccak256(Buffer.concat([
         Buffer.from("1901", "hex"),
         structHash("EIP712Domain", contract_1.TYPED_DATA.domain),
