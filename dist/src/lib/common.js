@@ -33,6 +33,7 @@ class Common {
             : (await server_1.CITA.base.getBlockNumber()) + 88;
     }
     static async SendEthTransaction(from, to, value, data, privateKey) {
+        const { toBN } = server_1.web3.utils;
         let nonce = await server_1.web3.eth.getTransactionCount(from);
         if (nonce > getEthNonce(from)) {
             ethNonce.set(from, nonce);
@@ -41,6 +42,12 @@ class Common {
             nonce = getEthNonce(from) + 1;
             ethNonce.set(from, nonce);
         }
+        const currentGasPrice = await server_1.web3.eth.getGasPrice();
+        const gasPrice = toBN(currentGasPrice)
+            .mul(toBN(11))
+            .div(toBN(10))
+            .toString(10);
+        console.log('gasPrice', gasPrice);
         let rawTx = {
             from: from,
             nonce: "0x" + nonce.toString(16),
@@ -48,7 +55,7 @@ class Common {
             to: to,
             data: data,
             value: server_1.web3.utils.toHex(value),
-            gasPrice: server_1.web3.utils.toHex(await server_1.web3.eth.getGasPrice()),
+            gasPrice: server_1.web3.utils.toHex(8 * 1e9),
             gasLimit: server_1.web3.utils.toHex(300000)
         };
         let tx = new TX(rawTx);

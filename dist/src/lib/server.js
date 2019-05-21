@@ -75,22 +75,21 @@ class SDK {
             throw new Error(`token [${token}] is not a valid address`);
         }
         mylog_1.logger.debug("start withdraw with params: amount: [%s], token: [%s]", amount, token);
-        let amountBN = exports.web3.utils.toBN(amount);
-        let [{ providerOnchainBalance, providerBalance }, ethProviderBalance] = await Promise.all([
-            exports.appPN.methods.paymentNetworkMap(token).call(),
-            exports.ethPN.methods.providerBalance(token).call()
+        const { toBN } = exports.web3.utils;
+        let amountBN = toBN(amount);
+        let [{ providerOnchainBalance, providerBalance, providerWithdraw }] = await Promise.all([
+            exports.appPN.methods.paymentNetworkMap(token).call()
         ]);
-        mylog_1.logger.debug("providerOnchainBalance:[%s], providerBalance:[%s], ethProviderBalance:[%s]", providerOnchainBalance, providerBalance, ethProviderBalance);
-        let onChainBalanceBN = exports.web3.utils.toBN(providerOnchainBalance);
-        let balanceBN = exports.web3.utils.toBN(providerBalance);
+        mylog_1.logger.debug("providerOnchainBalance:[%s], providerBalance:[%s], ethProviderBalance:[%s]", providerOnchainBalance, providerBalance);
+        let onChainBalanceBN = toBN(providerOnchainBalance);
+        let balanceBN = toBN(providerBalance);
+        let totalWithdrawBN = toBN(providerWithdraw);
         if (amountBN.gt(onChainBalanceBN)) {
             throw new Error(`withdraw amount[${amountBN.toString()}] great than onchain balance[${onChainBalanceBN.toString()}]`);
         }
-        let balance = exports.web3.utils
-            .toBN(providerOnchainBalance)
-            .sub(exports.web3.utils.toBN(amount));
+        totalWithdrawBN = totalWithdrawBN.add(amountBN);
         let lastCommitBlock = await common_1.Common.GetLastCommitBlock();
-        return await common_1.Common.SendAppChainTX(exports.appPN.methods.providerProposeWithdraw(token, balance.toString(), lastCommitBlock), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.providerProposeWithdraw");
+        return await common_1.Common.SendAppChainTX(exports.appPN.methods.providerProposeWithdraw(token, totalWithdrawBN.toString(), lastCommitBlock), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.providerProposeWithdraw");
     }
     async openChannelForUser(userAddress, token = contract_1.ADDRESS_ZERO) {
         if (!exports.web3.utils.isAddress(token)) {
@@ -111,10 +110,11 @@ class SDK {
         return await common_1.Common.SendEthTransaction(exports.cpProvider.address, exports.ethPN.options.address, "0", data, exports.cpProvider.privateKey);
     }
     async rebalance(userAddress, amount, token = contract_1.ADDRESS_ZERO) {
-        if (!exports.web3.utils.isAddress(userAddress)) {
+        let { toBN, isAddress, soliditySha3 } = exports.web3.utils;
+        if (!isAddress(userAddress)) {
             throw new Error(`userAddress [${userAddress}] is not a valid address`);
         }
-        if (!exports.web3.utils.isAddress(token)) {
+        if (!isAddress(token)) {
             throw new Error(`token [${token}] is not a valid address`);
         }
         mylog_1.logger.debug("start reblance with params: userAddress: [%s], amount: [%s], token: [%s]", userAddress, amount, token);
@@ -123,24 +123,24 @@ class SDK {
         if (Number(channel.status) != contract_1.CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
             throw new Error("channel status is not open");
         }
-        let amountBN = exports.web3.utils.toBN(amount);
+        let amountBN = toBN(amount);
         let [{ providerBalance }] = await Promise.all([
             exports.appPN.methods.paymentNetworkMap(token).call()
         ]);
-        let providerBalanceBN = exports.web3.utils.toBN(providerBalance);
+        let providerBalanceBN = toBN(providerBalance);
         let [{ amount: balance, nonce }] = await Promise.all([
             exports.appPN.methods.rebalanceProofMap(channelID).call()
         ]);
-        let balanceBN = exports.web3.utils.toBN(balance);
+        let balanceBN = toBN(balance);
         if (amountBN.sub(balanceBN).gt(providerBalanceBN)) {
             return false;
         }
         let reBalanceAmountBN = balanceBN.add(amountBN).toString();
-        nonce = exports.web3.utils
-            .toBN(nonce)
-            .add(exports.web3.utils.toBN(1))
+        nonce = toBN(nonce)
+            .add(toBN(1))
             .toString();
-        let messageHash = exports.web3.utils.soliditySha3({ v: exports.ethPN.options.address, t: "address" }, { v: channelID, t: "bytes32" }, { v: reBalanceAmountBN, t: "uint256" }, { v: nonce, t: "uint256" });
+        let flag = soliditySha3({ v: "rebalanceIn", t: "string" });
+        let messageHash = soliditySha3({ v: exports.ethPN.options.address, t: "address" }, { v: flag, t: "bytes32" }, { v: channelID, t: "bytes32" }, { v: reBalanceAmountBN, t: "uint256" }, { v: nonce, t: "uint256" });
         let signature = common_1.Common.SignatureToHex(messageHash, exports.cpProvider.privateKey);
         let res = await common_1.Common.SendAppChainTX(exports.appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.proposeRebalance");
         let repeatTime = 0;

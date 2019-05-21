@@ -227,25 +227,28 @@ export class SDK {
       token
     );
 
-    let amountBN = web3.utils.toBN(amount);
+    const { toBN } = web3.utils;
+
+    let amountBN = toBN(amount);
 
     let [
-      { providerOnchainBalance, providerBalance },
-      ethProviderBalance
+      { providerOnchainBalance, providerBalance, providerWithdraw }
+      // ethProviderBalance
     ] = await Promise.all([
-      appPN.methods.paymentNetworkMap(token).call(),
-      ethPN.methods.providerBalance(token).call()
+      appPN.methods.paymentNetworkMap(token).call()
+      // ethPN.methods.providerBalance(token).call()
     ]);
 
     logger.debug(
       "providerOnchainBalance:[%s], providerBalance:[%s], ethProviderBalance:[%s]",
       providerOnchainBalance,
-      providerBalance,
-      ethProviderBalance
+      providerBalance
+      // ethProviderBalance
     );
 
-    let onChainBalanceBN = web3.utils.toBN(providerOnchainBalance);
-    let balanceBN = web3.utils.toBN(providerBalance);
+    let onChainBalanceBN = toBN(providerOnchainBalance);
+    let balanceBN = toBN(providerBalance);
+    let totalWithdrawBN = toBN(providerWithdraw);
 
     // 余额检测 (BN 计算)
     if (amountBN.gt(onChainBalanceBN)) {
@@ -254,14 +257,7 @@ export class SDK {
       );
     }
 
-    //web3.utils.toBN(amount).gt()
-    let balance = web3.utils
-      .toBN(providerOnchainBalance)
-      .sub(web3.utils.toBN(amount));
-    // 余额检测 (BN 计算)
-    // if (balance.gt(balanceBN)) {
-    //   return false;
-    // }
+    totalWithdrawBN = totalWithdrawBN.add(amountBN);
 
     // ETH lastCommitBlock
     let lastCommitBlock = await Common.GetLastCommitBlock();
@@ -270,7 +266,7 @@ export class SDK {
     return await Common.SendAppChainTX(
       appPN.methods.providerProposeWithdraw(
         token,
-        balance.toString(),
+        totalWithdrawBN.toString(),
         lastCommitBlock
       ),
       cpProvider.address,
@@ -336,10 +332,11 @@ export class SDK {
     amount: number | string,
     token: string = ADDRESS_ZERO
   ) {
-    if (!web3.utils.isAddress(userAddress)) {
+    let { toBN, isAddress, soliditySha3 } = web3.utils;
+    if (!isAddress(userAddress)) {
       throw new Error(`userAddress [${userAddress}] is not a valid address`);
     }
-    if (!web3.utils.isAddress(token)) {
+    if (!isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
 
@@ -359,18 +356,18 @@ export class SDK {
       throw new Error("channel status is not open");
     }
 
-    let amountBN = web3.utils.toBN(amount);
+    let amountBN = toBN(amount);
     let [{ providerBalance }] = await Promise.all([
       appPN.methods.paymentNetworkMap(token).call()
     ]);
-    let providerBalanceBN = web3.utils.toBN(providerBalance);
+    let providerBalanceBN = toBN(providerBalance);
 
     // 获取 ReBalance 数据
     let [{ amount: balance, nonce }] = await Promise.all([
       appPN.methods.rebalanceProofMap(channelID).call()
     ]);
     // 转换金额 为BN, 便于计算
-    let balanceBN = web3.utils.toBN(balance);
+    let balanceBN = toBN(balance);
 
     // 总金额检测，判断是否有足够资金
     if (amountBN.sub(balanceBN).gt(providerBalanceBN)) {
@@ -381,14 +378,16 @@ export class SDK {
     let reBalanceAmountBN = balanceBN.add(amountBN).toString();
 
     // 计算 NONCE
-    nonce = web3.utils
-      .toBN(nonce)
-      .add(web3.utils.toBN(1))
+    nonce = toBN(nonce)
+      .add(toBN(1))
       .toString();
 
+    let flag = soliditySha3({ v: "rebalanceIn", t: "string" });
+
     // CP 签名
-    let messageHash = web3.utils.soliditySha3(
+    let messageHash = soliditySha3(
       { v: ethPN.options.address, t: "address" },
+      { v: flag, t: "bytes32" },
       { v: channelID, t: "bytes32" },
       { v: reBalanceAmountBN, t: "uint256" },
       { v: nonce, t: "uint256" }

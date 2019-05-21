@@ -42,6 +42,7 @@ export class Common {
     data: string,
     privateKey: string
   ) {
+    const { toBN } = web3.utils;
     //TODO: fetch nonce from persist storage
     let nonce = await web3.eth.getTransactionCount(from);
     if (nonce > getEthNonce(from)) {
@@ -51,6 +52,23 @@ export class Common {
       ethNonce.set(from, nonce);
     }
 
+    const currentGasPrice = await web3.eth.getGasPrice();
+    // gasPrice = currentGasPrice * 1.1
+    const gasPrice = toBN(currentGasPrice)
+      .mul(toBN(11))
+      .div(toBN(10))
+      .toString(10);
+
+
+    console.log('gasPrice', gasPrice);
+
+    // const estimateGas = await web3.eth.estimateGas({ to, data });
+    // console.log('estimateGas', estimateGas);
+    // const gasLimit = toBN(estimateGas)
+    //   .mul(toBN(15))
+    //   .div(toBN(10))
+    //   .toString(10);
+
     let rawTx = {
       from: from,
       nonce: "0x" + nonce.toString(16),
@@ -58,8 +76,9 @@ export class Common {
       to: to,
       data: data,
       value: web3.utils.toHex(value),
-      // gasPrice: web3.utils.toHex(8 * 1e9),
-      gasPrice: web3.utils.toHex(await web3.eth.getGasPrice()),
+
+      gasPrice: web3.utils.toHex(8 * 1e9),
+      // gasPrice,
       gasLimit: web3.utils.toHex(300000)
     };
 
