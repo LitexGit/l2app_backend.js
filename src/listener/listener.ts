@@ -58,10 +58,12 @@ export default class HttpWatcher {
       toBlock: toBlockNumber
     });
 
-    logger.debug(
-      `[L2-LISTENER]: [${fromBlockNumber}--->${toBlockNumber}] [${watchItem.contract.options.address}] eventsNum: ${events.length},` +
-        `eventNames: [${events.map(item => item.event).join(",")}]`
-    );
+    if (events.length > 0) {
+      logger.debug(
+        `[L2-LISTENER]: [${fromBlockNumber}--->${toBlockNumber}] [${watchItem.contract.options.address}] eventsNum: ${events.length},` +
+          `eventNames: [${events.map(item => item.event).join(",")}]`
+      );
+    }
 
     for (let event of events) {
       let { event: eventName, returnValues } = event;
@@ -87,7 +89,7 @@ export default class HttpWatcher {
   }
 
   async start(lastBlockNumber: number = 0) {
-    let currentBlockNumber = await this.base.getBlockNumber();
+    let currentBlockNumber = (await this.base.getBlockNumber()) - this.delayBlock;
     lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
 
     logger.debug("[L2-LISTENER]: start syncing process", lastBlockNumber, currentBlockNumber);
@@ -113,7 +115,6 @@ export default class HttpWatcher {
       try {
         lastBlockNumber = currentBlockNumber + 1;
         currentBlockNumber = (await this.base.getBlockNumber()) - this.delayBlock;
-        // logger.debug("watching event", lastBlockNumber, currentBlockNumber);
         if (lastBlockNumber > currentBlockNumber) {
           continue;
         }

@@ -776,7 +776,7 @@ export class SDK {
       this.appWatcher && this.appWatcher.stop();
 
       let appWatchList = [{ contract: appPN, listener: CITA_EVENTS }, { contract: sessionPN, listener: SESSION_EVENTS }];
-      this.appWatcher = new HttpWatcher(CITA.base, this.appRpcUrl, 1000, appWatchList, 1);
+      this.appWatcher = new HttpWatcher(CITA.base, this.appRpcUrl, 1000, appWatchList, 2);
       this.appWatcher.start();
     } catch (err) {
       logger.error("appWatcher err: ", err);

@@ -389,7 +389,7 @@ class SDK {
         try {
             this.appWatcher && this.appWatcher.stop();
             let appWatchList = [{ contract: exports.appPN, listener: cita_events_1.CITA_EVENTS }, { contract: exports.sessionPN, listener: session_events_1.SESSION_EVENTS }];
-            this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList, 1);
+            this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList, 2);
             this.appWatcher.start();
         }
         catch (err) {

@@ -30,8 +30,10 @@ class HttpWatcher {
             fromBlock: fromBlockNumber,
             toBlock: toBlockNumber
         });
-        mylog_1.logger.debug(`[L2-LISTENER]: [${fromBlockNumber}--->${toBlockNumber}] [${watchItem.contract.options.address}] eventsNum: ${events.length},` +
-            `eventNames: [${events.map(item => item.event).join(",")}]`);
+        if (events.length > 0) {
+            mylog_1.logger.debug(`[L2-LISTENER]: [${fromBlockNumber}--->${toBlockNumber}] [${watchItem.contract.options.address}] eventsNum: ${events.length},` +
+                `eventNames: [${events.map(item => item.event).join(",")}]`);
+        }
         for (let event of events) {
             let { event: eventName, returnValues } = event;
             if (watchItem.listener[eventName]) {
@@ -54,7 +56,7 @@ class HttpWatcher {
         }
     }
     async start(lastBlockNumber = 0) {
-        let currentBlockNumber = await this.base.getBlockNumber();
+        let currentBlockNumber = (await this.base.getBlockNumber()) - this.delayBlock;
         lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
         mylog_1.logger.debug("[L2-LISTENER]: start syncing process", lastBlockNumber, currentBlockNumber);
         while (lastBlockNumber <= currentBlockNumber) {
