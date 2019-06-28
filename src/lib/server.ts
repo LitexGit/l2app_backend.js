@@ -266,7 +266,7 @@ export class SDK {
     logger.debug("start reblance with params: userAddress: [%s], amount: [%s], token: [%s]", userAddress, amount, token);
 
     // 从 ETH 获取通道信息
-    let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
+    let channelID = await appPN.methods.channelIDMap(userAddress, token).call();
     let channel = await appPN.methods.channelMap(channelID).call();
 
     // 通道状态异常
@@ -409,7 +409,7 @@ export class SDK {
       throw new Error(`token [${token}] is not a valid address`);
     }
     logger.debug("Transfer start execute with params: to: [%s], amount: [%s], token: [%s]", to, amount, token);
-    let channelID = await ethPN.methods.getChannelID(to, token).call();
+    let channelID = await appPN.methods.channelIDMap(to, token).call();
     return this.channelTransferLock.acquire(channelID, async done => {
       try {
         let result = await this.doTransfer(channelID, to, amount, token);
@@ -565,7 +565,7 @@ export class SDK {
       let channelID = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
       if (Number(amount) > 0) {
-        channelID = await ethPN.methods.getChannelID(to, token).call();
+        channelID = await appPN.methods.channelIDMap(to, token).call();
 
         return this.channelTransferLock.acquire(channelID, async done => {
           try {
@@ -680,7 +680,7 @@ export class SDK {
 
   async getChannelInfo(userAddress: string, token: string = ADDRESS_ZERO) {
     // 从 ETH 获取通道信息
-    let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
+    let channelID = await appPN.methods.channelIDMap(userAddress, token).call();
 
     // 通道未开通检测
     if (!channelID) {
@@ -692,6 +692,9 @@ export class SDK {
     // 获取通道信息
     let channel = await appPN.methods.channelMap(channelID).call();
     channel.channelID = channelID;
+    if (Number(channel.status) === CHANNEL_STATUS.CHANNEL_STATUS_SETTLE) {
+      channel.userBalance = "0";
+    }
     return channel;
   }
 
@@ -776,7 +779,7 @@ export class SDK {
       this.appWatcher && this.appWatcher.stop();
 
       let appWatchList = [{ contract: appPN, listener: CITA_EVENTS }, { contract: sessionPN, listener: SESSION_EVENTS }];
-      this.appWatcher = new HttpWatcher(CITA.base, this.appRpcUrl, 1000, appWatchList, 2);
+      this.appWatcher = new HttpWatcher(CITA.base, this.appRpcUrl, 1000, appWatchList, 0);
       this.appWatcher.start();
     } catch (err) {
       logger.error("appWatcher err: ", err);
@@ -794,7 +797,7 @@ export class SDK {
   private async checkBalance(to: any, amount: string, token: string, needRebalance: boolean) {
     let { toBN } = web3.utils;
     // 获取通道id
-    let channelID = await ethPN.methods.getChannelID(to, token).call();
+    let channelID = await appPN.methods.channelIDMap(to, token).call();
     let channel = await appPN.methods.channelMap(channelID).call();
 
     // 通道状态异常
@@ -824,7 +827,7 @@ export class SDK {
     let paymentSignature = "0x0";
 
     if (Number(amount) > 0) {
-      channelID = await ethPN.methods.getChannelID(user, token).call();
+      channelID = await appPN.methods.channelIDMap(user, token).call();
 
       await this.checkBalance(user, amount, token, true);
 

@@ -116,7 +116,7 @@ class SDK {
             throw new Error(`token [${token}] is not a valid address`);
         }
         mylog_1.logger.debug("start reblance with params: userAddress: [%s], amount: [%s], token: [%s]", userAddress, amount, token);
-        let channelID = await exports.ethPN.methods.getChannelID(userAddress, token).call();
+        let channelID = await exports.appPN.methods.channelIDMap(userAddress, token).call();
         let channel = await exports.appPN.methods.channelMap(channelID).call();
         if (Number(channel.status) != contract_1.CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
             throw new Error("channel status is not open");
@@ -180,7 +180,7 @@ class SDK {
             throw new Error(`token [${token}] is not a valid address`);
         }
         mylog_1.logger.debug("Transfer start execute with params: to: [%s], amount: [%s], token: [%s]", to, amount, token);
-        let channelID = await exports.ethPN.methods.getChannelID(to, token).call();
+        let channelID = await exports.appPN.methods.channelIDMap(to, token).call();
         return this.channelTransferLock.acquire(channelID, async (done) => {
             try {
                 let result = await this.doTransfer(channelID, to, amount, token);
@@ -257,7 +257,7 @@ class SDK {
         if (await session_1.Session.isExists(sessionID)) {
             let channelID = "0x0000000000000000000000000000000000000000000000000000000000000000";
             if (Number(amount) > 0) {
-                channelID = await exports.ethPN.methods.getChannelID(to, token).call();
+                channelID = await exports.appPN.methods.channelIDMap(to, token).call();
                 return this.channelTransferLock.acquire(channelID, async (done) => {
                     try {
                         let result = await this.doSendMessage(channelID, sessionID, to, type, content, amount, token);
@@ -331,7 +331,7 @@ class SDK {
         return Number(feeRate) / 10000;
     }
     async getChannelInfo(userAddress, token = contract_1.ADDRESS_ZERO) {
-        let channelID = await exports.ethPN.methods.getChannelID(userAddress, token).call();
+        let channelID = await exports.appPN.methods.channelIDMap(userAddress, token).call();
         if (!channelID) {
             return {
                 channel: { channelID }
@@ -339,6 +339,9 @@ class SDK {
         }
         let channel = await exports.appPN.methods.channelMap(channelID).call();
         channel.channelID = channelID;
+        if (Number(channel.status) === contract_1.CHANNEL_STATUS.CHANNEL_STATUS_SETTLE) {
+            channel.userBalance = "0";
+        }
         return channel;
     }
     async getAllTXs(token = contract_1.ADDRESS_ZERO) {
@@ -389,7 +392,7 @@ class SDK {
         try {
             this.appWatcher && this.appWatcher.stop();
             let appWatchList = [{ contract: exports.appPN, listener: cita_events_1.CITA_EVENTS }, { contract: exports.sessionPN, listener: session_events_1.SESSION_EVENTS }];
-            this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList, 2);
+            this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList, 0);
             this.appWatcher.start();
         }
         catch (err) {
@@ -398,7 +401,7 @@ class SDK {
     }
     async checkBalance(to, amount, token, needRebalance) {
         let { toBN } = exports.web3.utils;
-        let channelID = await exports.ethPN.methods.getChannelID(to, token).call();
+        let channelID = await exports.appPN.methods.channelIDMap(to, token).call();
         let channel = await exports.appPN.methods.channelMap(channelID).call();
         if (Number(channel.status) != contract_1.CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
             throw new Error("channel status is not open");
@@ -421,7 +424,7 @@ class SDK {
         let additionalHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let paymentSignature = "0x0";
         if (Number(amount) > 0) {
-            channelID = await exports.ethPN.methods.getChannelID(user, token).call();
+            channelID = await exports.appPN.methods.channelIDMap(user, token).call();
             await this.checkBalance(user, amount, token, true);
             let balanceProof = await exports.appPN.methods.balanceProofMap(channelID, user).call();
             balance = toBN(amount)
