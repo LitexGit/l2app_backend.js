@@ -30,7 +30,7 @@ class Common {
     static async GetLastCommitBlock(chain = "eth") {
         return chain === "eth"
             ? (await server_1.web3.eth.getBlockNumber()) + contract_1.COMMIT_BLOCK_CONDITION
-            : (await server_1.CITA.base.getBlockNumber()) + 88;
+            : (await server_1.CITA.base.getBlockNumber()) + 60;
     }
     static async SendEthTransaction(from, to, value, data, privateKey) {
         const { toBN } = server_1.web3.utils;

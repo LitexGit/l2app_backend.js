@@ -10,30 +10,20 @@ export default class HttpWatcher {
   private blockInterval: number;
   private contract: Contract;
   private watchList: any;
+  private delayBlock;
 
-  constructor(
-    base: any,
-    provider: string,
-    blockInterval: number,
-    watchList: any
-  ) {
+  constructor(base: any, provider: string, blockInterval: number, watchList: any, delayBlock: number = 0) {
     //   this.contract = contract;
     this.base = base;
     this.provider = provider;
     this.blockInterval = blockInterval;
     this.watchList = watchList;
+    this.delayBlock = delayBlock;
 
     this.enabled = true;
   }
 
-  async processEvent(
-    fromBlockNumber: number,
-    toBlockNumber: number,
-    contract: Contract,
-    eventName: string,
-    eventSetting: any
-  ) {
-
+  async processEvent(fromBlockNumber: number, toBlockNumber: number, contract: Contract, eventName: string, eventSetting: any) {
     // logger.info('eventName is ', eventName, eventSetting.filter());
 
     let events = await contract.getPastEvents(eventName, {
@@ -51,7 +41,7 @@ export default class HttpWatcher {
       // process event
       // logger.info('eventName is ', eventName, event.transactionHash);
     }
-      // logger.info("get events ", events.length);
+    // logger.info("get events ", events.length);
   }
 
   /**
@@ -61,16 +51,17 @@ export default class HttpWatcher {
    * @param toBlockNumber end blockNumber
    * @param watchItem watch event list and settings
    */
-  async processAllEvent(
-    fromBlockNumber: number,
-    toBlockNumber: number,
-    watchItem: any
-  ) {
+  async processAllEvent(fromBlockNumber: number, toBlockNumber: number, watchItem: any) {
     let events = await watchItem.contract.getPastEvents("allEvents", {
       // filter: {},
       fromBlock: fromBlockNumber,
       toBlock: toBlockNumber
     });
+
+    logger.debug(
+      `[L2-LISTENER]: [${fromBlockNumber}--->${toBlockNumber}] [${watchItem.contract.options.address}] eventsNum: ${events.length},` +
+        `eventNames: [${events.map(item => item.event).join(",")}]`
+    );
 
     for (let event of events) {
       let { event: eventName, returnValues } = event;
@@ -79,18 +70,18 @@ export default class HttpWatcher {
         let filter = watchItem.listener[eventName].filter();
         let filterResult = true;
         for (let k in filter) {
-          if (
-            !returnValues[k] ||
-            returnValues[k].toLowerCase() !== filter[k].toLowerCase()
-          ) {
+          if (!returnValues[k] || returnValues[k].toLowerCase() !== filter[k].toLowerCase()) {
             filterResult = false;
+            logger.debug(`[L2-LISTENER]: filter failed for event ${eventName}`, event);
             break;
           }
         }
 
         if (filterResult) {
-          await watchItem.listener[eventName].handler(event);
+          watchItem.listener[eventName].handler(event);
         }
+      } else {
+        logger.debug(`[L2-LISTENER]: eventName[${eventName}] not exist in listeners`);
       }
     }
   }
@@ -99,14 +90,10 @@ export default class HttpWatcher {
     let currentBlockNumber = await this.base.getBlockNumber();
     lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
 
-    logger.debug("start syncing process", lastBlockNumber, currentBlockNumber);
+    logger.debug("[L2-LISTENER]: start syncing process", lastBlockNumber, currentBlockNumber);
     while (lastBlockNumber <= currentBlockNumber) {
       for (let watchItem of this.watchList) {
-        this.processAllEvent(
-          lastBlockNumber,
-          currentBlockNumber,
-          watchItem
-        );
+        this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem);
 
         if (this.enabled == false) {
           return;
@@ -114,36 +101,32 @@ export default class HttpWatcher {
       }
 
       lastBlockNumber = currentBlockNumber + 1;
-      currentBlockNumber = await this.base.getBlockNumber();
+      currentBlockNumber = (await this.base.getBlockNumber()) - this.delayBlock;
     }
 
     // finish sync process;
-    logger.debug("finish syncing process", currentBlockNumber);
+    logger.debug("[L2-LISTENER]: finish syncing process", currentBlockNumber);
 
     while (true) {
       await Common.Sleep(this.blockInterval);
 
       try {
         lastBlockNumber = currentBlockNumber + 1;
-        currentBlockNumber = await this.base.getBlockNumber();
-        // logger.info("watching event", lastBlockNumber, currentBlockNumber);
+        currentBlockNumber = (await this.base.getBlockNumber()) - this.delayBlock;
+        // logger.debug("watching event", lastBlockNumber, currentBlockNumber);
         if (lastBlockNumber > currentBlockNumber) {
           continue;
         }
 
         for (let watchItem of this.watchList) {
-          this.processAllEvent(
-            lastBlockNumber,
-            currentBlockNumber,
-            watchItem
-          );
+          this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem);
 
           if (this.enabled == false) {
             return;
           }
         }
       } catch (err) {
-        logger.error("watching error: ", err);
+        logger.error("[L2-LISTENER]: watching error: ", err);
         // this.base.setProvider(this.provider);
       }
     }

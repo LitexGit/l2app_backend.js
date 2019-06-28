@@ -2,17 +2,7 @@ import { SESSION_EVENTS } from "../listener/session_events";
 const Web3 = require("web3");
 import { Contract } from "web3/node_modules/web3-eth-contract";
 import CITASDK from "@cryptape/cita-sdk";
-import {
-  ERC20ABI,
-  ADDRESS_ZERO,
-  CHANNEL_STATUS,
-  TYPED_DATA,
-  L2_CB,
-  L2_EVENT,
-  PN,
-  SESSION_STATUS,
-  CHANNEL_SETTLE_WINDOW
-} from "../conf/contract";
+import { ERC20ABI, ADDRESS_ZERO, CHANNEL_STATUS, TYPED_DATA, L2_CB, L2_EVENT, PN, SESSION_STATUS, CHANNEL_SETTLE_WINDOW } from "../conf/contract";
 import HttpWatcher from "../listener/listener";
 import { ETH_EVENTS } from "../listener/eth_events";
 import { CITA_EVENTS } from "../listener/cita_events";
@@ -73,14 +63,7 @@ export class SDK {
    * @param sessionPayNetwork PN
    * @constructor
    */
-  async init(
-    cpPrivateKey: string,
-    ethRpcUrl: string,
-    ethPaymentNetwork: PN,
-    appRpcUrl: string,
-    appPaymentNetwork: PN,
-    sessionPayNetwork: PN
-  ) {
+  async init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN) {
     logger.debug(
       "L2 server sdk init start with params: ethRpcUrl: [%s], ethPaymentNetwork: [%o], appRpcUrl: [%s], appPaymentNetwork: [%o]",
       ethRpcUrl,
@@ -95,15 +78,8 @@ export class SDK {
 
     CITA = CITASDK(appRpcUrl);
 
-    ethPN = new Contract(
-      web3.currentProvider,
-      Common.Abi2JsonInterface(ethPaymentNetwork.abi),
-      ethPaymentNetwork.address
-    );
-    appPN = new CITA.base.Contract(
-      Common.Abi2JsonInterface(appPaymentNetwork.abi),
-      appPaymentNetwork.address
-    );
+    ethPN = new Contract(web3.currentProvider, Common.Abi2JsonInterface(ethPaymentNetwork.abi), ethPaymentNetwork.address);
+    appPN = new CITA.base.Contract(Common.Abi2JsonInterface(appPaymentNetwork.abi), appPaymentNetwork.address);
 
     ethPN.options.address = ethPaymentNetwork.address;
     appPN.options.address = appPaymentNetwork.address;
@@ -112,15 +88,9 @@ export class SDK {
     TYPED_DATA.domain.verifyingContract = ethPN.options.address;
     TYPED_DATA.domain.chainId = ethChainId;
 
-    ERC20 = new Contract(
-      web3.currentProvider,
-      Common.Abi2JsonInterface(ERC20ABI)
-    );
+    ERC20 = new Contract(web3.currentProvider, Common.Abi2JsonInterface(ERC20ABI));
 
-    sessionPN = new CITA.base.Contract(
-      Common.Abi2JsonInterface(sessionPayNetwork.abi),
-      sessionPayNetwork.address
-    );
+    sessionPN = new CITA.base.Contract(Common.Abi2JsonInterface(sessionPayNetwork.abi), sessionPayNetwork.address);
 
     cpProvider = CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
 
@@ -165,11 +135,7 @@ export class SDK {
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
-    logger.debug(
-      "start deposit with params: amount: [%s], token: [%s]",
-      amount,
-      token
-    );
+    logger.debug("start deposit with params: amount: [%s], token: [%s]", amount, token);
 
     let amountBN = web3.utils.toBN(amount).toString();
     let data = ethPN.methods.providerDeposit(token, amountBN).encodeABI();
@@ -177,36 +143,16 @@ export class SDK {
     // 其它token
     if (token !== ADDRESS_ZERO) {
       // 授权合约能从账户扣token
-      let erc20Data = ERC20.methods
-        .approve(ethPN.options.address, amountBN)
-        .encodeABI();
+      let erc20Data = ERC20.methods.approve(ethPN.options.address, amountBN).encodeABI();
 
       // 发送ERC20交易
-      await Common.SendEthTransaction(
-        cpProvider.address,
-        token,
-        0,
-        erc20Data,
-        cpProvider.privateKey
-      );
+      await Common.SendEthTransaction(cpProvider.address, token, 0, erc20Data, cpProvider.privateKey);
 
       // 发送ETH交易
-      return await Common.SendEthTransaction(
-        cpProvider.address,
-        ethPN.options.address,
-        0,
-        data,
-        cpProvider.privateKey
-      );
+      return await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data, cpProvider.privateKey);
     } else {
       // 发送ETH交易
-      return await Common.SendEthTransaction(
-        cpProvider.address,
-        ethPN.options.address,
-        amountBN,
-        data,
-        cpProvider.privateKey
-      );
+      return await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, amountBN, data, cpProvider.privateKey);
     }
   }
 
@@ -224,11 +170,7 @@ export class SDK {
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
-    logger.debug(
-      "start withdraw with params: amount: [%s], token: [%s]",
-      amount,
-      token
-    );
+    logger.debug("start withdraw with params: amount: [%s], token: [%s]", amount, token);
 
     const { toBN } = web3.utils;
 
@@ -255,9 +197,7 @@ export class SDK {
 
     // 余额检测 (BN 计算)
     if (amountBN.gt(onChainBalanceBN)) {
-      throw new Error(
-        `withdraw amount[${amountBN.toString()}] great than onchain balance[${onChainBalanceBN.toString()}]`
-      );
+      throw new Error(`withdraw amount[${amountBN.toString()}] great than onchain balance[${onChainBalanceBN.toString()}]`);
     }
 
     totalWithdrawBN = totalWithdrawBN.add(amountBN);
@@ -267,11 +207,7 @@ export class SDK {
 
     // 发送交易 到 AppChain
     return await Common.SendAppChainTX(
-      appPN.methods.providerProposeWithdraw(
-        token,
-        totalWithdrawBN.toString(),
-        lastCommitBlock
-      ),
+      appPN.methods.providerProposeWithdraw(token, totalWithdrawBN.toString(), lastCommitBlock),
       cpProvider.address,
       cpProvider.privateKey,
       "appPN.methods.providerProposeWithdraw"
@@ -293,11 +229,7 @@ export class SDK {
     if (!web3.utils.isAddress(userAddress)) {
       throw new Error(`token [${userAddress}] is not a valid address`);
     }
-    logger.debug(
-      "start openChannelForUser with params: user: [%s], token: [%s]",
-      userAddress,
-      token
-    );
+    logger.debug("start openChannelForUser with params: user: [%s], token: [%s]", userAddress, token);
 
     let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
     let channel = await ethPN.methods.channelMap(channelID).call();
@@ -306,17 +238,9 @@ export class SDK {
       throw new Error("channel exist, can not be open.");
     }
 
-    let data = ethPN.methods
-      .openChannel(userAddress, ADDRESS_ZERO, CHANNEL_SETTLE_WINDOW, token, "0")
-      .encodeABI();
+    let data = ethPN.methods.openChannel(userAddress, ADDRESS_ZERO, CHANNEL_SETTLE_WINDOW, token, "0").encodeABI();
 
-    return await Common.SendEthTransaction(
-      cpProvider.address,
-      ethPN.options.address,
-      "0",
-      data,
-      cpProvider.privateKey
-    );
+    return await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, "0", data, cpProvider.privateKey);
   }
 
   /**
@@ -330,11 +254,7 @@ export class SDK {
    *
    * @return
    */
-  async rebalance(
-    userAddress: string,
-    amount: number | string,
-    token: string = ADDRESS_ZERO
-  ) {
+  async rebalance(userAddress: string, amount: number | string, token: string = ADDRESS_ZERO) {
     let { toBN, isAddress, soliditySha3 } = web3.utils;
     if (!isAddress(userAddress)) {
       throw new Error(`userAddress [${userAddress}] is not a valid address`);
@@ -343,12 +263,7 @@ export class SDK {
       throw new Error(`token [${token}] is not a valid address`);
     }
 
-    logger.debug(
-      "start reblance with params: userAddress: [%s], amount: [%s], token: [%s]",
-      userAddress,
-      amount,
-      token
-    );
+    logger.debug("start reblance with params: userAddress: [%s], amount: [%s], token: [%s]", userAddress, amount, token);
 
     // 从 ETH 获取通道信息
     let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
@@ -360,15 +275,11 @@ export class SDK {
     }
 
     let amountBN = toBN(amount);
-    let [{ providerBalance }] = await Promise.all([
-      appPN.methods.paymentNetworkMap(token).call()
-    ]);
+    let [{ providerBalance }] = await Promise.all([appPN.methods.paymentNetworkMap(token).call()]);
     let providerBalanceBN = toBN(providerBalance);
 
     // 获取 ReBalance 数据
-    let [{ amount: balance, nonce }] = await Promise.all([
-      appPN.methods.rebalanceProofMap(channelID).call()
-    ]);
+    let [{ amount: balance, nonce }] = await Promise.all([appPN.methods.rebalanceProofMap(channelID).call()]);
     // 转换金额 为BN, 便于计算
     let balanceBN = toBN(balance);
 
@@ -401,12 +312,7 @@ export class SDK {
 
     // 向 appChain 提交 ReBalance 数据
     let res = await Common.SendAppChainTX(
-      appPN.methods.proposeRebalance(
-        channelID,
-        reBalanceAmountBN,
-        nonce,
-        signature
-      ),
+      appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature),
       cpProvider.address,
       cpProvider.privateKey,
       "appPN.methods.proposeRebalance"
@@ -414,9 +320,7 @@ export class SDK {
 
     let repeatTime = 0;
     while (repeatTime < 10) {
-      let newRebalanceProof = await appPN.methods
-        .rebalanceProofMap(channelID)
-        .call();
+      let newRebalanceProof = await appPN.methods.rebalanceProofMap(channelID).call();
       if (newRebalanceProof.nonce === nonce) {
         logger.info("break loop ", repeatTime);
         break;
@@ -445,11 +349,7 @@ export class SDK {
       throw new Error(`token [${token}] is not a valid address`);
     }
 
-    logger.debug(
-      "start kickuser with params: userAddress: [%s], token: [%s]",
-      userAddress,
-      token
-    );
+    logger.debug("start kickuser with params: userAddress: [%s], token: [%s]", userAddress, token);
     // 从 ETH 获取通道信息
     let channelID = await ethPN.methods.getChannelID(userAddress, token).call();
     let channel = await appPN.methods.channelMap(channelID).call();
@@ -462,16 +362,8 @@ export class SDK {
     // AppChain 获取缓存数据
     let [
       { balance, nonce, additionalHash, partnerSignature },
-      {
-        amount: inAmount,
-        nonce: inNonce,
-        regulatorSignature,
-        providerSignature
-      }
-    ] = await Promise.all([
-      appPN.methods.balanceProofMap(channelID, cpProvider.address).call(),
-      appPN.methods.rebalanceProofMap(channelID).call()
-    ]);
+      { amount: inAmount, nonce: inNonce, regulatorSignature, providerSignature }
+    ] = await Promise.all([appPN.methods.balanceProofMap(channelID, cpProvider.address).call(), appPN.methods.rebalanceProofMap(channelID).call()]);
 
     partnerSignature = partnerSignature || "0x0";
     regulatorSignature = regulatorSignature || "0x0";
@@ -491,27 +383,11 @@ export class SDK {
     );
     // 生成数据
     let data = await ethPN.methods
-      .closeChannel(
-        channelID,
-        balance,
-        nonce,
-        additionalHash,
-        partnerSignature,
-        inAmount,
-        inNonce,
-        regulatorSignature,
-        providerSignature
-      )
+      .closeChannel(channelID, balance, nonce, additionalHash, partnerSignature, inAmount, inNonce, regulatorSignature, providerSignature)
       .encodeABI();
 
     // 发送交易
-    return await Common.SendEthTransaction(
-      cpProvider.address,
-      ethPN.options.address,
-      0,
-      data,
-      cpProvider.privateKey
-    );
+    return await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data, cpProvider.privateKey);
   }
 
   /**
@@ -525,23 +401,14 @@ export class SDK {
    *
    * @constructor
    */
-  async transfer(
-    to: string,
-    amount: number | string,
-    token: string = ADDRESS_ZERO
-  ) {
+  async transfer(to: string, amount: number | string, token: string = ADDRESS_ZERO) {
     if (!web3.utils.isAddress(to)) {
       throw new Error(`to [${to}] is not a valid address`);
     }
     if (!web3.utils.isAddress(token)) {
       throw new Error(`token [${token}] is not a valid address`);
     }
-    logger.debug(
-      "Transfer start execute with params: to: [%s], amount: [%s], token: [%s]",
-      to,
-      amount,
-      token
-    );
+    logger.debug("Transfer start execute with params: to: [%s], amount: [%s], token: [%s]", to, amount, token);
     let channelID = await ethPN.methods.getChannelID(to, token).call();
     return this.channelTransferLock.acquire(channelID, async done => {
       try {
@@ -553,12 +420,7 @@ export class SDK {
     });
   }
 
-  private async doTransfer(
-    channelID: string,
-    to: string,
-    amount: number | string,
-    token: string = ADDRESS_ZERO
-  ) {
+  private async doTransfer(channelID: string, to: string, amount: number | string, token: string = ADDRESS_ZERO) {
     let { toBN } = web3.utils;
     // 获取通道id
 
@@ -570,9 +432,7 @@ export class SDK {
     await this.checkBalance(to, amountBN.toString(), token, true);
 
     // 金额转成BN
-    let [{ balance, nonce, additionalHash }] = await Promise.all([
-      appPN.methods.balanceProofMap(channelID, to).call()
-    ]);
+    let [{ balance, nonce, additionalHash }] = await Promise.all([appPN.methods.balanceProofMap(channelID, to).call()]);
 
     let balanceBN = toBN(balance);
     let assetAmountBN = amountBN.add(balanceBN).toString();
@@ -590,23 +450,14 @@ export class SDK {
 
     let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
     let res = await Common.SendAppChainTX(
-      appPN.methods.transfer(
-        to,
-        channelID,
-        assetAmountBN,
-        nonce,
-        additionalHash,
-        signature
-      ),
+      appPN.methods.transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature),
       cpProvider.address,
       cpProvider.privateKey,
       "appPN.methods.transfer"
     );
     let repeatTime = 0;
     while (repeatTime < 10) {
-      let [{ nonce: newNonce }] = await Promise.all([
-        appPN.methods.balanceProofMap(channelID, to).call()
-      ]);
+      let [{ nonce: newNonce }] = await Promise.all([appPN.methods.balanceProofMap(channelID, to).call()]);
       if (newNonce === nonce) {
         logger.info("break tranfer loop", repeatTime);
         break;
@@ -625,19 +476,8 @@ export class SDK {
    * @param customData
    * @constructor
    */
-  async startSession(
-    sessionID: string,
-    game: string,
-    userList: string[],
-    customData: any
-  ) {
-    logger.debug(
-      "start session with params: sessionID: [%s], game: [%s], userList: [%o], customData: [%s]",
-      sessionID,
-      game,
-      userList,
-      customData
-    );
+  async startSession(sessionID: string, game: string, userList: string[], customData: any) {
+    logger.debug("start session with params: sessionID: [%s], game: [%s], userList: [%o], customData: [%s]", sessionID, game, userList, customData);
     if (await Session.isExists(sessionID)) {
       throw new Error("session is already exist, can not start again");
     } else {
@@ -722,38 +562,21 @@ export class SDK {
     );
 
     if (await Session.isExists(sessionID)) {
-      let channelID =
-        "0x0000000000000000000000000000000000000000000000000000000000000000";
+      let channelID = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
       if (Number(amount) > 0) {
         channelID = await ethPN.methods.getChannelID(to, token).call();
 
         return this.channelTransferLock.acquire(channelID, async done => {
           try {
-            let result = await this.doSendMessage(
-              channelID,
-              sessionID,
-              to,
-              type,
-              content,
-              amount,
-              token
-            );
+            let result = await this.doSendMessage(channelID, sessionID, to, type, content, amount, token);
             done(null, result);
           } catch (err) {
             done(err, null);
           }
         });
       } else {
-        return await this.doSendMessage(
-          channelID,
-          sessionID,
-          to,
-          type,
-          content,
-          amount,
-          token
-        );
+        return await this.doSendMessage(channelID, sessionID, to, type, content, amount, token);
       }
     } else {
       throw new Error("Session is not open");
@@ -778,13 +601,7 @@ export class SDK {
       { t: "bytes", v: content }
     );
     let signature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
-    let { rlpencode: transferData, paymentData } = await this.buildTransferData(
-      channelID,
-      to,
-      amount,
-      token,
-      messageHash
-    );
+    let { rlpencode: transferData, paymentData } = await this.buildTransferData(channelID, to, amount, token, messageHash);
     let res = await Session.SendSessionMessage(
       cpProvider.address,
       to,
@@ -802,9 +619,7 @@ export class SDK {
 
     let repeatTime = 0;
     while (repeatTime < 10) {
-      let [{ nonce: newNonce }] = await Promise.all([
-        appPN.methods.balanceProofMap(channelID, to).call()
-      ]);
+      let [{ nonce: newNonce }] = await Promise.all([appPN.methods.balanceProofMap(channelID, to).call()]);
       if (newNonce === paymentData.nonce) {
         logger.info("break sendMessage loop", repeatTime);
         break;
@@ -844,15 +659,7 @@ export class SDK {
   async getPaymentNetwork(token: string = ADDRESS_ZERO) {
     // 获取通道 可用金额
     let [
-      {
-        userCount,
-        userTotalDeposit,
-        userTotalWithdraw,
-        providerDeposit,
-        providerWithdraw,
-        providerBalance,
-        providerOnchainBalance
-      }
+      { userCount, userTotalDeposit, userTotalWithdraw, providerDeposit, providerWithdraw, providerBalance, providerOnchainBalance }
     ] = await Promise.all([appPN.methods.paymentNetworkMap(token).call()]);
 
     return {
@@ -958,12 +765,7 @@ export class SDK {
       this.ethWatcher && this.ethWatcher.stop();
 
       let ethWatchList = [{ contract: ethPN, listener: ETH_EVENTS }];
-      this.ethWatcher = new HttpWatcher(
-        web3.eth,
-        this.ethRpcUrl,
-        5000,
-        ethWatchList
-      );
+      this.ethWatcher = new HttpWatcher(web3.eth, this.ethRpcUrl, 5000, ethWatchList);
       this.ethWatcher.start();
     } catch (err) {
       logger.error("ethWatcher err: ", err);
@@ -973,16 +775,8 @@ export class SDK {
     try {
       this.appWatcher && this.appWatcher.stop();
 
-      let appWatchList = [
-        { contract: appPN, listener: CITA_EVENTS },
-        { contract: sessionPN, listener: SESSION_EVENTS }
-      ];
-      this.appWatcher = new HttpWatcher(
-        CITA.base,
-        this.appRpcUrl,
-        1000,
-        appWatchList
-      );
+      let appWatchList = [{ contract: appPN, listener: CITA_EVENTS }, { contract: sessionPN, listener: SESSION_EVENTS }];
+      this.appWatcher = new HttpWatcher(CITA.base, this.appRpcUrl, 1000, appWatchList, 1);
       this.appWatcher.start();
     } catch (err) {
       logger.error("appWatcher err: ", err);
@@ -997,12 +791,7 @@ export class SDK {
    * @param token
    * @param needRebalance
    */
-  private async checkBalance(
-    to: any,
-    amount: string,
-    token: string,
-    needRebalance: boolean
-  ) {
+  private async checkBalance(to: any, amount: string, token: string, needRebalance: boolean) {
     let { toBN } = web3.utils;
     // 获取通道id
     let channelID = await ethPN.methods.getChannelID(to, token).call();
@@ -1019,11 +808,7 @@ export class SDK {
       return;
     }
     if (!needRebalance) {
-      throw new Error(
-        `providerBalance[${
-          channel.providerBalance
-        }] is less than sendAmount[${amount}]`
-      );
+      throw new Error(`providerBalance[${channel.providerBalance}] is less than sendAmount[${amount}]`);
     }
 
     await this.rebalance(to, amountBN.sub(balanceBN).toString(), token);
@@ -1031,18 +816,11 @@ export class SDK {
     return true;
   }
 
-  private async buildTransferData(
-    channelID: string,
-    user: string,
-    amount: string,
-    token: string,
-    messageHash: string
-  ): Promise<any> {
+  private async buildTransferData(channelID: string, user: string, amount: string, token: string, messageHash: string): Promise<any> {
     let { hexToBytes, toHex, soliditySha3, toBN } = web3.utils;
     let balance = "0";
     let nonce = "0";
-    let additionalHash =
-      "0x0000000000000000000000000000000000000000000000000000000000000000";
+    let additionalHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
     let paymentSignature = "0x0";
 
     if (Number(amount) > 0) {
@@ -1052,9 +830,7 @@ export class SDK {
 
       // build transfer message
       // get balance proof from eth contract
-      let balanceProof = await appPN.methods
-        .balanceProofMap(channelID, user)
-        .call();
+      let balanceProof = await appPN.methods.balanceProofMap(channelID, user).call();
 
       balance = toBN(amount)
         .add(toBN(balanceProof.balance))
@@ -1062,10 +838,7 @@ export class SDK {
       nonce = toBN(balanceProof.nonce)
         .add(toBN(1))
         .toString();
-      additionalHash = soliditySha3(
-        { t: "bytes32", v: messageHash },
-        { t: "uint256", v: amount }
-      );
+      additionalHash = soliditySha3({ t: "bytes32", v: messageHash }, { t: "uint256", v: amount });
 
       // sign data with typed data v3
       let messageHash2 = signHash({
@@ -1074,20 +847,10 @@ export class SDK {
         nonce: nonce,
         additionalHash: additionalHash
       });
-      paymentSignature = Common.SignatureToHex(
-        messageHash2,
-        cpProvider.privateKey
-      );
+      paymentSignature = Common.SignatureToHex(messageHash2, cpProvider.privateKey);
     }
 
-    let paymentData = [
-      channelID,
-      toHex(balance),
-      toHex(nonce),
-      toHex(amount),
-      additionalHash,
-      paymentSignature
-    ];
+    let paymentData = [channelID, toHex(balance), toHex(nonce), toHex(amount), additionalHash, paymentSignature];
     console.log("paymentData: ", paymentData);
     // rlpencode is encoded data
     let rlpencode = "0x" + rlp.encode(paymentData).toString("hex");

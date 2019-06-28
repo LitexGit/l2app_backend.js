@@ -32,7 +32,7 @@ export class Common {
   static async GetLastCommitBlock(chain: string = "eth") {
     return chain === "eth"
       ? (await web3.eth.getBlockNumber()) + COMMIT_BLOCK_CONDITION
-      : (await CITA.base.getBlockNumber()) + 88;
+      : (await CITA.base.getBlockNumber()) + 60;
   }
 
   static async SendEthTransaction(

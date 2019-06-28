@@ -62,9 +62,7 @@ class SDK {
         let amountBN = exports.web3.utils.toBN(amount).toString();
         let data = exports.ethPN.methods.providerDeposit(token, amountBN).encodeABI();
         if (token !== contract_1.ADDRESS_ZERO) {
-            let erc20Data = exports.ERC20.methods
-                .approve(exports.ethPN.options.address, amountBN)
-                .encodeABI();
+            let erc20Data = exports.ERC20.methods.approve(exports.ethPN.options.address, amountBN).encodeABI();
             await common_1.Common.SendEthTransaction(exports.cpProvider.address, token, 0, erc20Data, exports.cpProvider.privateKey);
             return await common_1.Common.SendEthTransaction(exports.cpProvider.address, exports.ethPN.options.address, 0, data, exports.cpProvider.privateKey);
         }
@@ -106,9 +104,7 @@ class SDK {
         if (Number(channel.status) !== contract_1.CHANNEL_STATUS.CHANNEL_STATUS_INIT) {
             throw new Error("channel exist, can not be open.");
         }
-        let data = exports.ethPN.methods
-            .openChannel(userAddress, contract_1.ADDRESS_ZERO, contract_1.CHANNEL_SETTLE_WINDOW, token, "0")
-            .encodeABI();
+        let data = exports.ethPN.methods.openChannel(userAddress, contract_1.ADDRESS_ZERO, contract_1.CHANNEL_SETTLE_WINDOW, token, "0").encodeABI();
         return await common_1.Common.SendEthTransaction(exports.cpProvider.address, exports.ethPN.options.address, "0", data, exports.cpProvider.privateKey);
     }
     async rebalance(userAddress, amount, token = contract_1.ADDRESS_ZERO) {
@@ -126,13 +122,9 @@ class SDK {
             throw new Error("channel status is not open");
         }
         let amountBN = toBN(amount);
-        let [{ providerBalance }] = await Promise.all([
-            exports.appPN.methods.paymentNetworkMap(token).call()
-        ]);
+        let [{ providerBalance }] = await Promise.all([exports.appPN.methods.paymentNetworkMap(token).call()]);
         let providerBalanceBN = toBN(providerBalance);
-        let [{ amount: balance, nonce }] = await Promise.all([
-            exports.appPN.methods.rebalanceProofMap(channelID).call()
-        ]);
+        let [{ amount: balance, nonce }] = await Promise.all([exports.appPN.methods.rebalanceProofMap(channelID).call()]);
         let balanceBN = toBN(balance);
         if (amountBN.sub(balanceBN).gt(providerBalanceBN)) {
             return false;
@@ -147,9 +139,7 @@ class SDK {
         let res = await common_1.Common.SendAppChainTX(exports.appPN.methods.proposeRebalance(channelID, reBalanceAmountBN, nonce, signature), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.proposeRebalance");
         let repeatTime = 0;
         while (repeatTime < 10) {
-            let newRebalanceProof = await exports.appPN.methods
-                .rebalanceProofMap(channelID)
-                .call();
+            let newRebalanceProof = await exports.appPN.methods.rebalanceProofMap(channelID).call();
             if (newRebalanceProof.nonce === nonce) {
                 mylog_1.logger.info("break loop ", repeatTime);
                 break;
@@ -172,10 +162,7 @@ class SDK {
         if (Number(channel.status) != contract_1.CHANNEL_STATUS.CHANNEL_STATUS_OPEN) {
             throw new Error("channel status is not open");
         }
-        let [{ balance, nonce, additionalHash, partnerSignature }, { amount: inAmount, nonce: inNonce, regulatorSignature, providerSignature }] = await Promise.all([
-            exports.appPN.methods.balanceProofMap(channelID, exports.cpProvider.address).call(),
-            exports.appPN.methods.rebalanceProofMap(channelID).call()
-        ]);
+        let [{ balance, nonce, additionalHash, partnerSignature }, { amount: inAmount, nonce: inNonce, regulatorSignature, providerSignature }] = await Promise.all([exports.appPN.methods.balanceProofMap(channelID, exports.cpProvider.address).call(), exports.appPN.methods.rebalanceProofMap(channelID).call()]);
         partnerSignature = partnerSignature || "0x0";
         regulatorSignature = regulatorSignature || "0x0";
         providerSignature = providerSignature || "0x0";
@@ -208,9 +195,7 @@ class SDK {
         let { toBN } = exports.web3.utils;
         let amountBN = toBN(amount);
         await this.checkBalance(to, amountBN.toString(), token, true);
-        let [{ balance, nonce, additionalHash }] = await Promise.all([
-            exports.appPN.methods.balanceProofMap(channelID, to).call()
-        ]);
+        let [{ balance, nonce, additionalHash }] = await Promise.all([exports.appPN.methods.balanceProofMap(channelID, to).call()]);
         let balanceBN = toBN(balance);
         let assetAmountBN = amountBN.add(balanceBN).toString();
         nonce = toBN(nonce)
@@ -227,9 +212,7 @@ class SDK {
         let res = await common_1.Common.SendAppChainTX(exports.appPN.methods.transfer(to, channelID, assetAmountBN, nonce, additionalHash, signature), exports.cpProvider.address, exports.cpProvider.privateKey, "appPN.methods.transfer");
         let repeatTime = 0;
         while (repeatTime < 10) {
-            let [{ nonce: newNonce }] = await Promise.all([
-                exports.appPN.methods.balanceProofMap(channelID, to).call()
-            ]);
+            let [{ nonce: newNonce }] = await Promise.all([exports.appPN.methods.balanceProofMap(channelID, to).call()]);
             if (newNonce === nonce) {
                 mylog_1.logger.info("break tranfer loop", repeatTime);
                 break;
@@ -309,9 +292,7 @@ class SDK {
         }
         let repeatTime = 0;
         while (repeatTime < 10) {
-            let [{ nonce: newNonce }] = await Promise.all([
-                exports.appPN.methods.balanceProofMap(channelID, to).call()
-            ]);
+            let [{ nonce: newNonce }] = await Promise.all([exports.appPN.methods.balanceProofMap(channelID, to).call()]);
             if (newNonce === paymentData.nonce) {
                 mylog_1.logger.info("break sendMessage loop", repeatTime);
                 break;
@@ -407,11 +388,8 @@ class SDK {
         }
         try {
             this.appWatcher && this.appWatcher.stop();
-            let appWatchList = [
-                { contract: exports.appPN, listener: cita_events_1.CITA_EVENTS },
-                { contract: exports.sessionPN, listener: session_events_1.SESSION_EVENTS }
-            ];
-            this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList);
+            let appWatchList = [{ contract: exports.appPN, listener: cita_events_1.CITA_EVENTS }, { contract: exports.sessionPN, listener: session_events_1.SESSION_EVENTS }];
+            this.appWatcher = new listener_1.default(exports.CITA.base, this.appRpcUrl, 1000, appWatchList, 1);
             this.appWatcher.start();
         }
         catch (err) {
@@ -445,9 +423,7 @@ class SDK {
         if (Number(amount) > 0) {
             channelID = await exports.ethPN.methods.getChannelID(user, token).call();
             await this.checkBalance(user, amount, token, true);
-            let balanceProof = await exports.appPN.methods
-                .balanceProofMap(channelID, user)
-                .call();
+            let balanceProof = await exports.appPN.methods.balanceProofMap(channelID, user).call();
             balance = toBN(amount)
                 .add(toBN(balanceProof.balance))
                 .toString();
@@ -463,14 +439,7 @@ class SDK {
             });
             paymentSignature = common_1.Common.SignatureToHex(messageHash2, exports.cpProvider.privateKey);
         }
-        let paymentData = [
-            channelID,
-            toHex(balance),
-            toHex(nonce),
-            toHex(amount),
-            additionalHash,
-            paymentSignature
-        ];
+        let paymentData = [channelID, toHex(balance), toHex(nonce), toHex(amount), additionalHash, paymentSignature];
         console.log("paymentData: ", paymentData);
         let rlpencode = "0x" + rlp.encode(paymentData).toString("hex");
         console.log("rlpencode is", rlpencode);

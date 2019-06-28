@@ -3,11 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("../lib/common");
 const mylog_1 = require("../lib/mylog");
 class HttpWatcher {
-    constructor(base, provider, blockInterval, watchList) {
+    constructor(base, provider, blockInterval, watchList, delayBlock = 0) {
         this.base = base;
         this.provider = provider;
         this.blockInterval = blockInterval;
         this.watchList = watchList;
+        this.delayBlock = delayBlock;
         this.enabled = true;
     }
     async processEvent(fromBlockNumber, toBlockNumber, contract, eventName, eventSetting) {
@@ -29,28 +30,33 @@ class HttpWatcher {
             fromBlock: fromBlockNumber,
             toBlock: toBlockNumber
         });
+        mylog_1.logger.debug(`[L2-LISTENER]: [${fromBlockNumber}--->${toBlockNumber}] [${watchItem.contract.options.address}] eventsNum: ${events.length},` +
+            `eventNames: [${events.map(item => item.event).join(",")}]`);
         for (let event of events) {
             let { event: eventName, returnValues } = event;
             if (watchItem.listener[eventName]) {
                 let filter = watchItem.listener[eventName].filter();
                 let filterResult = true;
                 for (let k in filter) {
-                    if (!returnValues[k] ||
-                        returnValues[k].toLowerCase() !== filter[k].toLowerCase()) {
+                    if (!returnValues[k] || returnValues[k].toLowerCase() !== filter[k].toLowerCase()) {
                         filterResult = false;
+                        mylog_1.logger.debug(`[L2-LISTENER]: filter failed for event ${eventName}`, event);
                         break;
                     }
                 }
                 if (filterResult) {
-                    await watchItem.listener[eventName].handler(event);
+                    watchItem.listener[eventName].handler(event);
                 }
+            }
+            else {
+                mylog_1.logger.debug(`[L2-LISTENER]: eventName[${eventName}] not exist in listeners`);
             }
         }
     }
     async start(lastBlockNumber = 0) {
         let currentBlockNumber = await this.base.getBlockNumber();
         lastBlockNumber = lastBlockNumber || currentBlockNumber - 10;
-        mylog_1.logger.debug("start syncing process", lastBlockNumber, currentBlockNumber);
+        mylog_1.logger.debug("[L2-LISTENER]: start syncing process", lastBlockNumber, currentBlockNumber);
         while (lastBlockNumber <= currentBlockNumber) {
             for (let watchItem of this.watchList) {
                 this.processAllEvent(lastBlockNumber, currentBlockNumber, watchItem);
@@ -59,14 +65,14 @@ class HttpWatcher {
                 }
             }
             lastBlockNumber = currentBlockNumber + 1;
-            currentBlockNumber = await this.base.getBlockNumber();
+            currentBlockNumber = (await this.base.getBlockNumber()) - this.delayBlock;
         }
-        mylog_1.logger.debug("finish syncing process", currentBlockNumber);
+        mylog_1.logger.debug("[L2-LISTENER]: finish syncing process", currentBlockNumber);
         while (true) {
             await common_1.Common.Sleep(this.blockInterval);
             try {
                 lastBlockNumber = currentBlockNumber + 1;
-                currentBlockNumber = await this.base.getBlockNumber();
+                currentBlockNumber = (await this.base.getBlockNumber()) - this.delayBlock;
                 if (lastBlockNumber > currentBlockNumber) {
                     continue;
                 }
@@ -78,7 +84,7 @@ class HttpWatcher {
                 }
             }
             catch (err) {
-                mylog_1.logger.error("watching error: ", err);
+                mylog_1.logger.error("[L2-LISTENER]: watching error: ", err);
             }
         }
     }
