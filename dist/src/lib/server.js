@@ -141,7 +141,7 @@ class SDK {
         while (repeatTime < 10) {
             let newRebalanceProof = await exports.appPN.methods.rebalanceProofMap(channelID).call();
             if (newRebalanceProof.nonce === nonce) {
-                mylog_1.logger.info("break loop ", repeatTime);
+                mylog_1.logger.info("Rebalance break loop ", repeatTime);
                 break;
             }
             await common_1.Common.Sleep(1000);
@@ -214,7 +214,7 @@ class SDK {
         while (repeatTime < 10) {
             let [{ nonce: newNonce }] = await Promise.all([exports.appPN.methods.balanceProofMap(channelID, to).call()]);
             if (newNonce === nonce) {
-                mylog_1.logger.info("break tranfer loop", repeatTime);
+                mylog_1.logger.info("Transfer break loop", repeatTime);
                 break;
             }
             repeatTime++;
@@ -294,7 +294,7 @@ class SDK {
         while (repeatTime < 10) {
             let [{ nonce: newNonce }] = await Promise.all([exports.appPN.methods.balanceProofMap(channelID, to).call()]);
             if (newNonce === paymentData.nonce) {
-                mylog_1.logger.info("break sendMessage loop", repeatTime);
+                mylog_1.logger.info("SendMessage break loop", repeatTime);
                 break;
             }
             repeatTime++;
@@ -440,9 +440,9 @@ class SDK {
             paymentSignature = common_1.Common.SignatureToHex(messageHash2, exports.cpProvider.privateKey);
         }
         let paymentData = [channelID, toHex(balance), toHex(nonce), toHex(amount), additionalHash, paymentSignature];
-        console.log("paymentData: ", paymentData);
+        mylog_1.logger.info("paymentData: ", JSON.stringify(paymentData));
         let rlpencode = "0x" + rlp.encode(paymentData).toString("hex");
-        console.log("rlpencode is", rlpencode);
+        mylog_1.logger.info("rlpencode is", rlpencode);
         return { rlpencode, paymentData: { channelID, balance, nonce } };
     }
 }

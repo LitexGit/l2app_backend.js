@@ -322,7 +322,7 @@ export class SDK {
     while (repeatTime < 10) {
       let newRebalanceProof = await appPN.methods.rebalanceProofMap(channelID).call();
       if (newRebalanceProof.nonce === nonce) {
-        logger.info("break loop ", repeatTime);
+        logger.info("Rebalance break loop ", repeatTime);
         break;
       }
       await Common.Sleep(1000);
@@ -459,7 +459,7 @@ export class SDK {
     while (repeatTime < 10) {
       let [{ nonce: newNonce }] = await Promise.all([appPN.methods.balanceProofMap(channelID, to).call()]);
       if (newNonce === nonce) {
-        logger.info("break tranfer loop", repeatTime);
+        logger.info("Transfer break loop", repeatTime);
         break;
       }
       repeatTime++;
@@ -621,7 +621,7 @@ export class SDK {
     while (repeatTime < 10) {
       let [{ nonce: newNonce }] = await Promise.all([appPN.methods.balanceProofMap(channelID, to).call()]);
       if (newNonce === paymentData.nonce) {
-        logger.info("break sendMessage loop", repeatTime);
+        logger.info("SendMessage break loop", repeatTime);
         break;
       }
       repeatTime++;
@@ -851,11 +851,11 @@ export class SDK {
     }
 
     let paymentData = [channelID, toHex(balance), toHex(nonce), toHex(amount), additionalHash, paymentSignature];
-    console.log("paymentData: ", paymentData);
+    logger.info("paymentData: ", JSON.stringify(paymentData));
     // rlpencode is encoded data
     let rlpencode = "0x" + rlp.encode(paymentData).toString("hex");
 
-    console.log("rlpencode is", rlpencode);
+    logger.info("rlpencode is", rlpencode);
 
     return { rlpencode, paymentData: { channelID, balance, nonce } };
   }

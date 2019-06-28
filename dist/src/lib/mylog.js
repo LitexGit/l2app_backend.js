@@ -15,9 +15,15 @@ async function setLogger(newlogger) {
         };
     }
     else {
-        exports.logger = newlogger;
-        newlogger.error('server error');
-        newlogger.debug('server debug');
+        exports.logger.info = (...params) => {
+            newlogger.info("[L2-SERVER]: " + params[0], ...params.slice(1));
+        };
+        exports.logger.debug = (...params) => {
+            newlogger.debug("[L2-SERVER]: " + params[0], ...params.slice(1));
+        };
+        exports.logger.error = (...params) => {
+            newlogger.error("[L2-SERVER]: " + params[0], ...params.slice(1));
+        };
     }
 }
 exports.setLogger = setLogger;

@@ -28,12 +28,10 @@ class Common {
         }
     }
     static async GetLastCommitBlock(chain = "eth") {
-        return chain === "eth"
-            ? (await server_1.web3.eth.getBlockNumber()) + contract_1.COMMIT_BLOCK_CONDITION
-            : (await server_1.CITA.base.getBlockNumber()) + 60;
+        return chain === "eth" ? (await server_1.web3.eth.getBlockNumber()) + contract_1.COMMIT_BLOCK_CONDITION : (await server_1.CITA.base.getBlockNumber()) + 60;
     }
     static async SendEthTransaction(from, to, value, data, privateKey) {
-        const { toBN } = server_1.web3.utils;
+        const { toBN, fromWei } = server_1.web3.utils;
         let nonce = await server_1.web3.eth.getTransactionCount(from);
         if (nonce > getEthNonce(from)) {
             ethNonce.set(from, nonce);
@@ -47,7 +45,7 @@ class Common {
             .mul(toBN(11))
             .div(toBN(10))
             .toString(10);
-        console.log('gasPrice', gasPrice);
+        mylog_1.logger.info(`gasPrice is ${fromWei(gasPrice, "Gwei")} Gwei`);
         let rawTx = {
             from: from,
             nonce: "0x" + nonce.toString(16),
@@ -68,7 +66,7 @@ class Common {
         }
         let serializedTx = tx.serialize();
         let txData = "0x" + serializedTx.toString("hex");
-        mylog_1.logger.debug("SEND ETH TX", rawTx);
+        mylog_1.logger.debug("SEND ETH TX", JSON.stringify(rawTx));
         return new Promise((resolve, reject) => {
             try {
                 server_1.web3.eth
@@ -98,7 +96,7 @@ class Common {
         return tx;
     }
     static async SendAppChainTX(action, from, privateKey, name) {
-        mylog_1.logger.debug("start send CITA tx", name, action.arguments);
+        mylog_1.logger.debug("start send CITA tx ", name, JSON.stringify(action.arguments));
         let tx = await this.BuildAppChainTX(from, privateKey);
         let rs = await action.send(tx);
         if (rs.hash) {
@@ -131,9 +129,7 @@ class Common {
         let messageBuffer = Buffer.from(messageHex, "hex");
         let privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
         let signatureObj = ethUtil.ecsign(messageBuffer, privateKeyBuffer);
-        return ethUtil
-            .toRpcSig(signatureObj.v, signatureObj.r, signatureObj.s)
-            .toString("hex");
+        return ethUtil.toRpcSig(signatureObj.v, signatureObj.r, signatureObj.s).toString("hex");
     }
     static RandomWord(randomFlag, min, max = 12) {
         let str = "", range = min, arr = [

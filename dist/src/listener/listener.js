@@ -40,7 +40,7 @@ class HttpWatcher {
                 for (let k in filter) {
                     if (!returnValues[k] || returnValues[k].toLowerCase() !== filter[k].toLowerCase()) {
                         filterResult = false;
-                        mylog_1.logger.debug(`[L2-LISTENER]: filter failed for event ${eventName}`, event);
+                        mylog_1.logger.debug(`[L2-LISTENER]: filter failed for event ${eventName}, ${event.transactionHash}, ${event.transactionIndex}`);
                         break;
                     }
                 }

@@ -18,9 +18,7 @@ export const ETH_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle ETH ProviderWithdraw--------------------"
-      );
+      logger.debug("--------------------Handle ETH ProviderWithdraw--------------------");
       // 获取事件内容
     }
   },
@@ -30,9 +28,7 @@ export const ETH_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle ETH UserNewDeposit--------------------"
-      );
+      logger.debug("--------------------Handle ETH UserNewDeposit--------------------");
     }
   },
 
@@ -41,9 +37,7 @@ export const ETH_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle ETH UserWithdraw--------------------"
-      );
+      logger.debug("--------------------Handle ETH UserWithdraw--------------------");
     }
   },
 
@@ -52,9 +46,7 @@ export const ETH_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle ETH ChannelOpened--------------------"
-      );
+      logger.debug("--------------------Handle ETH ChannelOpened--------------------");
     }
   },
 
@@ -63,23 +55,14 @@ export const ETH_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle ETH ChannelClosed--------------------"
-      );
+      logger.debug("--------------------Handle ETH ChannelClosed--------------------");
 
       // 获取事件内容
       let {
         returnValues: { channelID, balance, nonce, inAmount, inNonce }
       } = event;
 
-      logger.debug(
-        "channelID: [%s], balance: [%s], nonce: [%s], inAmount: [%s], inNonce: [%s]",
-        channelID,
-        balance,
-        nonce,
-        inAmount,
-        inNonce
-      );
+      logger.debug("channelID: [%s], balance: [%s], nonce: [%s], inAmount: [%s], inNonce: [%s]", channelID, balance, nonce, inAmount, inNonce);
       // 获取通道信息
       let channel = await ethPN.methods.channelMap(channelID).call();
 
@@ -95,9 +78,7 @@ export const ETH_EVENTS = {
         // 强关发起方是用户
         if (channel.isCloser) {
           // 获取通道证据
-          let [
-            { balance, nonce, additionalHash, signature: partnerSignature }
-          ] = await Promise.all([
+          let [{ balance, nonce, additionalHash, signature: partnerSignature }] = await Promise.all([
             appPN.methods.balanceProofMap(channelID, cpProvider.address).call()
           ]);
 
@@ -115,10 +96,7 @@ export const ETH_EVENTS = {
             );
 
             // 进行签名
-            let consignorSignature = Common.SignatureToHex(
-              messageHash,
-              cpProvider.privateKey
-            );
+            let consignorSignature = Common.SignatureToHex(messageHash, cpProvider.privateKey);
 
             logger.debug("user close the channel, provider will submit proof");
             logger.debug(
@@ -131,38 +109,15 @@ export const ETH_EVENTS = {
               consignorSignature
             );
             // 获取 user数据
-            data = ethPN.methods
-              .partnerUpdateProof(
-                channelID,
-                balance,
-                nonce,
-                additionalHash,
-                partnerSignature,
-                consignorSignature
-              )
-              .encodeABI();
+            data = ethPN.methods.partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature).encodeABI();
 
             // 发送ETH交易
-            await Common.SendEthTransaction(
-              cpProvider.address,
-              ethPN.options.address,
-              0,
-              data,
-              cpProvider.privateKey
-            );
+            await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data, cpProvider.privateKey);
           }
         } else {
           // 发起方为 cp
           // 获取通道证据
-          let [
-            {
-              balance,
-              nonce,
-              additionalHash,
-              signature: partnerSignature,
-              consignorSignature
-            }
-          ] = await Promise.all([
+          let [{ balance, nonce, additionalHash, signature: partnerSignature, consignorSignature }] = await Promise.all([
             appPN.methods.balanceProofMap(channelID, channel.user).call()
           ]);
 
@@ -185,25 +140,10 @@ export const ETH_EVENTS = {
             if (consignorSignature == null || consignorSignature == "") {
               logger.debug("no user proof signature, will not submit proof");
             } else {
-              data = ethPN.methods
-                .partnerUpdateProof(
-                  channelID,
-                  balance,
-                  nonce,
-                  additionalHash,
-                  partnerSignature,
-                  consignorSignature
-                )
-                .encodeABI();
+              data = ethPN.methods.partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature).encodeABI();
 
               // 发送ETH交易
-              await Common.SendEthTransaction(
-                cpProvider.address,
-                ethPN.options.address,
-                0,
-                data,
-                cpProvider.privateKey
-              );
+              await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data, cpProvider.privateKey);
             }
           }
         }
@@ -223,13 +163,7 @@ export const ETH_EVENTS = {
           let settleData = ethPN.methods.settleChannel(channelID).encodeABI();
 
           // 发送ETH交易
-          let hash = await Common.SendEthTransaction(
-            cpProvider.address,
-            ethPN.options.address,
-            0,
-            settleData,
-            cpProvider.privateKey
-          );
+          let hash = await Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, settleData, cpProvider.privateKey);
 
           logger.debug("Settle Channel HASH:", hash);
           break;
@@ -248,9 +182,7 @@ export const ETH_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle ETH CooperativeSettled--------------------"
-      );
+      logger.debug("--------------------Handle ETH CooperativeSettled--------------------");
     }
   },
 
@@ -259,9 +191,7 @@ export const ETH_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle ETH ChannelSettled--------------------"
-      );
+      logger.debug("--------------------Handle ETH ChannelSettled--------------------");
     }
   }
 };

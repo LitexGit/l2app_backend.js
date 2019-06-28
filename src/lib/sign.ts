@@ -33,9 +33,7 @@ function encodeType(primaryType: any) {
   let result = "";
   for (let type of deps) {
     // @ts-ignore
-    result += `${type}(${types[type]
-      .map(({ name, type }) => `${type} ${name}`)
-      .join(",")})`;
+    result += `${type}(${types[type].map(({ name, type }) => `${type} ${name}`).join(",")})`;
   }
 
   return result;
@@ -83,10 +81,6 @@ export function signHash(message: any) {
   TYPED_DATA.domain.verifyingContract = ethPN.options.address;
   TYPED_DATA.domain.chainId = ethChainId;
   return keccak256(
-    Buffer.concat([
-      Buffer.from("1901", "hex"),
-      structHash("EIP712Domain", TYPED_DATA.domain),
-      structHash(TYPED_DATA.primaryType, message)
-    ])
+    Buffer.concat([Buffer.from("1901", "hex"), structHash("EIP712Domain", TYPED_DATA.domain), structHash(TYPED_DATA.primaryType, message)])
   ).toString("hex");
 }

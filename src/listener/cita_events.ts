@@ -16,19 +16,10 @@ export const CITA_EVENTS = {
     handler: async (event: any) => {
       // 获取event事件内容
       let {
-        returnValues: {
-          from,
-          to,
-          channelID,
-          balance,
-          transferAmount,
-          additionalHash
-        }
+        returnValues: { from, to, channelID, balance, transferAmount, additionalHash }
       } = event;
 
-      logger.debug(
-        "--------------------Handle CITA Transfer--------------------"
-      );
+      logger.debug("--------------------Handle CITA Transfer--------------------");
       logger.debug(
         "from :[%s], to :[%s], channelID :[%s], balance :[%s], transferAmount :[%s], additionalHash :[%s]",
         from,
@@ -43,7 +34,7 @@ export const CITA_EVENTS = {
       let channel = await appPN.methods.channelMap(channelID).call();
       let token = channel.token;
 
-      logger.debug("channel", channel);
+      logger.debug("channel", JSON.stringify(channel));
       let assetEvent: TRANSFER_EVENT = {
         from: from,
         to: to,
@@ -63,9 +54,7 @@ export const CITA_EVENTS = {
         let { toBN } = web3.utils;
         let time = 0;
         while (time < 15) {
-          let channelInfo = await appPN.methods
-            .balanceProofMap(channelID, to)
-            .call();
+          let channelInfo = await appPN.methods.balanceProofMap(channelID, to).call();
           if (toBN(channelInfo.balance).gte(toBN(balance))) {
             break;
           }
@@ -77,10 +66,7 @@ export const CITA_EVENTS = {
       }
 
       // 查询费率
-      let {
-        amount: feeProofAmount,
-        nonce: road
-      } = await appPN.methods.feeProofMap(token).call();
+      let { amount: feeProofAmount, nonce: road } = await appPN.methods.feeProofMap(token).call();
 
       //
       let feeRate = await appPN.methods.feeRateMap(token).call();
@@ -89,15 +75,9 @@ export const CITA_EVENTS = {
         return;
       }
 
-      logger.debug(
-        "start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]",
-        feeProofAmount,
-        feeRate
-      );
+      logger.debug("start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]", feeProofAmount, feeRate);
       // 查询通道证据
-      let [{ balance: amount }] = await Promise.all([
-        appPN.methods.balanceProofMap(channelID, cpProvider.address).call()
-      ]);
+      let [{ balance: amount }] = await Promise.all([appPN.methods.balanceProofMap(channelID, cpProvider.address).call()]);
 
       // let { balance: arrearBalance } = await appPN.methods.arrearBalanceProofMap(channelID).call();
       // logger.debug("arrearBalance", arrearBalance);
@@ -111,13 +91,7 @@ export const CITA_EVENTS = {
         )
         .toString();
 
-      logger.debug(
-        "provider balance :[%s], provider nonce :[%s], event Balance :[%s], feeAmount :[%s]",
-        amount,
-        road,
-        balance,
-        feeAmount
-      );
+      logger.debug("provider balance :[%s], provider nonce :[%s], event Balance :[%s], feeAmount :[%s]", amount, road, balance, feeAmount);
 
       let feeNonce = Number(road) + 1;
 
@@ -142,13 +116,7 @@ export const CITA_EVENTS = {
       );
 
       Common.SendAppChainTX(
-        appPN.methods.submitFee(
-          channelID,
-          token,
-          feeAmount,
-          feeNonce,
-          signature
-        ),
+        appPN.methods.submitFee(channelID, token, feeAmount, feeNonce, signature),
         cpProvider.address,
         cpProvider.privateKey,
         "appPN.methods.submitFee"
@@ -158,9 +126,7 @@ export const CITA_EVENTS = {
   SubmitFee: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA SubmitFee--------------------"
-      );
+      logger.debug("--------------------Handle CITA SubmitFee--------------------");
       let { token, amount, nonce } = event.returnValues;
       logger.debug("token:[%s], amount:[%s], nonce:[%s]", token, amount, nonce);
     }
@@ -170,19 +136,10 @@ export const CITA_EVENTS = {
     handler: async (event: any) => {
       // 获取event事件内容
       let {
-        returnValues: {
-          user,
-          channelID,
-          amount,
-          balance,
-          receiver,
-          lastCommitBlock
-        }
+        returnValues: { user, channelID, amount, balance, receiver, lastCommitBlock }
       } = event;
 
-      logger.debug(
-        "--------------------Handle CITA UserProposeWithdraw--------------------"
-      );
+      logger.debug("--------------------Handle CITA UserProposeWithdraw--------------------");
       logger.debug(
         "user :[%s], channelID :[%s], amount :[%s], balance :[%s], receiver :[%s], lastCommitBlock :[%s] ",
         user,
@@ -222,15 +179,8 @@ export const CITA_EVENTS = {
         returnValues: { channelID, balance, lastCommitBlock }
       } = event;
 
-      logger.debug(
-        "--------------------Handle CITA ProposeCooperativeSettle--------------------"
-      );
-      logger.debug(
-        " channelID: [%s], balance:[%s], lastCommitBlock:[%s] ",
-        channelID,
-        balance,
-        lastCommitBlock
-      );
+      logger.debug("--------------------Handle CITA ProposeCooperativeSettle--------------------");
+      logger.debug(" channelID: [%s], balance:[%s], lastCommitBlock:[%s] ", channelID, balance, lastCommitBlock);
       // 签署消息
       let messageHash = web3.utils.soliditySha3(
         { v: ethPN.options.address, t: "address" },
@@ -260,30 +210,14 @@ export const CITA_EVENTS = {
         returnValues: { token, amount: balance, lastCommitBlock, signature }
       } = event;
 
-      logger.debug(
-        "--------------------Handle CITA ConfirmProviderWithdraw--------------------"
-      );
-      logger.debug(
-        " token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]",
-        token,
-        balance,
-        lastCommitBlock,
-        signature
-      );
+      logger.debug("--------------------Handle CITA ConfirmProviderWithdraw--------------------");
+      logger.debug(" token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]", token, balance, lastCommitBlock, signature);
 
       // 获取数据
-      let data = await ethPN.methods
-        .providerWithdraw(token, balance, lastCommitBlock, signature)
-        .encodeABI();
+      let data = await ethPN.methods.providerWithdraw(token, balance, lastCommitBlock, signature).encodeABI();
 
       // 提交数据到 ETH
-      Common.SendEthTransaction(
-        cpProvider.address,
-        ethPN.options.address,
-        0,
-        data,
-        cpProvider.privateKey
-      );
+      Common.SendEthTransaction(cpProvider.address, ethPN.options.address, 0, data, cpProvider.privateKey);
     }
   },
   /***************************Operator Related Onchain Event*********************************/
@@ -291,18 +225,11 @@ export const CITA_EVENTS = {
   OnchainProviderWithdraw: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA OnchainProviderWithdraw--------------------"
-      );
+      logger.debug("--------------------Handle CITA OnchainProviderWithdraw--------------------");
       let { returnValues, transactionHash: txhash } = event;
       let { token, amount, balance } = returnValues;
 
-      logger.debug(
-        "token:[%s], amount:[%s], balance:[%s]",
-        token,
-        amount,
-        balance
-      );
+      logger.debug("token:[%s], amount:[%s], balance:[%s]", token, amount, balance);
 
       let providerWithdrawEvent: PROVIDER_WITHDRAW_EVENT = {
         token,
@@ -319,9 +246,7 @@ export const CITA_EVENTS = {
   OnchainProviderDeposit: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA OnchainProviderDeposit--------------------"
-      );
+      logger.debug("--------------------Handle CITA OnchainProviderDeposit--------------------");
       let { returnValues, transactionHash: txhash } = event;
       let { token, amount } = returnValues;
       logger.debug("token:[%s], amount:[%s]", token, amount);
@@ -339,22 +264,14 @@ export const CITA_EVENTS = {
   OnchainUserDeposit: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA OnchainUserDeposit--------------------"
-      );
+      logger.debug("--------------------Handle CITA OnchainUserDeposit--------------------");
       // 获取事件内容
       let {
         returnValues: { channelID, user, deposit: newDeposit, totalDeposit },
         transactionHash: txhash
       } = event;
 
-      logger.debug(
-        " channelID: [%s], user: [%s], newDeposit: [%s], totalDeposit: [%s] ",
-        channelID,
-        user,
-        newDeposit,
-        totalDeposit
-      );
+      logger.debug(" channelID: [%s], user: [%s], newDeposit: [%s], totalDeposit: [%s] ", channelID, user, newDeposit, totalDeposit);
       let { token } = await appPN.methods.channelMap(channelID).call();
 
       // TODO get real sender
@@ -376,21 +293,13 @@ export const CITA_EVENTS = {
   OnchainUserWithdraw: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA OnchainUserWithdraw--------------------"
-      );
+      logger.debug("--------------------Handle CITA OnchainUserWithdraw--------------------");
       // 获取event事件内容
       let {
         returnValues: { channelID, user, amount, withdraw: totalWithdraw },
         transactionHash: txhash
       } = event;
-      logger.debug(
-        " channelID: [%s], user: [%s], amount: [%s], totalWithdraw: [%s] ",
-        channelID,
-        user,
-        amount,
-        totalWithdraw
-      );
+      logger.debug(" channelID: [%s], user: [%s], amount: [%s], totalWithdraw: [%s] ", channelID, user, amount, totalWithdraw);
 
       let { token } = await appPN.methods.channelMap(channelID).call();
 
@@ -410,23 +319,14 @@ export const CITA_EVENTS = {
   OnchainOpenChannel: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA OnchainOpenChannel--------------------"
-      );
+      logger.debug("--------------------Handle CITA OnchainOpenChannel--------------------");
       // 获取事件内容
       let {
         returnValues: { user, token, amount, channelID },
         transactionHash: txhash
       } = event;
 
-      logger.debug(
-        " sender: [%s], user: [%s], token: [%s], amount: [%s], channelID: [%s] ",
-        user,
-        user,
-        token,
-        amount,
-        channelID
-      );
+      logger.debug(" sender: [%s], user: [%s], token: [%s], amount: [%s], channelID: [%s] ", user, user, token, amount, channelID);
 
       let userJoinEvent: USER_DEPOSIT_EVENT = {
         sender: user,
@@ -445,22 +345,14 @@ export const CITA_EVENTS = {
   OnchainCooperativeSettleChannel: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA OnchainCooperativeSettleChannel--------------------"
-      );
+      logger.debug("--------------------Handle CITA OnchainCooperativeSettleChannel--------------------");
       // 获取event事件内容
       let {
         returnValues: { channelID, user, token, balance },
         transactionHash: txhash
       } = event;
 
-      logger.debug(
-        " channelID: [%s], user: [%s], token: [%s], balance: [%s] ",
-        channelID,
-        user,
-        token,
-        balance
-      );
+      logger.debug(" channelID: [%s], user: [%s], token: [%s], balance: [%s] ", channelID, user, token, balance);
 
       let userLeaveEvent: USER_WITHDRAW_EVENT = {
         user,
@@ -478,18 +370,10 @@ export const CITA_EVENTS = {
   OnchainSettleChannel: {
     filter: () => ({}),
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA OnchainSettleChannel--------------------"
-      );
+      logger.debug("--------------------Handle CITA OnchainSettleChannel--------------------");
       // 获取event事件内容
       let {
-        returnValues: {
-          channelID,
-          user,
-          token,
-          userSettleAmount: transferTouserAmount,
-          providerSettleAmount: transferToProviderAmount
-        },
+        returnValues: { channelID, user, token, userSettleAmount: transferTouserAmount, providerSettleAmount: transferToProviderAmount },
         transactionHash: txhash
       } = event;
 

@@ -16,9 +16,16 @@ export async function setLogger(newlogger?) {
       debug: debug ? console.log : () => {}
     };
   } else {
-    logger = newlogger;
-    newlogger.error('server error');
-    // newlogger.info('server info');
-    newlogger.debug('server debug');
+    logger.info = (...params) => {
+      newlogger.info("[L2-SERVER]: " + params[0], ...params.slice(1));
+    };
+
+    logger.debug = (...params) => {
+      newlogger.debug("[L2-SERVER]: " + params[0], ...params.slice(1));
+    };
+
+    logger.error = (...params) => {
+      newlogger.error("[L2-SERVER]: " + params[0], ...params.slice(1));
+    };
   }
 }

@@ -38,14 +38,7 @@ export type PaymentData = {
   paymentSignature: string;
 };
 
-export type L2_EVENT =
-  | "Message"
-  | "UserDeposit"
-  | "UserWithdraw"
-  | "UserForceWithdraw"
-  | "ProviderWithdraw"
-  | "ProviderDeposit"
-  | "Transfer";
+export type L2_EVENT = "Message" | "UserDeposit" | "UserWithdraw" | "UserForceWithdraw" | "ProviderWithdraw" | "ProviderDeposit" | "Transfer";
 export type L2_CB = (err: any, res: any) => void;
 
 // 转账事件

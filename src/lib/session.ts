@@ -23,22 +23,10 @@ export class Session {
    *
    * @constructor
    */
-  static async InitSession(
-    sessionID: string,
-    game: string,
-    userList: string[],
-    customData: any
-  ) {
+  static async InitSession(sessionID: string, game: string, userList: string[], customData: any) {
     // 发送交易 到 AppChain
     let res = await Common.SendAppChainTX(
-      sessionPN.methods.initSession(
-        sessionID,
-        cpProvider.address,
-        game,
-        userList,
-        appPN.options.address,
-        web3.utils.utf8ToHex(customData)
-      ),
+      sessionPN.methods.initSession(sessionID, cpProvider.address, game, userList, appPN.options.address, web3.utils.utf8ToHex(customData)),
       cpProvider.address,
       cpProvider.privateKey,
       "sessionPN.methods.initSession"
@@ -79,12 +67,7 @@ export class Session {
    *
    *
    */
-  static async SendSessionMessage(
-    from: string,
-    to: string,
-    sessionData: SessionData,
-    paymentData: string
-  ) {
+  static async SendSessionMessage(from: string, to: string, sessionData: SessionData, paymentData: string) {
     logger.debug(
       "sendMessage params: from: [%s], to: [%s], sessionData.sessionID: [%s], sessionData.mType: [%s], sessionData.content: [%s], sessionData.signature: [%s], paymentData: [%o]",
       from,
@@ -98,15 +81,7 @@ export class Session {
 
     // 发送交易 到 AppChain
     return await Common.SendAppChainTX(
-      sessionPN.methods.sendMessage(
-        from,
-        to,
-        sessionData.sessionID,
-        sessionData.mType,
-        sessionData.content,
-        sessionData.signature,
-        paymentData
-      ),
+      sessionPN.methods.sendMessage(from, to, sessionData.sessionID, sessionData.mType, sessionData.content, sessionData.signature, paymentData),
       cpProvider.address,
       cpProvider.privateKey,
       "sessionPN.methods.sendMessage"
@@ -173,9 +148,7 @@ export class Session {
 
   private async initialize() {
     // query session by _sessionPN
-    let { status, game, data } = await sessionPN.methods
-      .sessions(this.id)
-      .call();
+    let { status, game, data } = await sessionPN.methods.sessions(this.id).call();
     this.status = Number(status);
     this.game = game;
     this.customData = web3.utils.hexToUtf8(data);

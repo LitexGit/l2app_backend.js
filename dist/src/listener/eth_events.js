@@ -70,9 +70,7 @@ exports.ETH_EVENTS = {
                         let consignorSignature = common_1.Common.SignatureToHex(messageHash, server_1.cpProvider.privateKey);
                         mylog_1.logger.debug("user close the channel, provider will submit proof");
                         mylog_1.logger.debug("proof data: channelID: [%s], balance: [%s], nonce: [%s], additionalHash: [%s], partnerSignature: [%s], consignorSignature: [%s]", channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature);
-                        data = server_1.ethPN.methods
-                            .partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature)
-                            .encodeABI();
+                        data = server_1.ethPN.methods.partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature).encodeABI();
                         await common_1.Common.SendEthTransaction(server_1.cpProvider.address, server_1.ethPN.options.address, 0, data, server_1.cpProvider.privateKey);
                     }
                 }
@@ -90,9 +88,7 @@ exports.ETH_EVENTS = {
                             mylog_1.logger.debug("no user proof signature, will not submit proof");
                         }
                         else {
-                            data = server_1.ethPN.methods
-                                .partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature)
-                                .encodeABI();
+                            data = server_1.ethPN.methods.partnerUpdateProof(channelID, balance, nonce, additionalHash, partnerSignature, consignorSignature).encodeABI();
                             await common_1.Common.SendEthTransaction(server_1.cpProvider.address, server_1.ethPN.options.address, 0, data, server_1.cpProvider.privateKey);
                         }
                     }

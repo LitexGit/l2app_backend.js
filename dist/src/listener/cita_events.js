@@ -12,7 +12,7 @@ exports.CITA_EVENTS = {
             mylog_1.logger.debug("from :[%s], to :[%s], channelID :[%s], balance :[%s], transferAmount :[%s], additionalHash :[%s]", from, to, channelID, balance, transferAmount, additionalHash);
             let channel = await server_1.appPN.methods.channelMap(channelID).call();
             let token = channel.token;
-            mylog_1.logger.debug("channel", channel);
+            mylog_1.logger.debug("channel", JSON.stringify(channel));
             let assetEvent = {
                 from: from,
                 to: to,
@@ -25,9 +25,7 @@ exports.CITA_EVENTS = {
                 let { toBN } = server_1.web3.utils;
                 let time = 0;
                 while (time < 15) {
-                    let channelInfo = await server_1.appPN.methods
-                        .balanceProofMap(channelID, to)
-                        .call();
+                    let channelInfo = await server_1.appPN.methods.balanceProofMap(channelID, to).call();
                     if (toBN(channelInfo.balance).gte(toBN(balance))) {
                         break;
                     }
@@ -43,9 +41,7 @@ exports.CITA_EVENTS = {
                 return;
             }
             mylog_1.logger.debug("start to submit feeProof, old feeProofAmount :[%s], feeRate :[%s]", feeProofAmount, feeRate);
-            let [{ balance: amount }] = await Promise.all([
-                server_1.appPN.methods.balanceProofMap(channelID, server_1.cpProvider.address).call()
-            ]);
+            let [{ balance: amount }] = await Promise.all([server_1.appPN.methods.balanceProofMap(channelID, server_1.cpProvider.address).call()]);
             let bn = server_1.web3.utils.toBN;
             let feeAmount = bn(feeProofAmount)
                 .add(bn(feeRate)
@@ -96,9 +92,7 @@ exports.CITA_EVENTS = {
             let { returnValues: { token, amount: balance, lastCommitBlock, signature } } = event;
             mylog_1.logger.debug("--------------------Handle CITA ConfirmProviderWithdraw--------------------");
             mylog_1.logger.debug(" token: [%s], balance: [%s], lastCommitBlock: [%s], signature: [%s]", token, balance, lastCommitBlock, signature);
-            let data = await server_1.ethPN.methods
-                .providerWithdraw(token, balance, lastCommitBlock, signature)
-                .encodeABI();
+            let data = await server_1.ethPN.methods.providerWithdraw(token, balance, lastCommitBlock, signature).encodeABI();
             common_1.Common.SendEthTransaction(server_1.cpProvider.address, server_1.ethPN.options.address, 0, data, server_1.cpProvider.privateKey);
         }
     },

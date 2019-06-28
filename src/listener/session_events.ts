@@ -10,9 +10,7 @@ export const SESSION_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA InitSession--------------------"
-      );
+      logger.debug("--------------------Handle CITA InitSession--------------------");
     }
   },
 
@@ -21,9 +19,7 @@ export const SESSION_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA JoinSession--------------------"
-      );
+      logger.debug("--------------------Handle CITA JoinSession--------------------");
     }
   },
 
@@ -32,21 +28,9 @@ export const SESSION_EVENTS = {
       return { to: cpProvider.address };
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA SendMessage--------------------"
-      );
+      logger.debug("--------------------Handle CITA SendMessage--------------------");
       let {
-        returnValues: {
-          from,
-          to,
-          sessionID,
-          mType: type,
-          content,
-          balance,
-          nonce,
-          amount,
-          channelID
-        },
+        returnValues: { from, to, sessionID, mType: type, content, balance, nonce, amount, channelID },
         transactionHash: txhash
       } = event;
 
@@ -83,9 +67,7 @@ export const SESSION_EVENTS = {
       return {};
     },
     handler: async (event: any) => {
-      logger.debug(
-        "--------------------Handle CITA CloseSession--------------------"
-      );
+      logger.debug("--------------------Handle CITA CloseSession--------------------");
       // TODO
     }
   }

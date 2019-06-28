@@ -54,9 +54,7 @@ class Session {
         return true;
     }
     async initialize() {
-        let { status, game, data } = await server_1.sessionPN.methods
-            .sessions(this.id)
-            .call();
+        let { status, game, data } = await server_1.sessionPN.methods.sessions(this.id).call();
         this.status = Number(status);
         this.game = game;
         this.customData = server_1.web3.utils.hexToUtf8(data);

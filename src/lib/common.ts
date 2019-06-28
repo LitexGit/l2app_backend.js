@@ -30,19 +30,11 @@ export class Common {
   }
 
   static async GetLastCommitBlock(chain: string = "eth") {
-    return chain === "eth"
-      ? (await web3.eth.getBlockNumber()) + COMMIT_BLOCK_CONDITION
-      : (await CITA.base.getBlockNumber()) + 60;
+    return chain === "eth" ? (await web3.eth.getBlockNumber()) + COMMIT_BLOCK_CONDITION : (await CITA.base.getBlockNumber()) + 60;
   }
 
-  static async SendEthTransaction(
-    from: string,
-    to: string,
-    value: number | string,
-    data: string,
-    privateKey: string
-  ) {
-    const { toBN } = web3.utils;
+  static async SendEthTransaction(from: string, to: string, value: number | string, data: string, privateKey: string) {
+    const { toBN, fromWei } = web3.utils;
     //TODO: fetch nonce from persist storage
     let nonce = await web3.eth.getTransactionCount(from);
     if (nonce > getEthNonce(from)) {
@@ -59,8 +51,7 @@ export class Common {
       .div(toBN(10))
       .toString(10);
 
-
-    console.log('gasPrice', gasPrice);
+    logger.info(`gasPrice is ${fromWei(gasPrice, "Gwei")} Gwei`);
 
     // const estimateGas = await web3.eth.estimateGas({ to, data });
     // console.log('estimateGas', estimateGas);
@@ -97,7 +88,7 @@ export class Common {
 
     let txData = "0x" + serializedTx.toString("hex");
 
-    logger.debug("SEND ETH TX", rawTx);
+    logger.debug("SEND ETH TX", JSON.stringify(rawTx));
 
     return new Promise((resolve, reject) => {
       try {
@@ -130,13 +121,8 @@ export class Common {
     return tx;
   }
 
-  static async SendAppChainTX(
-    action: any,
-    from: string,
-    privateKey: string,
-    name: string
-  ) {
-    logger.debug("start send CITA tx", name, action.arguments);
+  static async SendAppChainTX(action: any, from: string, privateKey: string, name: string) {
+    logger.debug("start send CITA tx ", name, JSON.stringify(action.arguments));
     let tx = await this.BuildAppChainTX(from, privateKey);
     let rs = await action.send(tx);
 
@@ -149,12 +135,7 @@ export class Common {
         return rs.hash;
       } else {
         //确认失败
-        logger.error(
-          `CITATX ${name} error ${receipt.errorMessage}`,
-          rs.hash,
-          action.arguments,
-          tx
-        );
+        logger.error(`CITATX ${name} error ${receipt.errorMessage}`, rs.hash, action.arguments, tx);
         throw new Error(`CITATX ${name} fail ${receipt.errorMessage}`);
       }
     } else {
@@ -164,21 +145,10 @@ export class Common {
     }
   }
 
-  static CheckSignature(
-    messageHash: string,
-    signature: string,
-    address: string
-  ) {
+  static CheckSignature(messageHash: string, signature: string, address: string) {
     let messageHashBuffer = Buffer.from(messageHash.replace("0x", ""), "hex");
-    let sigDecoded = ethUtil.fromRpcSig(
-      Buffer.from(signature.replace("0x", ""), "hex")
-    );
-    let recoveredPub = ethUtil.ecrecover(
-      messageHashBuffer,
-      sigDecoded.v,
-      sigDecoded.r,
-      sigDecoded.s
-    );
+    let sigDecoded = ethUtil.fromRpcSig(Buffer.from(signature.replace("0x", ""), "hex"));
+    let recoveredPub = ethUtil.ecrecover(messageHashBuffer, sigDecoded.v, sigDecoded.r, sigDecoded.s);
     let recoveredAddress = ethUtil.pubToAddress(recoveredPub).toString("hex");
     recoveredAddress = "0x" + recoveredAddress;
 
@@ -186,25 +156,17 @@ export class Common {
   }
 
   static SignatureToHex(messageHash: string, privateKey: string) {
-    let messageHex =
-      messageHash.substr(0, 2) == "0x" ? messageHash.substr(2) : messageHash;
-    let privateKeyHex =
-      privateKey.substr(0, 2) == "0x" ? privateKey.substr(2) : privateKey;
+    let messageHex = messageHash.substr(0, 2) == "0x" ? messageHash.substr(2) : messageHash;
+    let privateKeyHex = privateKey.substr(0, 2) == "0x" ? privateKey.substr(2) : privateKey;
 
     let messageBuffer = Buffer.from(messageHex, "hex");
     let privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
     let signatureObj = ethUtil.ecsign(messageBuffer, privateKeyBuffer);
 
-    return ethUtil
-      .toRpcSig(signatureObj.v, signatureObj.r, signatureObj.s)
-      .toString("hex");
+    return ethUtil.toRpcSig(signatureObj.v, signatureObj.r, signatureObj.s).toString("hex");
   }
 
-  static RandomWord(
-    randomFlag: boolean,
-    min: number,
-    max: number = 12
-  ): string {
+  static RandomWord(randomFlag: boolean, min: number, max: number = 12): string {
     let str = "",
       range = min,
       arr = [
@@ -276,11 +238,7 @@ export class Common {
     let random = this.RandomWord(true, 6, 32);
 
     // 计算hash 作为sessionID
-    return web3.utils.soliditySha3(
-      { v: game, t: "address" },
-      { v: timestamp, t: "uint256" },
-      { v: random, t: "bytes32" }
-    );
+    return web3.utils.soliditySha3({ v: game, t: "address" }, { v: timestamp, t: "uint256" }, { v: random, t: "bytes32" });
   }
 
   static async Sleep(time: number): Promise<void> {

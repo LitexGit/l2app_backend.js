@@ -24,8 +24,7 @@ export const config = {
 //   // token: "0x0000000000000000000000000000000000000000"
 // };
 
-export const cpPrivateKey =
-  "9C273F1FC38BCBAC1C41242F9D606E67A7BB868BD474E0E3099012ECAA88B059";
+export const cpPrivateKey = "9C273F1FC38BCBAC1C41242F9D606E67A7BB868BD474E0E3099012ECAA88B059";
 
 export const ethPaymentNetwork: PN = {
   address: config.ethPNAddress,

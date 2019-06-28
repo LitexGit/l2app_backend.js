@@ -28,9 +28,7 @@ function encodeType(primaryType) {
     deps = [primaryType].concat(deps.sort());
     let result = "";
     for (let type of deps) {
-        result += `${type}(${types[type]
-            .map(({ name, type }) => `${type} ${name}`)
-            .join(",")})`;
+        result += `${type}(${types[type].map(({ name, type }) => `${type} ${name}`).join(",")})`;
     }
     return result;
 }
@@ -70,11 +68,7 @@ function structHash(primaryType, data) {
 function signHash(message) {
     contract_1.TYPED_DATA.domain.verifyingContract = server_1.ethPN.options.address;
     contract_1.TYPED_DATA.domain.chainId = server_1.ethChainId;
-    return ethereumjs_util_1.keccak256(Buffer.concat([
-        Buffer.from("1901", "hex"),
-        structHash("EIP712Domain", contract_1.TYPED_DATA.domain),
-        structHash(contract_1.TYPED_DATA.primaryType, message)
-    ])).toString("hex");
+    return ethereumjs_util_1.keccak256(Buffer.concat([Buffer.from("1901", "hex"), structHash("EIP712Domain", contract_1.TYPED_DATA.domain), structHash(contract_1.TYPED_DATA.primaryType, message)])).toString("hex");
 }
 exports.signHash = signHash;
 //# sourceMappingURL=sign.js.map
