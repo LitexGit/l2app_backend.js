@@ -20,7 +20,7 @@ export declare class SDK {
     private appRpcUrl;
     private ethRpcUrl;
     private channelTransferLock;
-    init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN): Promise<void>;
+    init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN, enableListener?: boolean): Promise<void>;
     setDebug(debugFlag: boolean): void;
     setLogger(logger: any): void;
     deposit(amount: number | string, token?: string): Promise<{}>;

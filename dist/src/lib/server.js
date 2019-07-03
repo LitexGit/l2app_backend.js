@@ -26,7 +26,7 @@ class SDK {
         }
         return this.instance;
     }
-    async init(cpPrivateKey, ethRpcUrl, ethPaymentNetwork, appRpcUrl, appPaymentNetwork, sessionPayNetwork) {
+    async init(cpPrivateKey, ethRpcUrl, ethPaymentNetwork, appRpcUrl, appPaymentNetwork, sessionPayNetwork, enableListener = true) {
         mylog_1.logger.debug("L2 server sdk init start with params: ethRpcUrl: [%s], ethPaymentNetwork: [%o], appRpcUrl: [%s], appPaymentNetwork: [%o]", ethRpcUrl, ethPaymentNetwork.address, appRpcUrl, appPaymentNetwork.address);
         exports.web3 = new Web3(Web3.givenProvider || ethRpcUrl);
         this.appRpcUrl = appRpcUrl;
@@ -43,7 +43,7 @@ class SDK {
         exports.sessionPN = new exports.CITA.base.Contract(common_1.Common.Abi2JsonInterface(sessionPayNetwork.abi), sessionPayNetwork.address);
         exports.cpProvider = exports.CITA.base.accounts.privateKeyToAccount(cpPrivateKey);
         exports.callbacks = new Map();
-        if (exports.cpProvider.address) {
+        if (exports.cpProvider.address && enableListener) {
             this.initListeners();
         }
     }

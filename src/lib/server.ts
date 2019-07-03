@@ -61,9 +61,10 @@ export class SDK {
    * @param appRpcUrl         string
    * @param appPaymentNetwork  PN
    * @param sessionPayNetwork PN
+   * @param enableListener boolean if start watch blockchain
    * @constructor
    */
-  async init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN) {
+  async init(cpPrivateKey: string, ethRpcUrl: string, ethPaymentNetwork: PN, appRpcUrl: string, appPaymentNetwork: PN, sessionPayNetwork: PN, enableListener: boolean = true) {
     logger.debug(
       "L2 server sdk init start with params: ethRpcUrl: [%s], ethPaymentNetwork: [%o], appRpcUrl: [%s], appPaymentNetwork: [%o]",
       ethRpcUrl,
@@ -97,7 +98,7 @@ export class SDK {
     callbacks = new Map<L2_EVENT, L2_CB>();
 
     // 私钥错误, 不进行监听
-    if (cpProvider.address) {
+    if (cpProvider.address && enableListener) {
       this.initListeners();
     }
   }
